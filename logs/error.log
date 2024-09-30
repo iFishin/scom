@@ -1,0 +1,8 @@
+2024-09-12 19:59:56,716 - ERROR - An unexpected error occurred: 'PySide6.QtWidgets.QBoxLayout.addLayout' called with wrong argument types:
+  PySide6.QtWidgets.QBoxLayout.addLayout(QScrollArea)
+Supported signatures:
+  PySide6.QtWidgets.QBoxLayout.addLayout(PySide6.QtWidgets.QLayout, int = 0)
+2024-09-26 14:03:47,545 - ERROR - An unexpected error occurred: module 'PySide6.QtWidgets' has no attribute 'QAction'
+2024-09-26 14:41:41,058 - ERROR - An unexpected error occurred: setColumnStretch expected 2 arguments, got 3
+2024-09-26 15:02:41,837 - ERROR - An unexpected error occurred: Invalid parameter None passed to addLayoutOwnership().
+2024-09-26 15:03:05,784 - ERROR - An unexpected error occurred: Invalid parameter None passed to addLayoutOwnership().
