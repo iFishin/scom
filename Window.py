@@ -307,12 +307,14 @@ class MyWidget(QtWidgets.QWidget):
         self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
         button_layout.addWidget(QtWidgets.QLabel("Function"), 0, 1, alignment=QtCore.Qt.AlignCenter)
         button_layout.addWidget(QtWidgets.QLabel("Input Field"), 0, 2, alignment=QtCore.Qt.AlignCenter)
-        # button_layout.addWidget(QtWidgets.QLabel("Interval"), 0, 3, alignment=QtCore.Qt.AlignRight)
+        button_layout.addWidget(QtWidgets.QLabel("Enter"), 0, 3, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(QtWidgets.QLabel("Sec"), 0, 4, alignment=QtCore.Qt.AlignRight)
 
         # Add buttons and input fields to the button group
         self.checkbox = []
         self.buttons = []
         self.input_fields = []
+        self.send_with_enter_checkboxs = []
         self.interVal = []
         for i in range(1, 101):
             # Create a combobox for selecting the function
@@ -320,6 +322,8 @@ class MyWidget(QtWidgets.QWidget):
             label = f"Func {i}"
             button = QtWidgets.QPushButton(label)
             input_field = QtWidgets.QLineEdit()
+            checkbox_send_with_enter = QtWidgets.QCheckBox()
+            checkbox_send_with_enter.setChecked(True)
             input_interval = QtWidgets.QLineEdit()
             input_interval.setFixedWidth(self.width() * 0.06)
             input_interval.setValidator(QtGui.QIntValidator(0, 1000))
@@ -328,17 +332,19 @@ class MyWidget(QtWidgets.QWidget):
             button_layout.addWidget(checkbox, i, 0)
             button_layout.addWidget(button, i, 1)
             button_layout.addWidget(input_field, i, 2)
-            button_layout.addWidget(input_interval, i, 3)
+            button_layout.addWidget(checkbox_send_with_enter, i, 3)
+            button_layout.addWidget(input_interval, i, 4)
             self.checkbox.append(checkbox)
             self.buttons.append(button)
             self.input_fields.append(input_field)
+            self.send_with_enter_checkboxs.append(checkbox_send_with_enter)
             self.interVal.append(input_interval)
             button.setEnabled(False)
             input_field.returnPressed.connect(
-            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1])
+            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.send_with_enter_checkboxs[i - 1], self.interVal[i - 1])
             )
             button.clicked.connect(
-            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1])
+            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.send_with_enter_checkboxs[i - 1], self.interVal[i - 1])
             )
 
         # Create a layout for the left half
@@ -377,7 +383,7 @@ class MyWidget(QtWidgets.QWidget):
         layout_3.addWidget(self.label_layout_3)
         layout_3.addWidget(self.text_input_layout_3)
         self.text_input_layout_3.setStyleSheet(
-            "QTextEdit { height: 100%; width: 100%; font-size: 16px; font-weight: bold; }"
+            "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: bold; }"
         )
         self.text_input_layout_3.setAcceptRichText(False)
         
@@ -389,7 +395,7 @@ class MyWidget(QtWidgets.QWidget):
         layout_4.addWidget(self.label_layout_4)
         layout_4.addWidget(self.text_input_layout_4)
         self.text_input_layout_4.setStyleSheet(
-            "QTextEdit { height: 100%; width: 100%; font-size: 16px; font-weight: bold; }"
+            "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: bold; }"
         )
         self.text_input_layout_4.setAcceptRichText(False)
 
@@ -837,6 +843,9 @@ class MyWidget(QtWidgets.QWidget):
                 for checkbox in self.checkbox:
                     checkbox.setChecked(False)
                 self.total_checkbox.setChecked(False)
+                for checkbox in self.send_with_enter_checkboxs:
+                    checkbox.setChecked(True)
+                
                 
             elif index == 2:
                 # 读取指令到input_fields
@@ -879,9 +888,9 @@ class MyWidget(QtWidgets.QWidget):
             checkbox.setChecked(state == 2)
 
     # Button Click Handler
-    def handle_button_click(self, index, input_field, checkbox):
+    def handle_button_click(self, index, input_field, checkbox, send_with_enter_checkbox, interVal):
         def button_clicked():
-            common.port_write(input_field.text(), self.main_Serial)
+            common.port_write(input_field.text(), self.main_Serial, send_with_enter_checkbox.isChecked())
             checkbox.setChecked(True)
 
         return button_clicked
