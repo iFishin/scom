@@ -6,3 +6,4 @@ Supported signatures:
 2024-09-26 14:41:41,058 - ERROR - An unexpected error occurred: setColumnStretch expected 2 arguments, got 3
 2024-09-26 15:02:41,837 - ERROR - An unexpected error occurred: Invalid parameter None passed to addLayoutOwnership().
 2024-09-26 15:03:05,784 - ERROR - An unexpected error occurred: Invalid parameter None passed to addLayoutOwnership().
+2024-10-09 11:17:17,356 - ERROR - An unexpected error occurred: Internal C++ object (PySide6.QtWidgets.QGridLayout) already deleted.

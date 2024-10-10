@@ -300,15 +300,27 @@ class MyWidget(QtWidgets.QWidget):
         button_scroll_area.setWidget(self.button_groupbox)
         button_scroll_area.setWidgetResizable(True)
         button_scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        
+        # Add setting area for the button group
+        self.settings_button_group = QtWidgets.QGroupBox()
+        settings_button_layout = QtWidgets.QVBoxLayout(self.settings_button_group)
+        
+        self.prompt_button = QtWidgets.QPushButton("Prompt")
+        self.prompt_button.clicked.connect(lambda: common.port_write("AT", self.main_Serial, True))
+        settings_button_layout.addWidget(self.prompt_button)
+        
+        button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
+        
+        
 
         # Add column titles
         self.total_checkbox = QtWidgets.QCheckBox()
-        button_layout.addWidget(self.total_checkbox, 0, 0)
+        button_layout.addWidget(self.total_checkbox, 1, 0)
         self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
-        button_layout.addWidget(QtWidgets.QLabel("Function"), 0, 1, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Input Field"), 0, 2, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Enter"), 0, 3, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Sec"), 0, 4, alignment=QtCore.Qt.AlignRight)
+        button_layout.addWidget(QtWidgets.QLabel("Function"), 1, 1, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(QtWidgets.QLabel("Input Field"), 1, 2, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(QtWidgets.QLabel("Enter"), 1, 3, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(QtWidgets.QLabel("Sec"), 1, 4, alignment=QtCore.Qt.AlignRight)
 
         # Add buttons and input fields to the button group
         self.checkbox = []
