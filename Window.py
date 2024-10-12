@@ -16,6 +16,9 @@ from scom.DataReceiver import DataReceiver
 from scom.PortUpdater import PortUpdater
 from scom.FileSender import FileSender
 
+# Set the global variable for the current path
+current_path = os.path.dirname(os.path.abspath(__file__))
+
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -146,10 +149,11 @@ class MyWidget(QtWidgets.QWidget):
         
         self.label_data_received = QtWidgets.QLabel("Data Received:")
         self.input_path_data_received = QtWidgets.QLineEdit()
+        self.input_path_data_received.setText(os.path.join(current_path, "tmps/temp.log"))
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = self.set_default_received_file
         self.checkbox_data_received = QtWidgets.QCheckBox()
-        self.checkbox_data_received.setChecked(True)
+        self.checkbox_data_received.setChecked(False)
         self.checkbox_data_received.stateChanged.connect(self.handle_data_received_checkbox)
         self.button_data_received_select = QtWidgets.QPushButton("Select")
         self.button_data_received_select.clicked.connect(self.select_received_file)
@@ -293,24 +297,63 @@ class MyWidget(QtWidgets.QWidget):
         # Create a group box for the button group section
         self.button_groupbox = QtWidgets.QGroupBox("Button Group")
         button_layout = QtWidgets.QGridLayout(self.button_groupbox)
-        button_layout.setColumnStretch(2, 2)
+        # button_layout.setColumnStretch(2, 2)
 
         # Create a scroll area for the button group
         button_scroll_area = QtWidgets.QScrollArea()
         button_scroll_area.setWidget(self.button_groupbox)
         button_scroll_area.setWidgetResizable(True)
-        button_scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        
+        button_scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        QtCore.QTimer.singleShot(0, lambda: button_scroll_area.verticalScrollBar().setValue(self.settings_button_group.height()))
+
         # Add setting area for the button group
         self.settings_button_group = QtWidgets.QGroupBox()
-        settings_button_layout = QtWidgets.QVBoxLayout(self.settings_button_group)
+        settings_button_layout = QtWidgets.QGridLayout(self.settings_button_group)
+        settings_button_layout.setColumnStretch(1, 3)
         
         self.prompt_button = QtWidgets.QPushButton("Prompt")
-        self.prompt_button.clicked.connect(lambda: common.port_write("AT", self.main_Serial, True))
-        settings_button_layout.addWidget(self.prompt_button)
+        self.prompt_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #0d6e3f; }"
+            "QPushButton:pressed { background-color: #0a4c2b; }"
+        )
+        self.prompt_button.clicked.connect(lambda: self.prompt_button_click(QtCore.Qt.LeftButton))
+        self.input_prompt = QtWidgets.QLineEdit()
+        self.input_prompt.setPlaceholderText("COMMAND: click ME to start")
+        self.input_prompt.setStyleSheet(
+            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            )
         
+        self.prompt_batch_start_button = QtWidgets.QPushButton("Start")
+        self.prompt_batch_start_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #0d6e3f; }"
+            "QPushButton:pressed { background-color: #0a4c2b; }"
+        )
+        
+        self.prompt_batch_stop_button = QtWidgets.QPushButton("Stop")
+        self.prompt_batch_stop_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #a71d2a; }"
+            "QPushButton:pressed { background-color: #7b1520; }"
+        )
+        
+        self.input_prompt_batch_frequency = QtWidgets.QLineEdit()
+        self.input_prompt_batch_frequency.setPlaceholderText("Total Times")
+        self.input_prompt_batch_frequency.setStyleSheet(
+                "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            )
+
+        settings_button_layout.addWidget(self.prompt_button, 0, 0, 1, 1)
+        settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
+        settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
+        settings_button_layout.addWidget(self.input_prompt_batch_frequency, 1, 1, 1, 2,)
+        settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 3, 1, 2)
         button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
-        
+
+        # Set the input field to expand horizontally
+        self.input_prompt.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+
         
 
         # Add column titles
@@ -334,6 +377,7 @@ class MyWidget(QtWidgets.QWidget):
             label = f"Func {i}"
             button = QtWidgets.QPushButton(label)
             input_field = QtWidgets.QLineEdit()
+            
             checkbox_send_with_enter = QtWidgets.QCheckBox()
             checkbox_send_with_enter.setChecked(True)
             input_interval = QtWidgets.QLineEdit()
@@ -341,11 +385,11 @@ class MyWidget(QtWidgets.QWidget):
             input_interval.setValidator(QtGui.QIntValidator(0, 1000))
             input_interval.setPlaceholderText("sec")
             input_interval.setAlignment(QtCore.Qt.AlignRight)
-            button_layout.addWidget(checkbox, i, 0)
-            button_layout.addWidget(button, i, 1)
-            button_layout.addWidget(input_field, i, 2)
-            button_layout.addWidget(checkbox_send_with_enter, i, 3)
-            button_layout.addWidget(input_interval, i, 4)
+            button_layout.addWidget(checkbox, i+1, 0)
+            button_layout.addWidget(button, i+1, 1)
+            button_layout.addWidget(input_field, i+1, 2)
+            button_layout.addWidget(checkbox_send_with_enter, i+1, 3)
+            button_layout.addWidget(input_interval, i+1, 4)
             self.checkbox.append(checkbox)
             self.buttons.append(button)
             self.input_fields.append(input_field)
@@ -500,7 +544,6 @@ class MyWidget(QtWidgets.QWidget):
             else:
                 break
 
-
     # FUNCTIONS
     def apply_style(self):
         text = self.received_data_textarea.toPlainText()
@@ -540,23 +583,23 @@ class MyWidget(QtWidgets.QWidget):
             cursor.setCharFormat(char_format)
     
     def read_ATCommand_txt(self):
-        with open("./utils/ATCommand.txt", "r", encoding="utf-8") as f:
+        with open(os.path.join(current_path, "utils/ATCommand.txt"), "r", encoding="utf-8") as f:
             return f.read()
 
     def read_temp_txt(self):
-        with open("./tmps/temp.log", "r", encoding="utf-8") as f:
+        with open(os.path.join(current_path, "tmps/temp.log"), "r", encoding="utf-8") as f:
             return f.read()
 
     def write_ATCommand_txt(self, content):
         pre_content = self.read_ATCommand_txt()
         if pre_content!= content:
-            with open("./utils/ATCommand.txt", "w", encoding="utf-8") as f:
+            with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
                 f.write(content)
 
     def write_temp_txt(self, content):
         pre_content = self.read_temp_txt()
         if pre_content!= content:
-            with open("./tmps/temp.log", "w", encoding="utf-8") as f:
+            with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
                 f.write(content)
 
     def show_page(self, index):
@@ -675,7 +718,7 @@ class MyWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Warning", "Permission denied to save the file.")
            
     def set_default_received_file(self, event):
-        self.input_path_data_received.setText("./tmps/temp.log")
+        self.input_path_data_received.setText(os.path.join(current_path, "tmps/temp.log"))
                
      
     def select_received_file(self):
@@ -849,8 +892,12 @@ class MyWidget(QtWidgets.QWidget):
             if index == 1:
                 # 清空日志
                 self.received_data_textarea.clear()
-                with open("./tmps/temp.log", "w", encoding="utf-8") as f:
-                    f.write("")
+                if self.input_path_data_received.text():
+                    with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
+                        f.write("")
+                else:
+                    with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
+                        f.write("")
                 common.clear_terminal()
                 for checkbox in self.checkbox:
                     checkbox.setChecked(False)
@@ -861,7 +908,7 @@ class MyWidget(QtWidgets.QWidget):
                 
             elif index == 2:
                 # 读取指令到input_fields
-                with open("./utils/ATCommand.txt", "r", encoding="utf-8") as f:
+                with open(os.path.join(current_path, "utils/ATCommand.txt"), "r", encoding="utf-8") as f:
                     ATCommandFromFile = f.read().strip().split("\n")
                     for i in range(1, len(self.input_fields) + 1):
                         if i <= len(ATCommandFromFile):
@@ -880,7 +927,7 @@ class MyWidget(QtWidgets.QWidget):
                         [item.text() for item in self.input_fields]
                     )
                 )
-                with open('./utils/ATCommand.txt', 'w', encoding='utf-8') as f:
+                with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
                   command_list = [item.text() for item in self.input_fields if item.text()]
                   f.write("\n".join(command_list))
             elif index == 5:
@@ -939,7 +986,7 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="./logs/error.log",
+        filename=os.path.join(current_path, "logs/error.log"),
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )

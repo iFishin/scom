@@ -6,7 +6,7 @@ sequential_data = [i % 10 for i in range(length)]
 sequential_data_str = ''.join(str(num) for num in sequential_data)
 
 # 将数据写入txt文件
-file_path = './tmpS/byte.txt'
+file_path = '../tmps/byte.txt'
 with open(file_path, 'w') as file:
     file.write(sequential_data_str)
 

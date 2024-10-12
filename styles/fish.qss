@@ -170,19 +170,24 @@ QMessageBox QLabel#imageLabel {
 }
 
 QPushButton {
-    background-color: #0078d7;
+    background-color: #00a86b;
     color: white;
-    border: none;
+    border: 2px solid white;
     padding: 8px 16px;
     border-radius: 8px;
 }
 
 QPushButton:hover {
-    background-color: #005a9e;
+    background-color: #008c5a;
 }
 
 QPushButton:pressed {
-    background-color: #004578;
+    background-color: #006f4a;
+}
+
+QPushButton:disabled {
+    background-color: #ccc;
+    color: #999;
 }
 
 QLabel {
@@ -347,28 +352,6 @@ QProgressBar::chunk {
     background-color: #0078d7;
     width: 20px;
 }
-
-QWidget {
-    background-color: #f0f0f0;
-}
-
-QPushButton {
-    background-color: #00a86b;
-}
-
-QPushButton:hover {
-    background-color: #008c5a;
-}
-
-QPushButton:pressed {
-    background-color: #006f4a;
-}
-
-QPushButton:disabled {
-    background-color: #ccc;
-    color: #999;
-}
-
 
 QLabel {
     color: #666;
