@@ -282,7 +282,7 @@ def reset(UART_Serial):
         print("Serial port is not initialized.")
         return
     else:
-        port_write("AT+QRST\r\n", UART_Serial)
+        port_write("AT+RESTORE\r\n", UART_Serial)
         port_read(UART_Serial)
 
 def print_write(text, log_file=None):

@@ -1,5 +1,5 @@
 # 生成指定长度的顺序数字
-length = 64
+length = 4096
 sequential_data = [i % 10 for i in range(length)]
 
 # 将数据转换为字符串

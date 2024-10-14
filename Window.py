@@ -15,6 +15,7 @@ from scom.QSSLoader import QSSLoader
 from scom.DataReceiver import DataReceiver
 from scom.PortUpdater import PortUpdater
 from scom.FileSender import FileSender
+from scom.SearchReplaceDialog import SearchReplaceDialog
 
 # Set the global variable for the current path
 current_path = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +26,7 @@ class MyWidget(QtWidgets.QWidget):
         super().__init__()
         self.init_UI()
 
+        self.thread_pool = QtCore.QThreadPool()
         # Init the thread
         self.port_updater = PortUpdater()
         self.port_updater.portUpdated.connect(self.port_update)
@@ -45,6 +47,11 @@ class MyWidget(QtWidgets.QWidget):
         self.data_receiver.pause_thread()
         
 
+
+    """
+    Summary:
+         Initialize the UI of the widget.
+    """
     def init_UI(self):
         # Create menu bar
         self.menu_bar = QtWidgets.QMenuBar()
@@ -215,6 +222,8 @@ class MyWidget(QtWidgets.QWidget):
 
         self.received_data_textarea = QtWidgets.QTextEdit()
         self.received_data_textarea.setDocument(QtGui.QTextDocument(None))
+        shortcut = QtGui.QShortcut(QtCore.Qt.ControlModifier | QtCore.Qt.Key_F, self)
+        shortcut.activated.connect(self.show_search_dialog)
         # self.received_data_textarea.setReadOnly(True)
 
         # Create a group box for the settings section
@@ -317,9 +326,9 @@ class MyWidget(QtWidgets.QWidget):
             "QPushButton:hover { background-color: #0d6e3f; }"
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
-        self.prompt_button.clicked.connect(lambda: self.prompt_button_click(QtCore.Qt.LeftButton))
+        self.prompt_button.installEventFilter(self)
         self.input_prompt = QtWidgets.QLineEdit()
-        self.input_prompt.setPlaceholderText("COMMAND: click ME to start")
+        self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
         self.input_prompt.setStyleSheet(
             "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             )
@@ -331,12 +340,16 @@ class MyWidget(QtWidgets.QWidget):
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
         
+        self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
+        
         self.prompt_batch_stop_button = QtWidgets.QPushButton("Stop")
         self.prompt_batch_stop_button.setStyleSheet(
             "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             "QPushButton:hover { background-color: #a71d2a; }"
             "QPushButton:pressed { background-color: #7b1520; }"
         )
+        
+        self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
         
         self.input_prompt_batch_frequency = QtWidgets.QLineEdit()
         self.input_prompt_batch_frequency.setPlaceholderText("Total Times")
@@ -544,7 +557,11 @@ class MyWidget(QtWidgets.QWidget):
             else:
                 break
 
-    # FUNCTIONS
+    """
+    Summary:
+        The function to handle the event when the button is clicked. 
+    
+    """
     def apply_style(self):
         text = self.received_data_textarea.toPlainText()
         doc = self.received_data_textarea.document()
@@ -609,12 +626,22 @@ class MyWidget(QtWidgets.QWidget):
             else:
                 self.write_ATCommand_txt(self.text_input_layout_2.toPlainText())
         elif index == 2 or self.stacked_widget.currentIndex() == 2:
-            self.text_input_layout_3.setPlainText(self.read_temp_txt())
+            self.text_input_layout_3.setPlainText(self.received_data_textarea.toPlainText())
         elif index == 3 or self.stacked_widget.currentIndex() == 3:
             self.text_input_layout_4.setPlainText(
-                common.remove_TimeStamp(self.read_temp_txt())
+                common.remove_TimeStamp(self.received_data_textarea.toPlainText())
             )
         self.stacked_widget.setCurrentIndex(index)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_F1:
+            self.show_page(0)
+        elif event.key() == QtCore.Qt.Key_F2:
+            self.show_page(1)
+        elif event.key() == QtCore.Qt.Key_F3:
+            self.show_page(2)
+        elif event.key() == QtCore.Qt.Key_F4:
+            self.show_page(3)
 
     def show_about_info(self):
         msg_box = QtWidgets.QMessageBox()
@@ -794,6 +821,10 @@ class MyWidget(QtWidgets.QWidget):
             pass
         self.received_data_textarea.ensureCursorVisible()
         self.received_data_textarea.moveCursor(QtGui.QTextCursor.End)
+        
+    def show_search_dialog(self):
+        dialog = SearchReplaceDialog(self.received_data_textarea, self)
+        dialog.exec()
 
     def port_on(self):
             self.port_updater.pause_thread()
@@ -834,7 +865,6 @@ class MyWidget(QtWidgets.QWidget):
                     )
                     self.port_button.clicked.disconnect(self.port_on)
                     self.port_button.clicked.connect(self.port_off)
-                    print("⚙ Port Opened")
                     # 禁用相关控件
                     self.serial_port_combo.setEnabled(False)
                     self.baud_rate_combo.setEnabled(False)
@@ -870,8 +900,7 @@ class MyWidget(QtWidgets.QWidget):
                 )
                 self.port_button.clicked.disconnect(self.port_off)
                 self.port_button.clicked.connect(self.port_on)
-                print("⚙ Port Closed")
-                # 启用相关控件
+                
                 self.serial_port_combo.setEnabled(True)
                 self.baud_rate_combo.setEnabled(True)
                 self.send_button.setEnabled(False)
@@ -942,6 +971,90 @@ class MyWidget(QtWidgets.QWidget):
 
         return hotkey_clicked
     
+    """
+    Summary:
+    Button group settings click handler
+    
+    """
+    global count
+    global total_times
+    global is_stop_batch
+    count = 0
+    total_times = 0
+    is_stop_batch = False
+    
+    def eventFilter(self, watched, event):
+        if watched == self.prompt_button:
+            if event.type() == QtCore.QEvent.MouseButtonDblClick:
+                if event.button() == QtCore.Qt.RightButton:
+                    self.handle_right_double_click()
+            elif event.type() == QtCore.QEvent.MouseButtonPress:
+                if event.button() == QtCore.Qt.LeftButton:
+                    self.handle_left_click()
+                elif event.button() == QtCore.Qt.RightButton:
+                    if event.modifiers() & QtCore.Qt.ControlModifier:
+                        self.handle_right_control_click()
+                    elif event.modifiers() & QtCore.Qt.ShiftModifier:
+                        self.handle_right_shift_click()
+                    else:
+                        # Single right click
+                        self.handle_right_click()
+                elif event.button() == QtCore.Qt.MiddleButton:
+                    self.handle_middle_click()
+        return super().eventFilter(watched, event)
+
+    def handle_left_click(self):
+        # Left button click to SEND
+        global count
+        common.port_write(self.input_prompt.text(), self.main_Serial, self.send_with_enter_checkboxs[count].isChecked())
+        
+        pass
+
+    def handle_right_click(self):
+        # Right button click to SKIP
+        global count
+        if count < len(self.input_fields) - 1:
+            self.input_prompt.setText(self.input_fields[count].text())
+            self.input_prompt.setCursorPosition(0)
+            count += 1
+            
+    def handle_right_double_click(self):
+        pass
+
+    def handle_right_control_click(self):
+        print("Right button click with Control modifier")
+
+    def handle_right_shift_click(self):
+        print("Right button click with Shift modifier")
+            
+    def handle_middle_click(self):
+        global count
+        if count >= 0:
+            self.input_prompt.setText(self.input_fields[count].text())
+            count -= 1
+            
+    def handle_prompt_batch_start(self):
+        # 从头开始执行input_fields中的指令
+        while True:
+            global total_times
+            if not is_stop_batch:
+                for i in range(len(self.input_fields)):
+                    if is_stop_batch:
+                        break
+                    else:
+                        common.port_write(self.input_fields[i].text(), self.main_Serial, self.send_with_enter_checkboxs[i].isChecked())
+                        time.sleep(int(self.input_prompt_batch_frequency.text()))
+                self.input_prompt_batch_frequency.setText(total_times-1)
+                total_times -= 1
+            else:
+                break
+    
+    def handle_prompt_batch_stop(self):
+        # 停止执行input_fields中的指令
+        global is_stop_batch
+        is_stop_batch = True
+    
+    
     def handle_total_checkbox_click(self, state):
         for checkbox in self.checkbox:
             checkbox.setChecked(state == 2)
@@ -954,19 +1067,20 @@ class MyWidget(QtWidgets.QWidget):
 
         return button_clicked
 
+    """
+    Summary:
+    Main window close event handler
+    
+    """
     def closeEvent(self, event):
-        # Close the serial port if it's open
-        if self.main_Serial:
-            try:
-                common.port_off(self.main_Serial)
-            except Exception as e:
-                print(f"Error closing serial port during closeEvent: {e}")
-                sys.exit()
-        else:
-            pass
+        # Signal all running threads to stop
+        active_threads = self.thread_pool.activeThreadCount()
+        while active_threads > 0:
+            self.thread_pool.waitForDone(100)
+            active_threads = self.thread_pool.activeThreadCount()
         event.accept()
 
-# 创建一个自定义的日志记录器
+# Create a logger for the application
 logger = logging.getLogger(__name__)
 
 def main():

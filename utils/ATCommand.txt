@@ -1,39 +1,5 @@
-1. 初始化BLE为外围模式
-AT+QBLEINIT=2
-
-2. 设置服务UUID和特征UUID，并完成服务创建
-AT+QBLEGATTSSRV=fff1
-AT+QBLEGATTSCHAR=fff2
-AT+QBLEGATTSCHAR=fff31111222233334444555566667777
-AT+QBLENAME=HCM111Z-iFishin
-AT+QBLEGATTSSRVDONE
-
-3. 开启广播
-AT+QBLEADVSTART
-
-4. 分别设置连接和断连时上报的状态字节流，分别为helloIN、helloOT
-AT+QBLEBSCFG=1,0,68656c6c6f4f540d0a
-AT+QBLEBSCFG=1,1,68656c6c6f494e0d0a
-
-5. 指定4字节特征UUID进入透传
-AT+QBLETRANMODE=FFF2,1
-
-6. 手机使用nrf连接模块，之后手机主动断开连接，查看状态字节流是否设置成功
-
-7. 关闭send with enter，模块下发+++，退出透传
-+++
-
-8. 再次修改连接和断连时上报的状态字节流，分别为yelloIN、xelloOT
-AT+QBLEBSCFG=1,0,78656c6c6f4f540d0a
-AT+QBLEBSCFG=1,1,79656c6c6f494e0d0a
-
-9. 指定4字节特征UUID进入透传
-AT+QBLETRANMODE=FFF2,1
-
-10. 手机使用nrf连接模块，之后手机主动断开连接，查看状态字节流是否设置成功
-
-11. 关闭send with enter，模块下发+++，退出透传
-+++
-
-12. 关闭广播
-AT+QBLEADVSTOP
+AT+QVERSION
+AT+QWSACN
+AT+QVERSION
+AT+QVERSION
+AT+QVERSION
