@@ -1,20 +1,24 @@
-import io
+import os
 import sys
+import io
+import re
+import time
+import json
+import serial
 import random
+import logging
+import configparser
 import threading
 import datetime
-import time
-import os
-import re
-import logging
 from PySide6 import QtCore, QtWidgets, QtGui
-import serial
+
 from serial.tools import list_ports
 import utils.common as common
 from scom.QSSLoader import QSSLoader
 from scom.DataReceiver import DataReceiver
 from scom.PortUpdater import PortUpdater
 from scom.FileSender import FileSender
+from scom.CommandExecutor import CommandExecutor
 from scom.SearchReplaceDialog import SearchReplaceDialog
 
 # Set the global variable for the current path
@@ -25,6 +29,16 @@ class MyWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.init_UI()
+        
+        # Init constants for the widget
+        self.prompt_index = 0
+        self.total_times = 0
+        self.is_stop_batch = False
+        
+        
+        # Read and apply the Configurations of SCOM from the config.ini
+        self.config = self.read_config()
+        self.apply_config(self.config)
 
         self.thread_pool = QtCore.QThreadPool()
         # Init the thread
@@ -46,6 +60,7 @@ class MyWidget(QtWidgets.QWidget):
         self.data_receive_thread.start()
         self.data_receiver.pause_thread()
         
+        self.command_executor = None
 
 
     """
@@ -171,6 +186,7 @@ class MyWidget(QtWidgets.QWidget):
         self.port_button.clicked.connect(self.port_on)
 
         self.toggle_button = QtWidgets.QPushButton()
+        self.toggle_button.setToolTip("Show More Options")
         self.toggle_button.setIcon(QtGui.QIcon("./res/expander-down.png"))
         self.toggle_button_is_expanded = False
         self.toggle_button.clicked.connect(self.show_more_options)
@@ -190,6 +206,8 @@ class MyWidget(QtWidgets.QWidget):
         
         self.file_label = QtWidgets.QLabel("File:")
         self.file_input = QtWidgets.QLineEdit()
+        self.file_input.setToolTip("Double click to Clear")
+        self.file_input.mouseDoubleClickEvent = lambda event: self.file_input.clear()
         self.file_input.setPlaceholderText("Path")
         self.file_input.setReadOnly(True)
         self.file_button_select = QtWidgets.QPushButton("Select")
@@ -321,17 +339,30 @@ class MyWidget(QtWidgets.QWidget):
         settings_button_layout.setColumnStretch(1, 3)
         
         self.prompt_button = QtWidgets.QPushButton("Prompt")
+        self.prompt_button.setToolTip("Left button clicked to Execute; Right button clicked to Switch Next")
         self.prompt_button.setStyleSheet(
             "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
         self.prompt_button.installEventFilter(self)
+        
         self.input_prompt = QtWidgets.QLineEdit()
         self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
         self.input_prompt.setStyleSheet(
             "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             )
+        
+        self.input_prompt_index = QtWidgets.QLineEdit()
+        self.input_prompt_index.setPlaceholderText("Idx")
+        self.input_prompt_index.setToolTip("Double click to edit")
+        self.input_prompt_index.setStyleSheet(
+            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            )
+        self.input_prompt_index.setReadOnly(True)
+        self.input_prompt_index.setMaximumWidth(self.width() * 0.1)
+        self.input_prompt_index.mouseDoubleClickEvent = lambda event: self.input_prompt_index.setReadOnly(False)
+        self.input_prompt_index.editingFinished.connect(self.set_prompt_index)
         
         self.prompt_batch_start_button = QtWidgets.QPushButton("Start")
         self.prompt_batch_start_button.setStyleSheet(
@@ -359,24 +390,29 @@ class MyWidget(QtWidgets.QWidget):
 
         settings_button_layout.addWidget(self.prompt_button, 0, 0, 1, 1)
         settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
+        settings_button_layout.addWidget(self.input_prompt_index, 0, 5, 1, 1)
         settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
-        settings_button_layout.addWidget(self.input_prompt_batch_frequency, 1, 1, 1, 2,)
-        settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 3, 1, 2)
+        settings_button_layout.addWidget(self.input_prompt_batch_frequency, 1, 1, 1, 3,)
+        settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 4, 1, 2)
         button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
 
         # Set the input field to expand horizontally
         self.input_prompt.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
 
-        
-
         # Add column titles
         self.total_checkbox = QtWidgets.QCheckBox()
         button_layout.addWidget(self.total_checkbox, 1, 0)
         self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
-        button_layout.addWidget(QtWidgets.QLabel("Function"), 1, 1, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Input Field"), 1, 2, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Enter"), 1, 3, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(QtWidgets.QLabel("Sec"), 1, 4, alignment=QtCore.Qt.AlignRight)
+        label_function = QtWidgets.QLabel("Function")
+        label_input_field = QtWidgets.QLabel("Input Field")
+        label_enter = QtWidgets.QLabel("Enter")
+        label_sec = QtWidgets.QLabel("Sec")
+        label_sec.setToolTip("Double click to Clear")
+        label_sec.mouseDoubleClickEvent = self.set_interval
+        button_layout.addWidget(label_function, 1, 1, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(label_input_field, 1, 2, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(label_enter, 1, 3, alignment=QtCore.Qt.AlignCenter)
+        button_layout.addWidget(label_sec, 1, 4, alignment=QtCore.Qt.AlignRight)
 
         # Add buttons and input fields to the button group
         self.checkbox = []
@@ -394,10 +430,10 @@ class MyWidget(QtWidgets.QWidget):
             checkbox_send_with_enter = QtWidgets.QCheckBox()
             checkbox_send_with_enter.setChecked(True)
             input_interval = QtWidgets.QLineEdit()
-            input_interval.setFixedWidth(self.width() * 0.06)
+            input_interval.setMaximumWidth(self.width() * 0.06)
             input_interval.setValidator(QtGui.QIntValidator(0, 1000))
             input_interval.setPlaceholderText("sec")
-            input_interval.setAlignment(QtCore.Qt.AlignRight)
+            input_interval.setAlignment(QtCore.Qt.AlignCenter)
             button_layout.addWidget(checkbox, i+1, 0)
             button_layout.addWidget(button, i+1, 1)
             button_layout.addWidget(input_field, i+1, 2)
@@ -470,6 +506,7 @@ class MyWidget(QtWidgets.QWidget):
 
         # Create a button section for switching other layouts
         self.button1 = QtWidgets.QPushButton("Window 1")
+        self.button1.setToolTip("Shortcut: F1")
         self.button1.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
@@ -478,6 +515,7 @@ class MyWidget(QtWidgets.QWidget):
         self.button1.clicked.connect(lambda: self.show_page(0))
 
         self.button2 = QtWidgets.QPushButton("Window 2")
+        self.button2.setToolTip("Shortcut: F2")
         self.button2.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
@@ -486,6 +524,7 @@ class MyWidget(QtWidgets.QWidget):
         self.button2.clicked.connect(lambda: self.show_page(1))
 
         self.button3 = QtWidgets.QPushButton("Window 3")
+        self.button3.setToolTip("Shortcut: F3")
         self.button3.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
@@ -494,6 +533,7 @@ class MyWidget(QtWidgets.QWidget):
         self.button3.clicked.connect(lambda: self.show_page(2))
 
         self.button4 = QtWidgets.QPushButton("Window 4")
+        self.button4.setToolTip("Shortcut: F4")
         self.button4.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
@@ -535,6 +575,7 @@ class MyWidget(QtWidgets.QWidget):
             "Internet",
             "RST",
             "ECHO",
+            ""
         ]
         for i, button in enumerate(self.hotkeys_buttons):
             if i == len(hotkeys_names):
@@ -545,9 +586,11 @@ class MyWidget(QtWidgets.QWidget):
             "AT+QECHO=1",
             "AT+QVERSION",
             "AT+QSUB",
+            "AT+QBLEADDR?",
             "AT+QBLEINIT=1",
             "AT+QBLESCAN=1",
             "AT+QBLESCAN=0",
+            "AT+QWSCAN",
             "AT+RESTORE",
             "AT+QWSCAN",
         ]
@@ -562,6 +605,60 @@ class MyWidget(QtWidgets.QWidget):
         The function to handle the event when the button is clicked. 
     
     """
+    def read_config(self):
+        config = configparser.ConfigParser()
+        config.read(os.path.join(current_path, "config.ini"))
+        return config
+    
+    def apply_config(self, config: configparser.ConfigParser):
+        # Set
+        self.baud_rate_combo.setCurrentText(config.get("Set", "BaudRate"))
+        self.stopbits_combo.setCurrentText(config.get("Set", "StopBits"))
+        self.parity_combo.setCurrentText(config.get("Set", "Parity"))
+        self.bytesize_combo.setCurrentText(config.get("Set", "ByteSize"))
+        self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
+        self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
+        self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
+        self.send_with_enter_checkbox.setChecked(config.getboolean("Set", "SendWithEnter"))
+        self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
+        self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamps"))
+        self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
+        self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
+        self.file_input.setText(config.get("Set", "PathFileSend"))
+        
+        # Hotkeys
+        for i in range(1, 9):
+            hotkey_name = config.get("Hotkeys", f"Hotkey_{i}")
+            self.hotkeys_buttons[i - 1].setText(hotkey_name)
+            hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}")
+            self.hotkeys_buttons[i - 1].clicked.connect(self.handle_hotkey_click(i, hotkey_value))
+    
+    def save_config(self, config: configparser.ConfigParser):
+        # Set
+        config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
+        config.set("Set", "StopBits", self.stopbits_combo.currentText())
+        config.set("Set", "Parity", self.parity_combo.currentText())
+        config.set("Set", "ByteSize", self.bytesize_combo.currentText())
+        config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
+        config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
+        config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
+        config.set("Set", "SendWithEnter", str(self.send_with_enter_checkbox.isChecked()))
+        config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
+        config.set("Set", "TimeStamps", str(self.timeStamp_checkbox.isChecked()))
+        config.set("Set", "PathDataReceived", self.input_path_data_received.text())
+        config.set("Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked()))
+        config.set("Set", "PathFileSend", self.file_input.text())
+
+        # Hotkeys
+        # for i in range(1, 9):
+        #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
+        #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
+
+        with open(os.path.join(current_path, "config.ini"), "w", encoding="utf-8") as configfile:
+            config.write(configfile)
+        
+        
+            
     def apply_style(self):
         text = self.received_data_textarea.toPlainText()
         doc = self.received_data_textarea.document()
@@ -599,32 +696,12 @@ class MyWidget(QtWidgets.QWidget):
             
             cursor.setCharFormat(char_format)
     
-    def read_ATCommand_txt(self):
-        with open(os.path.join(current_path, "utils/ATCommand.txt"), "r", encoding="utf-8") as f:
-            return f.read()
-
-    def read_temp_txt(self):
-        with open(os.path.join(current_path, "tmps/temp.log"), "r", encoding="utf-8") as f:
-            return f.read()
-
-    def write_ATCommand_txt(self, content):
-        pre_content = self.read_ATCommand_txt()
-        if pre_content!= content:
-            with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
-                f.write(content)
-
-    def write_temp_txt(self, content):
-        pre_content = self.read_temp_txt()
-        if pre_content!= content:
-            with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
-                f.write(content)
-
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
             if self.text_input_layout_2.toPlainText() == "":
-                self.text_input_layout_2.setPlainText(self.read_ATCommand_txt())
+                self.text_input_layout_2.setPlainText(common.join_text(common.read_ATCommand(os.path.join(current_path, "utils/ATCommand.json"))))
             else:
-                self.write_ATCommand_txt(self.text_input_layout_2.toPlainText())
+                common.write_ATCommand(os.path.join(current_path, "utils/ATCommand.json"), common.split_text(self.text_input_layout_2.toPlainText()))
         elif index == 2 or self.stacked_widget.currentIndex() == 2:
             self.text_input_layout_3.setPlainText(self.received_data_textarea.toPlainText())
         elif index == 3 or self.stacked_widget.currentIndex() == 3:
@@ -915,74 +992,69 @@ class MyWidget(QtWidgets.QWidget):
         self.port_updater.resume_thread()
 
 
-    # Hotkey and Button Click Handlers
-    def handle_hotkey_click(self, index):
-        def hotkey_clicked():
-            if index == 1:
-                # 清空日志
-                self.received_data_textarea.clear()
-                if self.input_path_data_received.text():
-                    with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
-                        f.write("")
+    """
+    Summary:
+        Hotkeys click handler       
+    """
+    def clear_log(self):
+        self.received_data_textarea.clear()
+        if self.input_path_data_received.text():
+            with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
+                f.write("")
+        else:
+            with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
+                f.write("")
+        common.clear_terminal()
+    
+    def read_ATCommand(self):
+        # 读取 ATCommand.json 文件
+        with open(os.path.join(current_path, "utils/ATCommand.json"), "r", encoding="utf-8") as f:
+            ATCommandFromFile = json.load(f).get("commands")
+            for i in range(1, len(self.input_fields) + 1):
+                if i <= len(ATCommandFromFile):
+                    self.checkbox[i - 1].setChecked(ATCommandFromFile[i - 1].get("selected"))
+                    self.input_fields[i - 1].setText(ATCommandFromFile[i - 1].get("command"))
+                    self.input_fields[i - 1].setCursorPosition(0)
+                    self.send_with_enter_checkboxs[i - 1].setChecked(ATCommandFromFile[i - 1].get("withEnter"))
+                    self.interVal[i - 1].setText(str(ATCommandFromFile[i - 1].get("interval")))
                 else:
-                    with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
-                        f.write("")
-                common.clear_terminal()
-                for checkbox in self.checkbox:
-                    checkbox.setChecked(False)
-                self.total_checkbox.setChecked(False)
-                for checkbox in self.send_with_enter_checkboxs:
-                    checkbox.setChecked(True)
-                
-                
-            elif index == 2:
-                # 读取指令到input_fields
-                with open(os.path.join(current_path, "utils/ATCommand.txt"), "r", encoding="utf-8") as f:
-                    ATCommandFromFile = f.read().strip().split("\n")
-                    for i in range(1, len(self.input_fields) + 1):
-                        if i <= len(ATCommandFromFile):
-                            self.input_fields[i - 1].setText(ATCommandFromFile[i - 1])
-                            self.input_fields[i - 1].setCursorPosition(0)
-                        else:
-                            self.input_fields[i - 1].setText("")
-            elif index == 3:
-                # 更新ATCommand.txt
-                result = common.update_AT_command()
-                self.text_input_layout_2.setPlainText(result)
-            elif index == 4:
-                # 把输入框的内容写入到ATCommand.txt
-                self.text_input_layout_2.setPlainText(
-                    "\n".join(
-                        [item.text() for item in self.input_fields]
-                    )
-                )
-                with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
-                  command_list = [item.text() for item in self.input_fields if item.text()]
-                  f.write("\n".join(command_list))
-            elif index == 5:
-                common.port_write(
-                    'AT+QSTAAPINFO="NewMar","12345678"', self.main_Serial
-                )
-            elif index == 6:
-                common.reset(self.main_Serial)
-            elif index == 7:
-                common.echo(self.main_Serial)
-
-
+                    self.input_fields[i - 1].setText("")
+        
+    def update_ATCommand(self):
+        result = common.update_AT_command(os.path.join(current_path, "utils/ATCommand.json"))
+        self.text_input_layout_2.setPlainText(result)
+        
+    def restore_ATCommand(self):
+        self.text_input_layout_2.setPlainText(
+            "\n".join(
+                [item.text() for item in self.input_fields]
+            )
+        )
+        with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
+            command_list = [item.text() for item in self.input_fields if item.text()]
+            f.write("\n".join(command_list))
+        
+    
+    def handle_hotkey_click(self, index: int, value: str=''):
+        def hotkey_clicked():
+            if value:
+                common.port_write(value, self.main_Serial)
+            else:
+                if index == 1:
+                    self.clear_log()
+                elif index == 2:
+                    self.read_ATCommand()
+                elif index == 3:
+                    self.update_ATCommand()
+                elif index == 4:
+                    self.restore_ATCommand()
         return hotkey_clicked
     
     """
     Summary:
-    Button group settings click handler
+        Button group settings click handler
     
     """
-    global count
-    global total_times
-    global is_stop_batch
-    count = 0
-    total_times = 0
-    is_stop_batch = False
-    
     def eventFilter(self, watched, event):
         if watched == self.prompt_button:
             if event.type() == QtCore.QEvent.MouseButtonDblClick:
@@ -1005,65 +1077,123 @@ class MyWidget(QtWidgets.QWidget):
 
     def handle_left_click(self):
         # Left button click to SEND
-        global count
-        common.port_write(self.input_prompt.text(), self.main_Serial, self.send_with_enter_checkboxs[count].isChecked())
-        
-        pass
+        common.port_write(self.input_prompt.text(), self.main_Serial, self.send_with_enter_checkboxs[self.prompt_index].isChecked())
+        self.checkbox[self.prompt_index-1].setChecked(True)
+        if self.prompt_index < len(self.input_fields) - 1:
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+            self.input_prompt.setCursorPosition(0)
+            self.prompt_index += 1
+        # Set Input Prompt Index read-only
+        self.input_prompt_index.setReadOnly(True)
 
     def handle_right_click(self):
         # Right button click to SKIP
-        global count
-        if count < len(self.input_fields) - 1:
-            self.input_prompt.setText(self.input_fields[count].text())
+        if self.prompt_index < len(self.input_fields) - 1:
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.input_prompt.setCursorPosition(0)
-            count += 1
+            self.prompt_index += 1
             
     def handle_right_double_click(self):
         pass
 
     def handle_right_control_click(self):
-        print("Right button click with Control modifier")
+        if self.prompt_index >= 0:
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+            self.prompt_index -= 1
 
     def handle_right_shift_click(self):
         print("Right button click with Shift modifier")
             
     def handle_middle_click(self):
-        global count
-        if count >= 0:
-            self.input_prompt.setText(self.input_fields[count].text())
-            count -= 1
+        if self.prompt_index >= 0:
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+            self.prompt_index -= 1
             
-    def handle_prompt_batch_start(self):
-        # 从头开始执行input_fields中的指令
+    def handle_prompt_batch(self):    
         while True:
-            global total_times
             if not is_stop_batch:
-                for i in range(len(self.input_fields)):
+                while self.prompt_index < len(self.input_fields):
                     if is_stop_batch:
                         break
                     else:
-                        common.port_write(self.input_fields[i].text(), self.main_Serial, self.send_with_enter_checkboxs[i].isChecked())
+                        common.port_write(self.input_fields[self.prompt_index].text(), self.main_Serial, self.send_with_enter_checkboxs[self.prompt_index].isChecked())
                         time.sleep(int(self.input_prompt_batch_frequency.text()))
-                self.input_prompt_batch_frequency.setText(total_times-1)
+                        self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+                        self.prompt_index += 1                        
                 total_times -= 1
+                self.input_prompt_batch_frequency.setText(total_times)
             else:
-                break
+                break        
+    
+    def set_prompt_index(self):
+        self.prompt_index = int(self.input_prompt_index.text())
+        self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+        self.input_prompt.setCursorPosition(0)
+        self.input_prompt_index.setReadOnly(True)
+    
+    def set_interval(self):
+        for i in range(len(self.interVal)):
+            self.interVal[i].setText("")
+        
+    # 过滤已选择的命令    
+    def filter_selected_command(self):
+        self.selected_commands = []
+        for i in range(len(self.input_fields)):
+            if self.checkbox[i].isChecked():
+                command_info = {
+                    "command": self.input_fields[i].text(),
+                    "interval": self.interVal[i].text(),
+                    "withEnter": self.send_with_enter_checkboxs[i].isChecked()
+                }
+                self.selected_commands.append(command_info)
+        return self.selected_commands
+            
+    def handle_prompt_batch_start(self):
+        if not self.command_executor:
+            self.command_executor = CommandExecutor(self.filter_selected_command(), self.main_Serial, int(self.input_prompt_batch_frequency.text()))
+            # self.command_executor.progressUpdated.connect(self.progress_bar.setValue)
+            self.command_executor.start()
+            self.prompt_batch_start_button.setText("Pause")
+            self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_pause)
+        
+    def handle_prompt_batch_pause(self):
+        if self.command_executor:
+            self.command_executor.pause_thread()
+            self.prompt_batch_start_button.setText("Resume")
+            self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_resume)
+            
+    def handle_prompt_batch_resume(self):
+        if self.command_executor:
+            self.command_executor.resume_thread()
+            self.prompt_batch_start_button.setText("Pause")
+            self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_pause)
     
     def handle_prompt_batch_stop(self):
-        # 停止执行input_fields中的指令
-        global is_stop_batch
-        is_stop_batch = True
-    
+        if self.command_executor:
+            self.command_executor.pause_thread()
+            self.command_executor = None
+            self.prompt_batch_start_button.setText("Start")
+            self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
     
     def handle_total_checkbox_click(self, state):
         for checkbox in self.checkbox:
             checkbox.setChecked(state == 2)
 
     # Button Click Handler
+    global last_one_click_time
+    
     def handle_button_click(self, index, input_field, checkbox, send_with_enter_checkbox, interVal):
+        global last_one_click_time
+        last_one_click_time = None
         def button_clicked():
+            global last_one_click_time
+            if not last_one_click_time:
+                last_one_click_time = time.time()
             common.port_write(input_field.text(), self.main_Serial, send_with_enter_checkbox.isChecked())
             checkbox.setChecked(True)
+            now_click_time = time.time()
+            self.interVal[index - 2].setText(str(min(99, int(now_click_time - last_one_click_time))))
+            last_one_click_time = now_click_time
 
         return button_clicked
 
@@ -1073,6 +1203,9 @@ class MyWidget(QtWidgets.QWidget):
     
     """
     def closeEvent(self, event):
+        # Save configuration settings
+        self.save_config(self.read_config())
+        
         # Signal all running threads to stop
         active_threads = self.thread_pool.activeThreadCount()
         while active_threads > 0:

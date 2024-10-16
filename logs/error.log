@@ -1,4 +1,0 @@
-2024-10-14 15:30:48,028 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'setShortcut'
-2024-10-14 15:32:25,829 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'setShortcut'
-2024-10-14 15:33:08,340 - ERROR - An unexpected error occurred: module 'PySide6.QtWidgets' has no attribute 'QShortcut'
-2024-10-14 15:35:29,091 - ERROR - An unexpected error occurred: module 'PySide6.QtWidgets' has no attribute 'QShortcut'
