@@ -2,97 +2,19 @@
     "commands": [
         {
             "selected": false,
-            "command": "1、开启CLIENT,扫描设备并连接",
+            "command": "AT+QBLECONN=0,\"0486808EB680\"",
             "withEnter": true,
             "interval": null
         },
         {
             "selected": false,
-            "command": "AT+QBLEINIT=1",
+            "command": "AT+QBLECONN=0,\"0486808EB68C1\"",
             "withEnter": true,
             "interval": null
         },
         {
             "selected": false,
-            "command": "AT+QBLESCAN=1",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESCAN=0",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLECONN=1,\"4061CA21A72E\"",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "2、打开通知，16bit UUID server收发数据（手机端设置16bit UUID）",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTCNTFCFG=0,\"fff4\",1",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTCWRCMD=0,\"fff4\",\"1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567\"",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "3、打开通知，128bit UUID server收发数据（手机端设置128bit UUID）",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTCNTFCFG=0,\"FF01FFFF001101023344556677889900\",1",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTCWRCMD=0,\"FF01FFFF001101023344556677889900\",\"1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567\"",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "4、断开连接",
-            "withEnter": true,
-            "interval": null
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEDISCONN=0",
+            "command": "AT+QBLECONN=0,\"0486808EB681\"",
             "withEnter": true,
             "interval": null
         }

@@ -20,6 +20,7 @@ from scom.PortUpdater import PortUpdater
 from scom.FileSender import FileSender
 from scom.CommandExecutor import CommandExecutor
 from scom.SearchReplaceDialog import SearchReplaceDialog
+from scom.LayoutConifgDialog import LayoutConfigDialog
 
 # Set the global variable for the current path
 current_path = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,10 @@ class MyWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.init_UI()
+        
+        # After init the UI, set the layout of the widget
+        self.layout_config_dialog = LayoutConfigDialog(self)
+        self.layout_config_dialog.apply()
         
         # Init constants for the widget
         self.prompt_index = 0
@@ -70,6 +75,15 @@ class MyWidget(QtWidgets.QWidget):
     def init_UI(self):
         # Create menu bar
         self.menu_bar = QtWidgets.QMenuBar()
+
+        # Create Settings menu
+        self.settings_menu = self.menu_bar.addMenu("Settings")
+        
+        self.save_settings_action = self.settings_menu.addAction("Save Config")
+        self.save_settings_action.triggered.connect(self.save_config)
+        self.layout_config_action = self.settings_menu.addAction("Layout Config")
+        self.layout_config_action.triggered.connect(self.layout_config)
+
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
@@ -148,25 +162,21 @@ class MyWidget(QtWidgets.QWidget):
         self.dtr_label = QtWidgets.QLabel("DTR:")
         self.dtr_checkbox = QtWidgets.QCheckBox()
         self.dtr_checkbox.stateChanged.connect(self.dtr_state_changed)
-        self.dtr_checkbox.setChecked(False)
         
         self.rts_label = QtWidgets.QLabel("RTS:")
         self.rts_checkbox = QtWidgets.QCheckBox()
         self.rts_checkbox.stateChanged.connect(self.rts_state_changed)
-        self.rts_checkbox.setChecked(False)
         
-        self.send_with_enter_label = QtWidgets.QLabel("SendWithEnter:")
-        self.send_with_enter_checkbox = QtWidgets.QCheckBox()
-        self.send_with_enter_checkbox.setChecked(True)
+        self.label_send_with_enter = QtWidgets.QLabel("SendWithEnter:")
+        self.checkbox_send_with_enter = QtWidgets.QCheckBox()
+        self.checkbox_send_with_enter.setChecked(True)
         
         self.symbol_label = QtWidgets.QLabel("Show\\r\\n:")
         self.symbol_checkbox = QtWidgets.QCheckBox()
-        self.symbol_checkbox.setChecked(False)
         self.symbol_checkbox.stateChanged.connect(self.symbol_state_changed)
         
         self.timeStamp_label = QtWidgets.QLabel("TimeStamp:")
         self.timeStamp_checkbox = QtWidgets.QCheckBox()
-        self.timeStamp_checkbox.setChecked(True)
         self.timeStamp_checkbox.stateChanged.connect(self.timeStamp_state_changed)
         
         self.label_data_received = QtWidgets.QLabel("Data Received:")
@@ -175,7 +185,6 @@ class MyWidget(QtWidgets.QWidget):
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = self.set_default_received_file
         self.checkbox_data_received = QtWidgets.QCheckBox()
-        self.checkbox_data_received.setChecked(False)
         self.checkbox_data_received.stateChanged.connect(self.handle_data_received_checkbox)
         self.button_data_received_select = QtWidgets.QPushButton("Select")
         self.button_data_received_select.clicked.connect(self.select_received_file)
@@ -239,6 +248,7 @@ class MyWidget(QtWidgets.QWidget):
             self.hotkeys_buttons.append(button)
 
         self.received_data_textarea = QtWidgets.QTextEdit()
+        self.received_data_textarea.setAcceptRichText(False)
         self.received_data_textarea.setDocument(QtGui.QTextDocument(None))
         shortcut = QtGui.QShortcut(QtCore.Qt.ControlModifier | QtCore.Qt.Key_F, self)
         shortcut.activated.connect(self.show_search_dialog)
@@ -265,21 +275,23 @@ class MyWidget(QtWidgets.QWidget):
         self.settings_more_layout.addWidget(self.bytesize_combo, 1, 1, 1, 1)
         self.settings_more_layout.addWidget(self.flowcontrol_label, 1, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
         self.settings_more_layout.addWidget(self.flowcontrol_checkbox, 1, 3, 1, 1)
-        self.settings_more_layout.addWidget(self.dtr_label, 0, 4, 1, 1, alignment=QtCore.Qt.AlignRight)
-        self.settings_more_layout.addWidget(self.dtr_checkbox, 0, 5, 1, 1)
-        self.settings_more_layout.addWidget(self.rts_label, 1, 4, 1, 1, alignment=QtCore.Qt.AlignRight)
-        self.settings_more_layout.addWidget(self.rts_checkbox, 1, 5, 1, 1)
-        self.settings_more_layout.addWidget(self.send_with_enter_label, 0, 6, 1, 1, alignment=QtCore.Qt.AlignRight)
-        self.settings_more_layout.addWidget(self.send_with_enter_checkbox, 0, 7, 1, 1)
-        self.settings_more_layout.addWidget(self.symbol_label, 2, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
-        self.settings_more_layout.addWidget(self.symbol_checkbox, 2, 1, 1, 1)
-        self.settings_more_layout.addWidget(self.timeStamp_label, 2, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
-        self.settings_more_layout.addWidget(self.timeStamp_checkbox, 2, 3, 1, 1)
-        self.settings_more_layout.addWidget(self.label_data_received, 3, 0, 1, 1)
-        self.settings_more_layout.addWidget(self.input_path_data_received, 3, 1, 1, 4)
-        self.settings_more_layout.addWidget(self.checkbox_data_received, 3, 5, 1, 1)
-        self.settings_more_layout.addWidget(self.button_data_received_select, 3, 6, 1, 1)
-        self.settings_more_layout.addWidget(self.button_data_received_save, 3, 7, 1, 1)
+        
+        self.settings_more_layout.addWidget(self.dtr_label, 2, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.dtr_checkbox, 2, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.rts_label, 2, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.rts_checkbox, 2, 3, 1, 1)
+        self.settings_more_layout.addWidget(self.symbol_label, 3, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.symbol_checkbox, 3, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.timeStamp_label, 3, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.timeStamp_checkbox, 3, 3, 1, 1)
+        self.settings_more_layout.addWidget(self.label_send_with_enter, 4, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.checkbox_send_with_enter, 4, 1, 1, 1)
+
+        self.settings_more_layout.addWidget(self.label_data_received, 5, 0, 1, 1)
+        self.settings_more_layout.addWidget(self.input_path_data_received, 5, 1, 1, 2)
+        self.settings_more_layout.addWidget(self.checkbox_data_received, 5, 3, 1, 1)
+        self.settings_more_layout.addWidget(self.button_data_received_select, 6, 0, 1, 2)
+        self.settings_more_layout.addWidget(self.button_data_received_save, 6, 2, 1, 2)
         
         settings_layout.addLayout(self.settings_more_layout, 2, 0, 1, 4)
         
@@ -418,7 +430,7 @@ class MyWidget(QtWidgets.QWidget):
         self.checkbox = []
         self.buttons = []
         self.input_fields = []
-        self.send_with_enter_checkboxs = []
+        self.checkbox_send_with_enters = []
         self.interVal = []
         for i in range(1, 101):
             # Create a combobox for selecting the function
@@ -442,14 +454,14 @@ class MyWidget(QtWidgets.QWidget):
             self.checkbox.append(checkbox)
             self.buttons.append(button)
             self.input_fields.append(input_field)
-            self.send_with_enter_checkboxs.append(checkbox_send_with_enter)
+            self.checkbox_send_with_enters.append(checkbox_send_with_enter)
             self.interVal.append(input_interval)
             button.setEnabled(False)
             input_field.returnPressed.connect(
-            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.send_with_enter_checkboxs[i - 1], self.interVal[i - 1])
+            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.checkbox_send_with_enters[i - 1], self.interVal[i - 1])
             )
             button.clicked.connect(
-            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.send_with_enter_checkboxs[i - 1], self.interVal[i - 1])
+            self.handle_button_click(i, self.input_fields[i - 1], self.checkbox[i - 1], self.checkbox_send_with_enters[i - 1], self.interVal[i - 1])
             )
 
         # Create a layout for the left half
@@ -619,7 +631,7 @@ class MyWidget(QtWidgets.QWidget):
         self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
         self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
         self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
-        self.send_with_enter_checkbox.setChecked(config.getboolean("Set", "SendWithEnter"))
+        self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
         self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
         self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamps"))
         self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
@@ -642,7 +654,7 @@ class MyWidget(QtWidgets.QWidget):
         config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
         config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
         config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
-        config.set("Set", "SendWithEnter", str(self.send_with_enter_checkbox.isChecked()))
+        config.set("Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked()))
         config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
         config.set("Set", "TimeStamps", str(self.timeStamp_checkbox.isChecked()))
         config.set("Set", "PathDataReceived", self.input_path_data_received.text())
@@ -720,6 +732,10 @@ class MyWidget(QtWidgets.QWidget):
         elif event.key() == QtCore.Qt.Key_F4:
             self.show_page(3)
 
+    def layout_config(self):
+        # LayoutConfigDialog
+        self.layout_config_dialog.exec()
+
     def show_about_info(self):
         msg_box = QtWidgets.QMessageBox()
         msg_box.setWindowTitle("About")
@@ -735,7 +751,7 @@ class MyWidget(QtWidgets.QWidget):
             "QLabel { color: #198754; font-size: 20px; font-weight: bold; }"
             "QMessageBox { background-color: #cccccc; }"
         )
-        msg_box.exec_()
+        msg_box.exec()
 
     def dtr_state_changed(self, state):
         if state == 2:
@@ -793,7 +809,7 @@ class MyWidget(QtWidgets.QWidget):
     def send_command(self):
         command = self.command_input.toPlainText()        
         try:
-            common.port_write(command, self.main_Serial, self.send_with_enter_checkbox.isChecked())
+            common.port_write(command, self.main_Serial, self.checkbox_send_with_enter.isChecked())
         except Exception as e:
             print(f"Error sending command: {e}")
             self.status_label.setText("Failed")
@@ -1015,7 +1031,7 @@ class MyWidget(QtWidgets.QWidget):
                     self.checkbox[i - 1].setChecked(ATCommandFromFile[i - 1].get("selected"))
                     self.input_fields[i - 1].setText(ATCommandFromFile[i - 1].get("command"))
                     self.input_fields[i - 1].setCursorPosition(0)
-                    self.send_with_enter_checkboxs[i - 1].setChecked(ATCommandFromFile[i - 1].get("withEnter"))
+                    self.checkbox_send_with_enters[i - 1].setChecked(ATCommandFromFile[i - 1].get("withEnter"))
                     self.interVal[i - 1].setText(str(ATCommandFromFile[i - 1].get("interval")))
                 else:
                     self.input_fields[i - 1].setText("")
@@ -1077,7 +1093,7 @@ class MyWidget(QtWidgets.QWidget):
 
     def handle_left_click(self):
         # Left button click to SEND
-        common.port_write(self.input_prompt.text(), self.main_Serial, self.send_with_enter_checkboxs[self.prompt_index].isChecked())
+        common.port_write(self.input_prompt.text(), self.main_Serial, self.checkbox_send_with_enters[self.prompt_index].isChecked())
         self.checkbox[self.prompt_index-1].setChecked(True)
         if self.prompt_index < len(self.input_fields) - 1:
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
@@ -1116,7 +1132,7 @@ class MyWidget(QtWidgets.QWidget):
                     if is_stop_batch:
                         break
                     else:
-                        common.port_write(self.input_fields[self.prompt_index].text(), self.main_Serial, self.send_with_enter_checkboxs[self.prompt_index].isChecked())
+                        common.port_write(self.input_fields[self.prompt_index].text(), self.main_Serial, self.checkbox_send_with_enters[self.prompt_index].isChecked())
                         time.sleep(int(self.input_prompt_batch_frequency.text()))
                         self.input_prompt.setText(self.input_fields[self.prompt_index].text())
                         self.prompt_index += 1                        
@@ -1143,7 +1159,7 @@ class MyWidget(QtWidgets.QWidget):
                 command_info = {
                     "command": self.input_fields[i].text(),
                     "interval": self.interVal[i].text(),
-                    "withEnter": self.send_with_enter_checkboxs[i].isChecked()
+                    "withEnter": self.checkbox_send_with_enters[i].isChecked()
                 }
                 self.selected_commands.append(command_info)
         return self.selected_commands
@@ -1182,14 +1198,14 @@ class MyWidget(QtWidgets.QWidget):
     # Button Click Handler
     global last_one_click_time
     
-    def handle_button_click(self, index, input_field, checkbox, send_with_enter_checkbox, interVal):
+    def handle_button_click(self, index, input_field, checkbox, checkbox_send_with_enter, interVal):
         global last_one_click_time
         last_one_click_time = None
         def button_clicked():
             global last_one_click_time
             if not last_one_click_time:
                 last_one_click_time = time.time()
-            common.port_write(input_field.text(), self.main_Serial, send_with_enter_checkbox.isChecked())
+            common.port_write(input_field.text(), self.main_Serial, checkbox_send_with_enter.isChecked())
             checkbox.setChecked(True)
             now_click_time = time.time()
             self.interVal[index - 2].setText(str(min(99, int(now_click_time - last_one_click_time))))
