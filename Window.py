@@ -1167,23 +1167,25 @@ class MyWidget(QtWidgets.QWidget):
     def handle_prompt_batch_start(self):
         if not self.command_executor:
             self.command_executor = CommandExecutor(self.filter_selected_command(), self.main_Serial, int(self.input_prompt_batch_times.text()))
-            # self.command_executor.progressUpdated.connect(self.progress_bar.setValue)
-            self.command_executor.start()
             self.command_executor.commandExecuted.connect(self.handle_command_executed) 
             self.command_executor.totalTimes.connect(self.handle_command_executed_total_times)           
+            self.command_executor.start()
             self.prompt_batch_start_button.setText("Pause")
+            self.prompt_batch_start_button.clicked.disconnect()
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_pause)
         
     def handle_prompt_batch_pause(self):
         if self.command_executor:
             self.command_executor.pause_thread()
             self.prompt_batch_start_button.setText("Resume")
+            self.prompt_batch_start_button.clicked.disconnect()
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_resume)
             
     def handle_prompt_batch_resume(self):
         if self.command_executor:
             self.command_executor.resume_thread()
             self.prompt_batch_start_button.setText("Pause")
+            self.prompt_batch_start_button.clicked.disconnect()
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_pause)
     
     def handle_prompt_batch_stop(self):
@@ -1191,6 +1193,7 @@ class MyWidget(QtWidgets.QWidget):
             self.command_executor.pause_thread()
             self.command_executor = None
             self.prompt_batch_start_button.setText("Start")
+            self.prompt_batch_start_button.clicked.disconnect()
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
             
     def handle_total_checkbox_click(self, state):

@@ -1,604 +1,604 @@
 {
     "commands": [
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QECHO=1",
-            "interval": "0",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QVERSION",
-            "interval": "0",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QSUB",
-            "interval": "0",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QBLEADDR?",
-            "interval": "0",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QBLEINIT=1",
-            "interval": "2",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QBLESCAN=1",
-            "interval": "3",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "AT+QBLESCAN=0",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "AT+QWSCAN",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "AT+RESTORE",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "AT+QWSCAN",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
             "command": "",
-            "interval": "",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
+            "selected": false,
             "command": "",
-            "interval": "0",
-            "withEnter": true
+            "withEnter": true,
+            "interval": ""
         }
     ]
 }
