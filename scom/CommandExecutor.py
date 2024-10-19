@@ -3,8 +3,9 @@ from utils import common
 
 
 class CommandExecutor(QThread):
-    # Signal to emit command and its output
-    commandExecuted = Signal(str, str)
+    # Signal to emit index, command
+    commandExecuted = Signal(int, str)
+    totalTimes = Signal(int)
 
     def __init__(self, commands, serial_port, total_times):
         super().__init__()
@@ -18,6 +19,7 @@ class CommandExecutor(QThread):
         
     def execute_commands(self):
         for command_dict in self.commands:
+            index = command_dict.get('index', 0)
             command = command_dict.get('command', '')
             interval = command_dict.get('interval', '')
             with_enter = command_dict.get('withEnter', False)
@@ -28,17 +30,16 @@ class CommandExecutor(QThread):
             if not self.is_paused:
                 try:
                     # Use common.port_write to execute the command
-                    output = common.port_write(command, self.serial_port, with_enter)
+                    common.port_write(command, self.serial_port, with_enter)
+                    self.commandExecuted.emit(index, command)
                     if interval:
                         QThread.sleep(int(interval))
                 except Exception as e:
-                    output = str(e)
                     self.error_occurred = True
-                self.commandExecuted.emit(command, output)
-                QThread.sleep(2)
-        self.commandExecuted.emit("", "All commands completed.")
+                # QThread.sleep(2)
+        self.commandExecuted.emit(-1, "All commands completed.")
         if self.error_occurred:
-            self.commandExecuted.emit("", "Some commands encountered errors.")
+            self.commandExecuted.emit(-1, "Some commands encountered errors.")
 
     def pause_thread(self):
         if not self.is_paused:
@@ -55,6 +56,8 @@ class CommandExecutor(QThread):
         # total times to run the commands
         for i in range(self.total_times):
             self.execute_commands()
+            self.totalTimes.emit(self.total_times - i - 1)
+            
 
     def clean_up(self):
         # Add any cleanup code here if needed

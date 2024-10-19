@@ -358,7 +358,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
                             "selected": False,
                             "command": command,
                             "withEnter": True,
-                            "interval": None,
+                            "interval": '',
                         }
                         for command in commands
                     ]

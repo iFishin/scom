@@ -89,7 +89,10 @@ class LayoutConfigDialog(QDialog):
         self.parent.received_data_groupbox.setVisible(state)
     
     def checkbox_button_group_box_stateChanged(self, state):
-        self.parent.button_groupbox.setVisible(state)
+        for i in range(self.parent.right_layout.count()):
+            widget = self.parent.right_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(state)
 
     def accept(self):
         config = configparser.ConfigParser()
@@ -114,3 +117,18 @@ class LayoutConfigDialog(QDialog):
         self.checkbox_data_received_box.setChecked(config.getboolean("LayoutConfig", "data_received"))
         self.checkbox_button_group_box.setChecked(config.getboolean("LayoutConfig", "button_group"))
         self.accept()
+        
+    def cancel(self):
+        config = configparser.ConfigParser()
+        config.read("config.ini")
+        self.checkbox_settings_box.setChecked(config.getboolean("LayoutConfig", "settings"))
+        self.checkbox_command_box.setChecked(config.getboolean("LayoutConfig", "command"))
+        self.checkbox_file_box.setChecked(config.getboolean("LayoutConfig", "file"))
+        self.checkbox_hotkeys_box.setChecked(config.getboolean("LayoutConfig", "hotkeys"))
+        self.checkbox_data_received_box.setChecked(config.getboolean("LayoutConfig", "data_received"))
+        self.checkbox_button_group_box.setChecked(config.getboolean("LayoutConfig", "button_group"))
+        self.accept()
+        
+    def closeEvent(self, event):
+        self.cancel()
+        event.accept()

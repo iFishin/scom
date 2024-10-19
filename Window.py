@@ -22,9 +22,6 @@ from scom.CommandExecutor import CommandExecutor
 from scom.SearchReplaceDialog import SearchReplaceDialog
 from scom.LayoutConifgDialog import LayoutConfigDialog
 
-# Set the global variable for the current path
-current_path = os.path.dirname(os.path.abspath(__file__))
-
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -32,6 +29,8 @@ class MyWidget(QtWidgets.QWidget):
         self.init_UI()
         
         # After init the UI, set the layout of the widget
+        if not os.path.exists("config.ini"):
+            self.create_default_config()
         self.layout_config_dialog = LayoutConfigDialog(self)
         self.layout_config_dialog.apply()
         
@@ -181,7 +180,7 @@ class MyWidget(QtWidgets.QWidget):
         
         self.label_data_received = QtWidgets.QLabel("Data Received:")
         self.input_path_data_received = QtWidgets.QLineEdit()
-        self.input_path_data_received.setText(os.path.join(current_path, "tmps/temp.log"))
+        self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = self.set_default_received_file
         self.checkbox_data_received = QtWidgets.QCheckBox()
@@ -394,9 +393,9 @@ class MyWidget(QtWidgets.QWidget):
         
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
         
-        self.input_prompt_batch_frequency = QtWidgets.QLineEdit()
-        self.input_prompt_batch_frequency.setPlaceholderText("Total Times")
-        self.input_prompt_batch_frequency.setStyleSheet(
+        self.input_prompt_batch_times = QtWidgets.QLineEdit()
+        self.input_prompt_batch_times.setPlaceholderText("Total Times")
+        self.input_prompt_batch_times.setStyleSheet(
                 "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             )
 
@@ -404,7 +403,7 @@ class MyWidget(QtWidgets.QWidget):
         settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
         settings_button_layout.addWidget(self.input_prompt_index, 0, 5, 1, 1)
         settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
-        settings_button_layout.addWidget(self.input_prompt_batch_frequency, 1, 1, 1, 3,)
+        settings_button_layout.addWidget(self.input_prompt_batch_times, 1, 1, 1, 3,)
         settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 4, 1, 2)
         button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
 
@@ -465,23 +464,23 @@ class MyWidget(QtWidgets.QWidget):
             )
 
         # Create a layout for the left half
-        left_layout = QtWidgets.QVBoxLayout()
-        left_layout.addWidget(self.settings_groupbox)
-        left_layout.addWidget(self.command_groupbox)
-        left_layout.addWidget(self.file_groupbox)
-        left_layout.addWidget(self.hotkeys_groupbox)
-        left_layout.addWidget(self.received_data_groupbox)
+        self.left_layout = QtWidgets.QVBoxLayout()
+        self.left_layout.addWidget(self.settings_groupbox)
+        self.left_layout.addWidget(self.command_groupbox)
+        self.left_layout.addWidget(self.file_groupbox)
+        self.left_layout.addWidget(self.hotkeys_groupbox)
+        self.left_layout.addWidget(self.received_data_groupbox)
 
-        right_layout = QtWidgets.QVBoxLayout()
-        right_layout.addWidget(button_scroll_area)
+        self.right_layout = QtWidgets.QVBoxLayout()
+        self.right_layout.addWidget(button_scroll_area)
         
         # Create a layout_1 for the widget
         layout_1 = QtWidgets.QHBoxLayout()
-        layout_1.addLayout(left_layout)
-        layout_1.addLayout(right_layout)
+        layout_1.addLayout(self.left_layout)
+        layout_1.addLayout(self.right_layout)
 
         layout_2 = QtWidgets.QVBoxLayout()
-        self.label_layout_2 = QtWidgets.QLabel("ATCommand.txt")
+        self.label_layout_2 = QtWidgets.QLabel("ATCommand")
         self.text_input_layout_2 = QtWidgets.QTextEdit()
         self.text_input_layout_2.setDocument(QtGui.QTextDocument(None))
         self.text_input_layout_2.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
@@ -619,7 +618,7 @@ class MyWidget(QtWidgets.QWidget):
     """
     def read_config(self):
         config = configparser.ConfigParser()
-        config.read(os.path.join(current_path, "config.ini"))
+        config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"))
         return config
     
     def apply_config(self, config: configparser.ConfigParser):
@@ -666,7 +665,7 @@ class MyWidget(QtWidgets.QWidget):
         #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
         #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
 
-        with open(os.path.join(current_path, "config.ini"), "w", encoding="utf-8") as configfile:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"), "w", encoding="utf-8") as configfile:
             config.write(configfile)
         
         
@@ -711,9 +710,9 @@ class MyWidget(QtWidgets.QWidget):
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
             if self.text_input_layout_2.toPlainText() == "":
-                self.text_input_layout_2.setPlainText(common.join_text(common.read_ATCommand(os.path.join(current_path, "utils/ATCommand.json"))))
+                self.text_input_layout_2.setPlainText(common.join_text(common.read_ATCommand(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"))))
             else:
-                common.write_ATCommand(os.path.join(current_path, "utils/ATCommand.json"), common.split_text(self.text_input_layout_2.toPlainText()))
+                common.write_ATCommand(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"), common.split_text(self.text_input_layout_2.toPlainText()))
         elif index == 2 or self.stacked_widget.currentIndex() == 2:
             self.text_input_layout_3.setPlainText(self.received_data_textarea.toPlainText())
         elif index == 3 or self.stacked_widget.currentIndex() == 3:
@@ -741,11 +740,11 @@ class MyWidget(QtWidgets.QWidget):
         msg_box.setWindowTitle("About")
         msg_box.setTextFormat(QtCore.Qt.RichText)
         msg_box.setText(
-            "Author: <a href='https://github.com/ifishin'>iFishin</a> <br/>\
+            "Repository: <a href='https://github.com/ifishin/SCOM'>SCOM</a> <br/>\
             Version: 1.0 <br/>\
             Description: Serial Communication Tool <br/>"
         )
-        msg_box.setIconPixmap(QtGui.QPixmap("./res/ifishin.png").scaled(100, 100))
+        msg_box.setIconPixmap(QtGui.QPixmap("./favicon.ico").scaled(100, 100))
         # 设置图片样式
         msg_box.setStyleSheet(
             "QLabel { color: #198754; font-size: 20px; font-weight: bold; }"
@@ -838,7 +837,7 @@ class MyWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Warning", "Permission denied to save the file.")
            
     def set_default_received_file(self, event):
-        self.input_path_data_received.setText(os.path.join(current_path, "tmps/temp.log"))
+        self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
                
      
     def select_received_file(self):
@@ -1018,13 +1017,13 @@ class MyWidget(QtWidgets.QWidget):
             with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
                 f.write("")
         else:
-            with open(os.path.join(current_path, "tmps/temp.log"), "w", encoding="utf-8") as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"), "w", encoding="utf-8") as f:
                 f.write("")
         common.clear_terminal()
     
     def read_ATCommand(self):
         # 读取 ATCommand.json 文件
-        with open(os.path.join(current_path, "utils/ATCommand.json"), "r", encoding="utf-8") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"), "r", encoding="utf-8") as f:
             ATCommandFromFile = json.load(f).get("commands")
             for i in range(1, len(self.input_fields) + 1):
                 if i <= len(ATCommandFromFile):
@@ -1037,7 +1036,7 @@ class MyWidget(QtWidgets.QWidget):
                     self.input_fields[i - 1].setText("")
         
     def update_ATCommand(self):
-        result = common.update_AT_command(os.path.join(current_path, "utils/ATCommand.json"))
+        result = common.update_AT_command(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"))
         self.text_input_layout_2.setPlainText(result)
         
     def restore_ATCommand(self):
@@ -1046,10 +1045,17 @@ class MyWidget(QtWidgets.QWidget):
                 [item.text() for item in self.input_fields]
             )
         )
-        with open(os.path.join(current_path, "utils/ATCommand.txt"), "w", encoding="utf-8") as f:
-            command_list = [item.text() for item in self.input_fields if item.text()]
-            f.write("\n".join(command_list))
-        
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"), "w", encoding="utf-8") as f:
+            command_list = []
+            for i in range(len(self.input_fields)):
+                command_info = {
+                    "selected": self.checkbox[i].isChecked(),
+                    "command": self.input_fields[i].text(),
+                    "interval": self.interVal[i].text() if self.interVal[i].text() else '',
+                    "withEnter": self.checkbox_send_with_enters[i].isChecked()
+                }
+                command_list.append(command_info)
+            json.dump({"commands": command_list}, f, ensure_ascii=False, indent=4)
     
     def handle_hotkey_click(self, index: int, value: str=''):
         def hotkey_clicked():
@@ -1124,22 +1130,6 @@ class MyWidget(QtWidgets.QWidget):
         if self.prompt_index >= 0:
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.prompt_index -= 1
-            
-    def handle_prompt_batch(self):    
-        while True:
-            if not is_stop_batch:
-                while self.prompt_index < len(self.input_fields):
-                    if is_stop_batch:
-                        break
-                    else:
-                        common.port_write(self.input_fields[self.prompt_index].text(), self.main_Serial, self.checkbox_send_with_enters[self.prompt_index].isChecked())
-                        time.sleep(int(self.input_prompt_batch_frequency.text()))
-                        self.input_prompt.setText(self.input_fields[self.prompt_index].text())
-                        self.prompt_index += 1                        
-                total_times -= 1
-                self.input_prompt_batch_frequency.setText(total_times)
-            else:
-                break        
     
     def set_prompt_index(self):
         self.prompt_index = int(self.input_prompt_index.text())
@@ -1157,18 +1147,30 @@ class MyWidget(QtWidgets.QWidget):
         for i in range(len(self.input_fields)):
             if self.checkbox[i].isChecked():
                 command_info = {
+                    "index": i,
                     "command": self.input_fields[i].text(),
                     "interval": self.interVal[i].text(),
                     "withEnter": self.checkbox_send_with_enters[i].isChecked()
                 }
                 self.selected_commands.append(command_info)
         return self.selected_commands
+    
+    def handle_command_executed(self, index, command):
+        self.checkbox[index].setChecked(True)
+        self.input_prompt_index.setText(str(index))
+        self.input_prompt.setText(command)
+        self.input_prompt.setCursorPosition(0)
+    
+    def handle_command_executed_total_times(self, total_times):
+        self.input_prompt_batch_times.setText(str(total_times))
             
     def handle_prompt_batch_start(self):
         if not self.command_executor:
-            self.command_executor = CommandExecutor(self.filter_selected_command(), self.main_Serial, int(self.input_prompt_batch_frequency.text()))
+            self.command_executor = CommandExecutor(self.filter_selected_command(), self.main_Serial, int(self.input_prompt_batch_times.text()))
             # self.command_executor.progressUpdated.connect(self.progress_bar.setValue)
             self.command_executor.start()
+            self.command_executor.commandExecuted.connect(self.handle_command_executed) 
+            self.command_executor.totalTimes.connect(self.handle_command_executed_total_times)           
             self.prompt_batch_start_button.setText("Pause")
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_pause)
         
@@ -1190,7 +1192,7 @@ class MyWidget(QtWidgets.QWidget):
             self.command_executor = None
             self.prompt_batch_start_button.setText("Start")
             self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
-    
+            
     def handle_total_checkbox_click(self, state):
         for checkbox in self.checkbox:
             checkbox.setChecked(state == 2)
@@ -1207,8 +1209,11 @@ class MyWidget(QtWidgets.QWidget):
                 last_one_click_time = time.time()
             common.port_write(input_field.text(), self.main_Serial, checkbox_send_with_enter.isChecked())
             checkbox.setChecked(True)
+            self.prompt_index = index
+            self.input_prompt_index.setText(str(index-1))
+            self.input_prompt.setText(input_field.text())
             now_click_time = time.time()
-            self.interVal[index - 2].setText(str(min(99, int(now_click_time - last_one_click_time))))
+            self.interVal[index - 2].setText(str(min(99, int(now_click_time - last_one_click_time)+1)))
             last_one_click_time = now_click_time
 
         return button_clicked
@@ -1249,7 +1254,7 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename=os.path.join(current_path, "logs/error.log"),
+        filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs/error.log"),
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
