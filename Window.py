@@ -632,7 +632,7 @@ class MyWidget(QtWidgets.QWidget):
         self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
         self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
         self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
-        self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamps"))
+        # self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamps"))
         self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
         self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
         self.file_input.setText(config.get("Set", "PathFileSend"))
@@ -668,8 +668,6 @@ class MyWidget(QtWidgets.QWidget):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"), "w", encoding="utf-8") as configfile:
             config.write(configfile)
         
-        
-            
     def apply_style(self):
         text = self.received_data_textarea.toPlainText()
         doc = self.received_data_textarea.document()
@@ -736,21 +734,34 @@ class MyWidget(QtWidgets.QWidget):
         self.layout_config_dialog.exec()
 
     def show_about_info(self):
-        msg_box = QtWidgets.QMessageBox()
-        msg_box.setWindowTitle("About")
-        msg_box.setTextFormat(QtCore.Qt.RichText)
-        msg_box.setText(
-            "Repository: <a href='https://github.com/ifishin/SCOM'>SCOM</a> <br/>\
-            Version: 1.0 <br/>\
-            Description: Serial Communication Tool <br/>"
+        about_dialog = QtWidgets.QDialog(self)
+        about_dialog.setWindowTitle("About")
+        about_dialog.setFixedSize(400, 300)
+
+        layout = QtWidgets.QVBoxLayout()
+
+        icon_label = QtWidgets.QLabel()
+        icon_label.setPixmap(QtGui.QPixmap("./favicon.ico").scaled(100, 100, QtCore.Qt.KeepAspectRatio))
+        icon_label.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(icon_label)
+
+        text_label = QtWidgets.QLabel()
+        text_label.setTextFormat(QtCore.Qt.RichText)
+        text_label.setText(
+            "<div style='text-align: center;'>"
+            "<h2>SCOM</h2>"
+            "<div style='text-align: left; margin: 0 30%'>"
+            "<p>Version: 1.0</p>"
+            "<p>Description: Serial Communication Tool</p>"
+            "<p>Repository: <a href='https://github.com/ifishin/SCOM'>SCOM</a></p>"
+            "</div>"
+            "</div>"
         )
-        msg_box.setIconPixmap(QtGui.QPixmap("./favicon.ico").scaled(100, 100))
-        # 设置图片样式
-        msg_box.setStyleSheet(
-            "QLabel { color: #198754; font-size: 20px; font-weight: bold; }"
-            "QMessageBox { background-color: #cccccc; }"
-        )
-        msg_box.exec()
+        text_label.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(text_label)
+
+        about_dialog.setLayout(layout)
+        about_dialog.exec()
 
     def dtr_state_changed(self, state):
         if state == 2:
@@ -915,7 +926,16 @@ class MyWidget(QtWidgets.QWidget):
         self.received_data_textarea.moveCursor(QtGui.QTextCursor.End)
         
     def show_search_dialog(self):
-        dialog = SearchReplaceDialog(self.received_data_textarea, self)
+        #如果是在winow 1，则传入对应的文本框
+        if self.stacked_widget.currentIndex() == 0:
+            dialog = SearchReplaceDialog(self.received_data_textarea, self)
+        elif self.stacked_widget.currentIndex() == 1:
+            dialog = SearchReplaceDialog(self.text_input_layout_2, self)
+        elif self.stacked_widget.currentIndex() == 2:
+            dialog = SearchReplaceDialog(self.text_input_layout_3, self)
+        elif self.stacked_widget.currentIndex() == 3:
+            dialog = SearchReplaceDialog(self.text_input_layout_4, self)
+            
         dialog.exec()
 
     def port_on(self):
