@@ -205,12 +205,11 @@ class MyWidget(QtWidgets.QWidget):
             "QLabel { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
         )
 
-        self.command_label = QtWidgets.QLabel("Command:")
         self.command_input = QtWidgets.QTextEdit()
         self.command_input.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
-        self.command_input.setFixedHeight(30)
+        self.command_input.setFixedHeight(35)
         self.command_input.setAcceptRichText(False)
-        # self.command_input.keyPressEvent = self.handle_key_press  # 重写 keyPressEvent 方法
+        self.command_input.keyPressEvent = self.handle_key_press  # Override keyPressEvent method
         
         self.file_label = QtWidgets.QLabel("File:")
         self.file_input = QtWidgets.QLineEdit()
@@ -301,7 +300,6 @@ class MyWidget(QtWidgets.QWidget):
         # Create a group box for the command section
         self.command_groupbox = QtWidgets.QGroupBox("Command")
         command_layout = QtWidgets.QHBoxLayout(self.command_groupbox)
-        command_layout.addWidget(self.command_label)
         command_layout.addWidget(self.command_input)
         command_layout.addWidget(self.expand_button)
         command_layout.addWidget(self.send_button)
@@ -810,7 +808,7 @@ class MyWidget(QtWidgets.QWidget):
         self.expand_button.clicked.connect(self.collapse_command_input)
     
     def collapse_command_input(self):
-        self.command_input.setFixedHeight(30)
+        self.command_input.setFixedHeight(35)
         self.command_input.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
         self.expand_button.setIcon(QtGui.QIcon("./res/expand.png"))
         self.expand_button.setChecked(False)
@@ -897,14 +895,16 @@ class MyWidget(QtWidgets.QWidget):
                 
     def handle_key_press(self, event):
         if event.key() == QtCore.Qt.Key_Return and event.modifiers() == QtCore.Qt.ShiftModifier:
-            # 处理 Shift + Enter 按下
-            print("Shift + Enter pressed")
+            # Handle Shift + Enter pressed: insert a new line
+            cursor = self.command_input.textCursor()
+            cursor.insertText("\n")
+            self.command_input.setTextCursor(cursor)
         elif event.key() == QtCore.Qt.Key_Return and event.modifiers() == QtCore.Qt.NoModifier:
-            # 处理单独 Enter 按下
+            # Handle Enter pressed: send the command
             self.send_command()
         else:
-            # 让其他输入事件正常处理
-            super(QtWidgets.QTextEdit, self.command_input).keyPressEvent(event)
+            # Let other key events be handled normally
+            QtWidgets.QTextEdit.keyPressEvent(self.command_input, event)
 
     def port_update(self, data):
         old_ports = [self.serial_port_combo.itemText(i) for i in range(self.serial_port_combo.count())]
@@ -1277,7 +1277,7 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs/error.log"),
+        filename="logs/error.log",
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
