@@ -1,6 +1,6 @@
 import os
-from PySide6.QtCore import *
-from PySide6 import QtWidgets
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtWidgets import QMessageBox
 from utils import common
 
 class FileSender(QThread):
@@ -27,6 +27,6 @@ class FileSender(QThread):
                     # 发送进度信号
                     self.progressUpdated.emit(int(sent_bytes / file_size * 100))
         except FileNotFoundError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "File not found.")
+            QMessageBox.warning(self, "Warning", "File not found.")
         except PermissionError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "Permission denied to open the file.")
+            QMessageBox.warning(self, "Warning", "Permission denied to open the file.")

@@ -5,9 +5,6 @@ import sys
 import time
 import json
 import serial
-from serial.tools import list_ports
-import datetime
-import threading
 
 
 def force_decode(text: str) -> str:

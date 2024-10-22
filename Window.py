@@ -8,22 +8,32 @@ import serial
 import random
 import logging
 import configparser
-import threading
-import datetime
-from PySide6 import QtCore, QtWidgets, QtGui
-
+from PySide6.QtWidgets import (
+    QMenuBar, QFileDialog, QProgressBar, QStackedWidget, 
+    QScrollArea, QSizePolicy, QGroupBox, QGridLayout, QVBoxLayout, QHBoxLayout, 
+    QTextEdit, QLineEdit, QComboBox, QCheckBox, QPushButton, QLabel, QWidget, 
+    QApplication, QMenuBar, QDialog, QMessageBox
+)
+from PySide6.QtCore import (
+    Qt, QTimer, QThreadPool, QEvent, QThread,
+    
+)
+from PySide6.QtGui import (
+    QTextDocument, QTextCursor, QIcon, QIntValidator, QTextFormat, QBrush, 
+    QPen, QColor, QPixmap, QShortcut
+)
 from serial.tools import list_ports
 import utils.common as common
-from scom.QSSLoader import QSSLoader
-from scom.DataReceiver import DataReceiver
-from scom.PortUpdater import PortUpdater
-from scom.FileSender import FileSender
-from scom.CommandExecutor import CommandExecutor
-from scom.SearchReplaceDialog import SearchReplaceDialog
-from scom.LayoutConifgDialog import LayoutConfigDialog
+from utils.QSSLoader import QSSLoader
+from utils.DataReceiver import DataReceiver
+from utils.PortUpdater import PortUpdater
+from utils.FileSender import FileSender
+from utils.CommandExecutor import CommandExecutor
+from utils.SearchReplaceDialog import SearchReplaceDialog
+from utils.LayoutConifgDialog import LayoutConfigDialog
 
 
-class MyWidget(QtWidgets.QWidget):
+class MyWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.init_UI()
@@ -44,11 +54,11 @@ class MyWidget(QtWidgets.QWidget):
         self.config = self.read_config()
         self.apply_config(self.config)
 
-        self.thread_pool = QtCore.QThreadPool()
+        self.thread_pool = QThreadPool()
         # Init the thread
         self.port_updater = PortUpdater()
         self.port_updater.portUpdated.connect(self.port_update)
-        self.port_update_thread = QtCore.QThread()
+        self.port_update_thread = QThread()
         self.port_updater.moveToThread(self.port_update_thread)
         self.port_update_thread.started.connect(self.port_updater.run)
         self.port_update_thread.finished.connect(self.port_updater.deleteLater)
@@ -56,7 +66,7 @@ class MyWidget(QtWidgets.QWidget):
 
         self.data_receiver = DataReceiver(None)
         self.data_receiver.dataReceived.connect(self.update_main_textarea)
-        self.data_receive_thread = QtCore.QThread()
+        self.data_receive_thread = QThread()
         self.data_receiver.moveToThread(self.data_receive_thread)
         self.data_receive_thread.started.connect(self.data_receiver.run)
         self.data_receive_thread.finished.connect(self.data_receiver.deleteLater)
@@ -73,7 +83,7 @@ class MyWidget(QtWidgets.QWidget):
     """
     def init_UI(self):
         # Create menu bar
-        self.menu_bar = QtWidgets.QMenuBar()
+        self.menu_bar = QMenuBar()
 
         # Create Settings menu
         self.settings_menu = self.menu_bar.addMenu("Settings")
@@ -97,12 +107,12 @@ class MyWidget(QtWidgets.QWidget):
         self.stop_ports_update_thread = False
         self.stop_textarea_update_thread = True
 
-        self.serial_port_label = QtWidgets.QLabel("Port:")
-        self.serial_port_combo = QtWidgets.QComboBox()
+        self.serial_port_label = QLabel("Port:")
+        self.serial_port_combo = QComboBox()
         self.serial_port_combo.addItems([port.device for port in list_ports.comports()])
 
-        self.baud_rate_label = QtWidgets.QLabel("BaudRate:")
-        self.baud_rate_combo = QtWidgets.QComboBox()
+        self.baud_rate_label = QLabel("BaudRate:")
+        self.baud_rate_combo = QComboBox()
         self.baud_rate_combo.addItems(
             [
                     "50",
@@ -138,151 +148,151 @@ class MyWidget(QtWidgets.QWidget):
             ]
         )
         self.baud_rate_combo.setCurrentText("115200")
-        self.stopbits_label = QtWidgets.QLabel("StopBits:")
-        self.stopbits_combo = QtWidgets.QComboBox()
+        self.stopbits_label = QLabel("StopBits:")
+        self.stopbits_combo = QComboBox()
         self.stopbits_combo.addItems(["1", "1.5", "2"])
         self.stopbits_combo.setCurrentText("1")
 
-        self.parity_label = QtWidgets.QLabel("Parity:")
-        self.parity_combo = QtWidgets.QComboBox()
+        self.parity_label = QLabel("Parity:")
+        self.parity_combo = QComboBox()
         self.parity_combo.addItems(["None", "Even", "Odd", "Mark", "Space"])
         self.parity_combo.setCurrentText("None")
 
-        self.bytesize_label = QtWidgets.QLabel("ByteSize:")
-        self.bytesize_combo = QtWidgets.QComboBox()
+        self.bytesize_label = QLabel("ByteSize:")
+        self.bytesize_combo = QComboBox()
         self.bytesize_combo.addItems(["5", "6", "7", "8"])
         self.bytesize_combo.setCurrentText("8")
 
-        self.flowcontrol_label = QtWidgets.QLabel("FlowControl:")
-        self.flowcontrol_checkbox = QtWidgets.QComboBox()
+        self.flowcontrol_label = QLabel("FlowControl:")
+        self.flowcontrol_checkbox = QComboBox()
         self.flowcontrol_checkbox.addItems(["None", "RTS/CTS", "XON/XOFF"])
         self.flowcontrol_checkbox.setCurrentText("None")
         
-        self.dtr_label = QtWidgets.QLabel("DTR:")
-        self.dtr_checkbox = QtWidgets.QCheckBox()
+        self.dtr_label = QLabel("DTR:")
+        self.dtr_checkbox = QCheckBox()
         self.dtr_checkbox.stateChanged.connect(self.dtr_state_changed)
         
-        self.rts_label = QtWidgets.QLabel("RTS:")
-        self.rts_checkbox = QtWidgets.QCheckBox()
+        self.rts_label = QLabel("RTS:")
+        self.rts_checkbox = QCheckBox()
         self.rts_checkbox.stateChanged.connect(self.rts_state_changed)
         
-        self.label_send_with_enter = QtWidgets.QLabel("SendWithEnter:")
-        self.checkbox_send_with_enter = QtWidgets.QCheckBox()
+        self.label_send_with_enter = QLabel("SendWithEnter:")
+        self.checkbox_send_with_enter = QCheckBox()
         self.checkbox_send_with_enter.setChecked(True)
         
-        self.symbol_label = QtWidgets.QLabel("Show\\r\\n:")
-        self.symbol_checkbox = QtWidgets.QCheckBox()
+        self.symbol_label = QLabel("Show\\r\\n:")
+        self.symbol_checkbox = QCheckBox()
         self.symbol_checkbox.stateChanged.connect(self.symbol_state_changed)
         
-        self.timeStamp_label = QtWidgets.QLabel("TimeStamp:")
-        self.timeStamp_checkbox = QtWidgets.QCheckBox()
+        self.timeStamp_label = QLabel("TimeStamp:")
+        self.timeStamp_checkbox = QCheckBox()
         self.timeStamp_checkbox.stateChanged.connect(self.timeStamp_state_changed)
         
-        self.label_data_received = QtWidgets.QLabel("Data Received:")
-        self.input_path_data_received = QtWidgets.QLineEdit()
+        self.label_data_received = QLabel("Data Received:")
+        self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = self.set_default_received_file
-        self.checkbox_data_received = QtWidgets.QCheckBox()
+        self.checkbox_data_received = QCheckBox()
         self.checkbox_data_received.stateChanged.connect(self.handle_data_received_checkbox)
-        self.button_data_received_select = QtWidgets.QPushButton("Select")
+        self.button_data_received_select = QPushButton("Select")
         self.button_data_received_select.clicked.connect(self.select_received_file)
-        self.button_data_received_save = QtWidgets.QPushButton("Save")
+        self.button_data_received_save = QPushButton("Save")
         self.button_data_received_save.clicked.connect(self.save_received_file)
 
-        self.port_button = QtWidgets.QPushButton("Open Port")
+        self.port_button = QPushButton("Open Port")
         self.port_button.clicked.connect(self.port_on)
 
-        self.toggle_button = QtWidgets.QPushButton()
+        self.toggle_button = QPushButton()
         self.toggle_button.setToolTip("Show More Options")
-        self.toggle_button.setIcon(QtGui.QIcon("./res/expander-down.png"))
+        self.toggle_button.setIcon(QIcon("./res/expander-down.png"))
         self.toggle_button_is_expanded = False
         self.toggle_button.clicked.connect(self.show_more_options)
         
-        self.status_label = QtWidgets.QLabel("Closed")
-        self.status_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.status_label = QLabel("Closed")
+        self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setStyleSheet(
             "QLabel { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
         )
 
-        self.command_input = QtWidgets.QTextEdit()
-        self.command_input.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        self.command_input = QTextEdit()
+        self.command_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.command_input.setFixedHeight(35)
         self.command_input.setAcceptRichText(False)
         self.command_input.keyPressEvent = self.handle_key_press  # Override keyPressEvent method
         
-        self.file_label = QtWidgets.QLabel("File:")
-        self.file_input = QtWidgets.QLineEdit()
+        self.file_label = QLabel("File:")
+        self.file_input = QLineEdit()
         self.file_input.setToolTip("Double click to Clear")
         self.file_input.mouseDoubleClickEvent = lambda event: self.file_input.clear()
         self.file_input.setPlaceholderText("Path")
         self.file_input.setReadOnly(True)
-        self.file_button_select = QtWidgets.QPushButton("Select")
+        self.file_button_select = QPushButton("Select")
         self.file_button_select.clicked.connect(self.select_file)        
-        self.file_button_send = QtWidgets.QPushButton("Send")
+        self.file_button_send = QPushButton("Send")
         self.file_button_send.clicked.connect(self.send_file)
         
-        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         
         # Create a button for expanding/collapsing the input field
-        self.expand_button = QtWidgets.QPushButton()
+        self.expand_button = QPushButton()
         self.expand_button.setIcon(
-            QtGui.QIcon("./res/expand.png")
+            QIcon("./res/expand.png")
         )  # You need to have an icon for this
         self.expand_button.setCheckable(True)
         self.expand_button.setChecked(False)
         self.expand_button.clicked.connect(self.expand_command_input)
 
-        self.send_button = QtWidgets.QPushButton("Send")
+        self.send_button = QPushButton("Send")
         self.send_button.setEnabled(False)
         self.send_button.clicked.connect(self.send_command)
 
         self.hotkeys_buttons = []
         for i in range(1, 9):
-            button = QtWidgets.QPushButton(f"Hotkey {i}")
+            button = QPushButton(f"Hotkey {i}")
             button.clicked.connect(self.handle_hotkey_click(i))
             self.hotkeys_buttons.append(button)
 
-        self.received_data_textarea = QtWidgets.QTextEdit()
+        self.received_data_textarea = QTextEdit()
         self.received_data_textarea.setAcceptRichText(False)
-        self.received_data_textarea.setDocument(QtGui.QTextDocument(None))
-        shortcut = QtGui.QShortcut(QtCore.Qt.ControlModifier | QtCore.Qt.Key_F, self)
+        self.received_data_textarea.setDocument(QTextDocument(None))
+        shortcut = QShortcut(Qt.ControlModifier | Qt.Key_F, self)
         shortcut.activated.connect(self.show_search_dialog)
         # self.received_data_textarea.setReadOnly(True)
 
         # Create a group box for the settings section
-        self.settings_groupbox = QtWidgets.QGroupBox("Settings")
-        settings_layout = QtWidgets.QGridLayout(self.settings_groupbox)
-        settings_layout.addWidget(self.serial_port_label, 0, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_groupbox = QGroupBox("Settings")
+        settings_layout = QGridLayout(self.settings_groupbox)
+        settings_layout.addWidget(self.serial_port_label, 0, 0, 1, 1, alignment=Qt.AlignRight)
         settings_layout.addWidget(self.serial_port_combo, 0, 1, 1, 1)
-        settings_layout.addWidget(self.baud_rate_label, 1, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        settings_layout.addWidget(self.baud_rate_label, 1, 0, 1, 1, alignment=Qt.AlignRight)
         settings_layout.addWidget(self.baud_rate_combo, 1, 1, 1, 1)
         settings_layout.addWidget(self.port_button, 0, 2, 1, 2)
         settings_layout.addWidget(self.status_label, 1, 2, 1, 1)
         settings_layout.addWidget(self.toggle_button, 1, 3, 1, 1)
         
-        self.settings_more_layout = QtWidgets.QGridLayout()
+        self.settings_more_layout = QGridLayout()
 
-        self.settings_more_layout.addWidget(self.stopbits_label, 0, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.stopbits_label, 0, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.stopbits_combo, 0, 1, 1, 1)
-        self.settings_more_layout.addWidget(self.parity_label, 0, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.parity_label, 0, 2, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.parity_combo, 0, 3, 1, 1)
-        self.settings_more_layout.addWidget(self.bytesize_label, 1, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.bytesize_label, 1, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.bytesize_combo, 1, 1, 1, 1)
-        self.settings_more_layout.addWidget(self.flowcontrol_label, 1, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.flowcontrol_label, 1, 2, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.flowcontrol_checkbox, 1, 3, 1, 1)
         
-        self.settings_more_layout.addWidget(self.dtr_label, 2, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.dtr_label, 2, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.dtr_checkbox, 2, 1, 1, 1)
-        self.settings_more_layout.addWidget(self.rts_label, 2, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.rts_label, 2, 2, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.rts_checkbox, 2, 3, 1, 1)
-        self.settings_more_layout.addWidget(self.symbol_label, 3, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.symbol_label, 3, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.symbol_checkbox, 3, 1, 1, 1)
-        self.settings_more_layout.addWidget(self.timeStamp_label, 3, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.timeStamp_label, 3, 2, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.timeStamp_checkbox, 3, 3, 1, 1)
-        self.settings_more_layout.addWidget(self.label_send_with_enter, 4, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.label_send_with_enter, 4, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.checkbox_send_with_enter, 4, 1, 1, 1)
 
         self.settings_more_layout.addWidget(self.label_data_received, 5, 0, 1, 1)
@@ -298,56 +308,56 @@ class MyWidget(QtWidgets.QWidget):
             self.settings_more_layout.itemAt(i).widget().setVisible(False)
 
         # Create a group box for the command section
-        self.command_groupbox = QtWidgets.QGroupBox("Command")
-        command_layout = QtWidgets.QHBoxLayout(self.command_groupbox)
+        self.command_groupbox = QGroupBox("Command")
+        command_layout = QHBoxLayout(self.command_groupbox)
         command_layout.addWidget(self.command_input)
         command_layout.addWidget(self.expand_button)
         command_layout.addWidget(self.send_button)
         
         # Create a group box for the file section
-        self.file_groupbox = QtWidgets.QGroupBox("File")
-        file_layout = QtWidgets.QVBoxLayout(self.file_groupbox)
-        file_row_layout = QtWidgets.QHBoxLayout()
+        self.file_groupbox = QGroupBox("File")
+        file_layout = QVBoxLayout(self.file_groupbox)
+        file_row_layout = QHBoxLayout()
         file_row_layout.addWidget(self.file_label)
         file_row_layout.addWidget(self.file_input)
         file_row_layout.addWidget(self.file_button_select)
         file_row_layout.addWidget(self.file_button_send)
-        file_progress_layout = QtWidgets.QHBoxLayout()
+        file_progress_layout = QHBoxLayout()
         file_progress_layout.addWidget(self.progress_bar)
         file_layout.addLayout(file_row_layout)
         file_layout.addLayout(file_progress_layout)
         
         # Create a group box for the Hotkeys section
-        self.hotkeys_groupbox = QtWidgets.QGroupBox("Hotkeys")
-        hotkeys_layout = QtWidgets.QGridLayout(self.hotkeys_groupbox)
+        self.hotkeys_groupbox = QGroupBox("Hotkeys")
+        hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
         for i, button in enumerate(self.hotkeys_buttons):
             row = i // 4
             col = i % 4
             hotkeys_layout.addWidget(button, row, col)
 
         # Create a group box for the received data section
-        self.received_data_groupbox = QtWidgets.QGroupBox("Received Data")
-        received_data_layout = QtWidgets.QVBoxLayout(self.received_data_groupbox)
+        self.received_data_groupbox = QGroupBox("Received Data")
+        received_data_layout = QVBoxLayout(self.received_data_groupbox)
         received_data_layout.addWidget(self.received_data_textarea)
 
         # Create a group box for the button group section
-        self.button_groupbox = QtWidgets.QGroupBox("Button Group")
-        button_layout = QtWidgets.QGridLayout(self.button_groupbox)
+        self.button_groupbox = QGroupBox("Button Group")
+        button_layout = QGridLayout(self.button_groupbox)
         # button_layout.setColumnStretch(2, 2)
 
         # Create a scroll area for the button group
-        button_scroll_area = QtWidgets.QScrollArea()
+        button_scroll_area = QScrollArea()
         button_scroll_area.setWidget(self.button_groupbox)
         button_scroll_area.setWidgetResizable(True)
-        button_scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        QtCore.QTimer.singleShot(0, lambda: button_scroll_area.verticalScrollBar().setValue(self.settings_button_group.height()))
+        button_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        QTimer.singleShot(0, lambda: button_scroll_area.verticalScrollBar().setValue(self.settings_button_group.height()))
 
         # Add setting area for the button group
-        self.settings_button_group = QtWidgets.QGroupBox()
-        settings_button_layout = QtWidgets.QGridLayout(self.settings_button_group)
+        self.settings_button_group = QGroupBox()
+        settings_button_layout = QGridLayout(self.settings_button_group)
         settings_button_layout.setColumnStretch(1, 3)
         
-        self.prompt_button = QtWidgets.QPushButton("Prompt")
+        self.prompt_button = QPushButton("Prompt")
         self.prompt_button.setToolTip("Left button clicked to Execute; Right button clicked to Switch Next")
         self.prompt_button.setStyleSheet(
             "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
@@ -356,13 +366,13 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.prompt_button.installEventFilter(self)
         
-        self.input_prompt = QtWidgets.QLineEdit()
+        self.input_prompt = QLineEdit()
         self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
         self.input_prompt.setStyleSheet(
             "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             )
         
-        self.input_prompt_index = QtWidgets.QLineEdit()
+        self.input_prompt_index = QLineEdit()
         self.input_prompt_index.setPlaceholderText("Idx")
         self.input_prompt_index.setToolTip("Double click to edit")
         self.input_prompt_index.setStyleSheet(
@@ -373,7 +383,7 @@ class MyWidget(QtWidgets.QWidget):
         self.input_prompt_index.mouseDoubleClickEvent = lambda event: self.input_prompt_index.setReadOnly(False)
         self.input_prompt_index.editingFinished.connect(self.set_prompt_index)
         
-        self.prompt_batch_start_button = QtWidgets.QPushButton("Start")
+        self.prompt_batch_start_button = QPushButton("Start")
         self.prompt_batch_start_button.setStyleSheet(
             "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             "QPushButton:hover { background-color: #0d6e3f; }"
@@ -382,7 +392,7 @@ class MyWidget(QtWidgets.QWidget):
         
         self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
         
-        self.prompt_batch_stop_button = QtWidgets.QPushButton("Stop")
+        self.prompt_batch_stop_button = QPushButton("Stop")
         self.prompt_batch_stop_button.setStyleSheet(
             "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
             "QPushButton:hover { background-color: #a71d2a; }"
@@ -391,7 +401,7 @@ class MyWidget(QtWidgets.QWidget):
         
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
         
-        self.input_prompt_batch_times = QtWidgets.QLineEdit()
+        self.input_prompt_batch_times = QLineEdit()
         self.input_prompt_batch_times.setPlaceholderText("Total Times")
         self.input_prompt_batch_times.setStyleSheet(
                 "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
@@ -406,22 +416,22 @@ class MyWidget(QtWidgets.QWidget):
         button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
 
         # Set the input field to expand horizontally
-        self.input_prompt.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        self.input_prompt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
         # Add column titles
-        self.total_checkbox = QtWidgets.QCheckBox()
+        self.total_checkbox = QCheckBox()
         button_layout.addWidget(self.total_checkbox, 1, 0)
         self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
-        label_function = QtWidgets.QLabel("Function")
-        label_input_field = QtWidgets.QLabel("Input Field")
-        label_enter = QtWidgets.QLabel("Enter")
-        label_sec = QtWidgets.QLabel("Sec")
+        label_function = QLabel("Function")
+        label_input_field = QLabel("Input Field")
+        label_enter = QLabel("Enter")
+        label_sec = QLabel("Sec")
         label_sec.setToolTip("Double click to Clear")
         label_sec.mouseDoubleClickEvent = self.set_interval
-        button_layout.addWidget(label_function, 1, 1, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(label_input_field, 1, 2, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(label_enter, 1, 3, alignment=QtCore.Qt.AlignCenter)
-        button_layout.addWidget(label_sec, 1, 4, alignment=QtCore.Qt.AlignRight)
+        button_layout.addWidget(label_function, 1, 1, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_enter, 1, 3, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
 
         # Add buttons and input fields to the button group
         self.checkbox = []
@@ -431,18 +441,18 @@ class MyWidget(QtWidgets.QWidget):
         self.interVal = []
         for i in range(1, 101):
             # Create a combobox for selecting the function
-            checkbox = QtWidgets.QCheckBox()
+            checkbox = QCheckBox()
             label = f"Func {i}"
-            button = QtWidgets.QPushButton(label)
-            input_field = QtWidgets.QLineEdit()
+            button = QPushButton(label)
+            input_field = QLineEdit()
             
-            checkbox_send_with_enter = QtWidgets.QCheckBox()
+            checkbox_send_with_enter = QCheckBox()
             checkbox_send_with_enter.setChecked(True)
-            input_interval = QtWidgets.QLineEdit()
+            input_interval = QLineEdit()
             input_interval.setMaximumWidth(self.width() * 0.06)
-            input_interval.setValidator(QtGui.QIntValidator(0, 1000))
+            input_interval.setValidator(QIntValidator(0, 1000))
             input_interval.setPlaceholderText("sec")
-            input_interval.setAlignment(QtCore.Qt.AlignCenter)
+            input_interval.setAlignment(Qt.AlignCenter)
             button_layout.addWidget(checkbox, i+1, 0)
             button_layout.addWidget(button, i+1, 1)
             button_layout.addWidget(input_field, i+1, 2)
@@ -462,26 +472,26 @@ class MyWidget(QtWidgets.QWidget):
             )
 
         # Create a layout for the left half
-        self.left_layout = QtWidgets.QVBoxLayout()
+        self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.settings_groupbox)
         self.left_layout.addWidget(self.command_groupbox)
         self.left_layout.addWidget(self.file_groupbox)
         self.left_layout.addWidget(self.hotkeys_groupbox)
         self.left_layout.addWidget(self.received_data_groupbox)
 
-        self.right_layout = QtWidgets.QVBoxLayout()
+        self.right_layout = QVBoxLayout()
         self.right_layout.addWidget(button_scroll_area)
         
         # Create a layout_1 for the widget
-        layout_1 = QtWidgets.QHBoxLayout()
+        layout_1 = QHBoxLayout()
         layout_1.addLayout(self.left_layout)
         layout_1.addLayout(self.right_layout)
 
-        layout_2 = QtWidgets.QVBoxLayout()
-        self.label_layout_2 = QtWidgets.QLabel("ATCommand")
-        self.text_input_layout_2 = QtWidgets.QTextEdit()
-        self.text_input_layout_2.setDocument(QtGui.QTextDocument(None))
-        self.text_input_layout_2.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
+        layout_2 = QVBoxLayout()
+        self.label_layout_2 = QLabel("ATCommand")
+        self.text_input_layout_2 = QTextEdit()
+        self.text_input_layout_2.setDocument(QTextDocument(None))
+        self.text_input_layout_2.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_2.addWidget(self.label_layout_2)
         layout_2.addWidget(self.text_input_layout_2)
         self.text_input_layout_2.setStyleSheet(
@@ -489,11 +499,11 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.text_input_layout_2.setAcceptRichText(False)
 
-        layout_3 = QtWidgets.QVBoxLayout()
-        self.label_layout_3 = QtWidgets.QLabel("temp.log")
-        self.text_input_layout_3 = QtWidgets.QTextEdit()
-        self.text_input_layout_3.setDocument(QtGui.QTextDocument(None))
-        self.text_input_layout_3.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
+        layout_3 = QVBoxLayout()
+        self.label_layout_3 = QLabel("temp.log")
+        self.text_input_layout_3 = QTextEdit()
+        self.text_input_layout_3.setDocument(QTextDocument(None))
+        self.text_input_layout_3.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_3.addWidget(self.label_layout_3)
         layout_3.addWidget(self.text_input_layout_3)
         self.text_input_layout_3.setStyleSheet(
@@ -501,11 +511,11 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.text_input_layout_3.setAcceptRichText(False)
         
-        layout_4 = QtWidgets.QVBoxLayout()
-        self.label_layout_4 = QtWidgets.QLabel("No TimeStamp")
-        self.text_input_layout_4 = QtWidgets.QTextEdit()
-        self.text_input_layout_4.setDocument(QtGui.QTextDocument(None))
-        self.text_input_layout_4.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
+        layout_4 = QVBoxLayout()
+        self.label_layout_4 = QLabel("No TimeStamp")
+        self.text_input_layout_4 = QTextEdit()
+        self.text_input_layout_4.setDocument(QTextDocument(None))
+        self.text_input_layout_4.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_4.addWidget(self.label_layout_4)
         layout_4.addWidget(self.text_input_layout_4)
         self.text_input_layout_4.setStyleSheet(
@@ -514,7 +524,7 @@ class MyWidget(QtWidgets.QWidget):
         self.text_input_layout_4.setAcceptRichText(False)
 
         # Create a button section for switching other layouts
-        self.button1 = QtWidgets.QPushButton("Window 1")
+        self.button1 = QPushButton("Window 1")
         self.button1.setToolTip("Shortcut: F1")
         self.button1.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
@@ -523,7 +533,7 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.button1.clicked.connect(lambda: self.show_page(0))
 
-        self.button2 = QtWidgets.QPushButton("Window 2")
+        self.button2 = QPushButton("Window 2")
         self.button2.setToolTip("Shortcut: F2")
         self.button2.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
@@ -532,7 +542,7 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.button2.clicked.connect(lambda: self.show_page(1))
 
-        self.button3 = QtWidgets.QPushButton("Window 3")
+        self.button3 = QPushButton("Window 3")
         self.button3.setToolTip("Shortcut: F3")
         self.button3.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
@@ -541,7 +551,7 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.button3.clicked.connect(lambda: self.show_page(2))
 
-        self.button4 = QtWidgets.QPushButton("Window 4")
+        self.button4 = QPushButton("Window 4")
         self.button4.setToolTip("Shortcut: F4")
         self.button4.setStyleSheet(
             "QPushButton { background-color: #198754; color: white; border-radius: 3px; padding: 5px; font-size: 16px; }"
@@ -550,17 +560,17 @@ class MyWidget(QtWidgets.QWidget):
         )
         self.button4.clicked.connect(lambda: self.show_page(3))
 
-        button_switch_layout = QtWidgets.QHBoxLayout()
+        button_switch_layout = QHBoxLayout()
         button_switch_layout.addWidget(self.button1)
         button_switch_layout.addWidget(self.button2)
         button_switch_layout.addWidget(self.button3)
         button_switch_layout.addWidget(self.button4)
         # Create a stacked widget to switch between layouts
-        self.stacked_widget = QtWidgets.QStackedWidget()
-        self.stacked_widget.addWidget(QtWidgets.QWidget())
-        self.stacked_widget.addWidget(QtWidgets.QWidget())
-        self.stacked_widget.addWidget(QtWidgets.QWidget())
-        self.stacked_widget.addWidget(QtWidgets.QWidget())
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.addWidget(QWidget())
+        self.stacked_widget.addWidget(QWidget())
+        self.stacked_widget.addWidget(QWidget())
+        self.stacked_widget.addWidget(QWidget())
 
         # Set the layouts for the stacked widget
         self.stacked_widget.widget(0).setLayout(layout_1)
@@ -570,7 +580,7 @@ class MyWidget(QtWidgets.QWidget):
         self.stacked_widget.setCurrentIndex(0)
 
         # Create a main layout for the widget
-        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.menu_bar)
         main_layout.addLayout(button_switch_layout)
@@ -669,7 +679,7 @@ class MyWidget(QtWidgets.QWidget):
     def apply_style(self):
         text = self.received_data_textarea.toPlainText()
         doc = self.received_data_textarea.document()
-        cursor = QtGui.QTextCursor(doc)
+        cursor = QTextCursor(doc)
 
         # 使用正则表达式查找匹配的字符串
         pattern_timestamp = r"\[20(.*?)\]"
@@ -684,10 +694,10 @@ class MyWidget(QtWidgets.QWidget):
 
         #     # 设置底色和圆角
         #     cursor.setPosition(start_pos)
-        #     cursor.movePosition(QtGui.QTextCursor.NextCharacter, QtGui.QTextCursor.KeepAnchor, end_pos - start_pos)
+        #     cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, end_pos - start_pos)
         #     char_format = cursor.charFormat()
         #     # 设置字体颜色
-        #     char_format.setForeground(QtGui.QBrush(QtGui.QColor("#198754")))
+        #     char_format.setForeground(QBrush(QColor("#198754")))
         #     cursor.setCharFormat(char_format)
 
         for match in matches_timestamp:
@@ -695,11 +705,11 @@ class MyWidget(QtWidgets.QWidget):
             start_pos = match.start()
             end_pos = match.end()
             cursor.setPosition(start_pos)
-            cursor.movePosition(QtGui.QTextCursor.NextCharacter, QtGui.QTextCursor.KeepAnchor, end_pos - start_pos)
+            cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, end_pos - start_pos)
             char_format = cursor.charFormat()
-            char_format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-            char_format.setBackground(QtGui.QBrush(QtGui.QColor("#cccccc")))
-            char_format.setProperty(QtGui.QTextFormat.OutlinePen, QtGui.QPen(QtGui.QColor("#cccccc")))
+            char_format.setProperty(QTextFormat.FullWidthSelection, True)
+            char_format.setBackground(QBrush(QColor("#cccccc")))
+            char_format.setProperty(QTextFormat.OutlinePen, QPen(QColor("#cccccc")))
             
             cursor.setCharFormat(char_format)
     
@@ -718,13 +728,13 @@ class MyWidget(QtWidgets.QWidget):
         self.stacked_widget.setCurrentIndex(index)
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_F1:
+        if event.key() == Qt.Key_F1:
             self.show_page(0)
-        elif event.key() == QtCore.Qt.Key_F2:
+        elif event.key() == Qt.Key_F2:
             self.show_page(1)
-        elif event.key() == QtCore.Qt.Key_F3:
+        elif event.key() == Qt.Key_F3:
             self.show_page(2)
-        elif event.key() == QtCore.Qt.Key_F4:
+        elif event.key() == Qt.Key_F4:
             self.show_page(3)
 
     def layout_config(self):
@@ -732,19 +742,19 @@ class MyWidget(QtWidgets.QWidget):
         self.layout_config_dialog.exec()
 
     def show_about_info(self):
-        about_dialog = QtWidgets.QDialog(self)
+        about_dialog = QDialog(self)
         about_dialog.setWindowTitle("About")
         about_dialog.setFixedSize(400, 300)
 
-        layout = QtWidgets.QVBoxLayout()
+        layout = QVBoxLayout()
 
-        icon_label = QtWidgets.QLabel()
-        icon_label.setPixmap(QtGui.QPixmap("./favicon.ico").scaled(100, 100, QtCore.Qt.KeepAspectRatio))
-        icon_label.setAlignment(QtCore.Qt.AlignCenter)
+        icon_label = QLabel()
+        icon_label.setPixmap(QPixmap("./favicon.ico").scaled(100, 100, Qt.KeepAspectRatio))
+        icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(icon_label)
 
-        text_label = QtWidgets.QLabel()
-        text_label.setTextFormat(QtCore.Qt.RichText)
+        text_label = QLabel()
+        text_label.setTextFormat(Qt.RichText)
         text_label.setText(
             "<div style='text-align: center;'>"
             "<h2>SCOM</h2>"
@@ -755,7 +765,7 @@ class MyWidget(QtWidgets.QWidget):
             "</div>"
             "</div>"
         )
-        text_label.setAlignment(QtCore.Qt.AlignCenter)
+        text_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(text_label)
 
         about_dialog.setLayout(layout)
@@ -795,22 +805,22 @@ class MyWidget(QtWidgets.QWidget):
             if widget:
                 widget.setVisible(not widget.isVisible())
         if self.toggle_button_is_expanded:
-            self.toggle_button.setIcon(QtGui.QIcon("./res/expander-down.png"))
+            self.toggle_button.setIcon(QIcon("./res/expander-down.png"))
         else:
-            self.toggle_button.setIcon(QtGui.QIcon("./res/fork.png"))
+            self.toggle_button.setIcon(QIcon("./res/fork.png"))
         self.toggle_button_is_expanded = not self.toggle_button_is_expanded
                 
     def expand_command_input(self):
         self.command_input.setFixedHeight(100)
-        self.command_input.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QtGui.QIcon("./res/collapse.png"))
+        self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.expand_button.setIcon(QIcon("./res/collapse.png"))
         self.expand_button.setChecked(True)
         self.expand_button.clicked.connect(self.collapse_command_input)
     
     def collapse_command_input(self):
         self.command_input.setFixedHeight(35)
-        self.command_input.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QtGui.QIcon("./res/expand.png"))
+        self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.expand_button.setIcon(QIcon("./res/expand.png"))
         self.expand_button.setChecked(False)
         self.expand_button.clicked.connect(self.expand_command_input)
 
@@ -835,23 +845,23 @@ class MyWidget(QtWidgets.QWidget):
     def save_received_file(self):
         file_path = self.input_path_data_received.text()
         if not file_path:
-            QtWidgets.QMessageBox.warning(self, "Warning", "No file selected.")
+            QMessageBox.warning(self, "Warning", "No file selected.")
             return
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(self.received_data_textarea.toPlainText())
         except FileNotFoundError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "File not found.")
+            QMessageBox.warning(self, "Warning", "File not found.")
         except PermissionError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "Permission denied to save the file.")
+            QMessageBox.warning(self, "Warning", "Permission denied to save the file.")
            
     def set_default_received_file(self, event):
         self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
                
      
     def select_received_file(self):
-        file_dialog = QtWidgets.QFileDialog()
-        file_dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.AnyFile)
         file_dialog.setNameFilter("Files (*)")
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
@@ -859,8 +869,8 @@ class MyWidget(QtWidgets.QWidget):
                 self.input_path_data_received.setText(file_path)
         
     def select_file(self):
-        file_dialog = QtWidgets.QFileDialog()
-        file_dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setNameFilter("Files (*)")
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
@@ -870,7 +880,7 @@ class MyWidget(QtWidgets.QWidget):
     def send_file(self):
         file_path = self.file_input.text()
         if not file_path:
-            QtWidgets.QMessageBox.warning(self, "Warning", "No file selected.")
+            QMessageBox.warning(self, "Warning", "No file selected.")
             return
         try:
             # chunk_size = 4096  # 可以根据实际情况调整块大小
@@ -886,25 +896,25 @@ class MyWidget(QtWidgets.QWidget):
             self.progress_bar.setValue(0)
             self.file_sender.start()
         except FileNotFoundError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "File not found.")
+            QMessageBox.warning(self, "Warning", "File not found.")
         except PermissionError:
-            QtWidgets.QMessageBox.warning(self, "Warning", "Permission denied to open the file.")
+            QMessageBox.warning(self, "Warning", "Permission denied to open the file.")
         
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(progress)
                 
     def handle_key_press(self, event):
-        if event.key() == QtCore.Qt.Key_Return and event.modifiers() == QtCore.Qt.ShiftModifier:
+        if event.key() == Qt.Key_Return and event.modifiers() == Qt.ShiftModifier:
             # Handle Shift + Enter pressed: insert a new line
             cursor = self.command_input.textCursor()
             cursor.insertText("\n")
             self.command_input.setTextCursor(cursor)
-        elif event.key() == QtCore.Qt.Key_Return and event.modifiers() == QtCore.Qt.NoModifier:
+        elif event.key() == Qt.Key_Return and event.modifiers() == Qt.NoModifier:
             # Handle Enter pressed: send the command
             self.send_command()
         else:
             # Let other key events be handled normally
-            QtWidgets.QTextEdit.keyPressEvent(self.command_input, event)
+            QTextEdit.keyPressEvent(self.command_input, event)
 
     def port_update(self, data):
         old_ports = [self.serial_port_combo.itemText(i) for i in range(self.serial_port_combo.count())]
@@ -923,7 +933,7 @@ class MyWidget(QtWidgets.QWidget):
         else:
             pass
         self.received_data_textarea.ensureCursorVisible()
-        self.received_data_textarea.moveCursor(QtGui.QTextCursor.End)
+        self.received_data_textarea.moveCursor(QTextCursor.End)
         
     def show_search_dialog(self):
         #如果是在winow 1，则传入对应的文本框
@@ -1099,21 +1109,21 @@ class MyWidget(QtWidgets.QWidget):
     """
     def eventFilter(self, watched, event):
         if watched == self.prompt_button:
-            if event.type() == QtCore.QEvent.MouseButtonDblClick:
-                if event.button() == QtCore.Qt.RightButton:
+            if event.type() == QEvent.MouseButtonDblClick:
+                if event.button() == Qt.RightButton:
                     self.handle_right_double_click()
-            elif event.type() == QtCore.QEvent.MouseButtonPress:
-                if event.button() == QtCore.Qt.LeftButton:
+            elif event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.LeftButton:
                     self.handle_left_click()
-                elif event.button() == QtCore.Qt.RightButton:
-                    if event.modifiers() & QtCore.Qt.ControlModifier:
+                elif event.button() == Qt.RightButton:
+                    if event.modifiers() & Qt.ControlModifier:
                         self.handle_right_control_click()
-                    elif event.modifiers() & QtCore.Qt.ShiftModifier:
+                    elif event.modifiers() & Qt.ShiftModifier:
                         self.handle_right_shift_click()
                     else:
                         # Single right click
                         self.handle_right_click()
-                elif event.button() == QtCore.Qt.MiddleButton:
+                elif event.button() == Qt.MiddleButton:
                     self.handle_middle_click()
         return super().eventFilter(watched, event)
 
@@ -1262,11 +1272,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     try:
-        app = QtWidgets.QApplication([])
+        app = QApplication([])
         widget = MyWidget()
         widget.setStyleSheet(QSSLoader.load_stylesheet("./styles/fish.qss"))
         widget.setWindowTitle("Serial Communication")
-        app.setWindowIcon(QtGui.QIcon("./favicon.ico"))
+        app.setWindowIcon(QIcon("./favicon.ico"))
 
         # widget.showMaximized()
         widget.resize(1000, 900)

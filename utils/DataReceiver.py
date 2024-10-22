@@ -1,7 +1,6 @@
 import datetime
-import serial
 from utils import common
-from PySide6.QtCore import *
+from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker
 
 
 class DataReceiver(QThread):

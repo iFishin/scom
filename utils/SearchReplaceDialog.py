@@ -1,22 +1,28 @@
 import re
-from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6 import QtWidgets, QtGui
+from PySide6.QtWidgets import (
+    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QDialog, QTextEdit
+)
+from PySide6.QtGui import (
+    QTextCursor, QTextCharFormat, QColor
+)
 
 
-class SearchReplaceDialog(QtWidgets.QDialog):
+class SearchReplaceDialog(QDialog):
     def __init__(self, text_edit, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Search and Replace")
         self.text_edit = text_edit
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # Search section
-        search_layout = QtWidgets.QHBoxLayout()
-        self.search_label = QtWidgets.QLabel("Search:")
-        self.search_input = QtWidgets.QLineEdit()
-        self.search_button = QtWidgets.QPushButton("Find")
-        self.case_sensitive_checkbox = QtWidgets.QCheckBox("Case Sensitive")
-        self.regex_checkbox = QtWidgets.QCheckBox("Regex")
+        search_layout = QHBoxLayout()
+        self.search_label = QLabel("Search:")
+        self.search_input = QLineEdit()
+        self.search_button = QPushButton("Find")
+        self.case_sensitive_checkbox = QCheckBox("Case Sensitive")
+        self.regex_checkbox = QCheckBox("Regex")
         search_layout.addWidget(self.search_label)
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(self.search_button)
@@ -24,11 +30,11 @@ class SearchReplaceDialog(QtWidgets.QDialog):
         search_layout.addWidget(self.regex_checkbox)
 
         # Replace section
-        replace_layout = QtWidgets.QHBoxLayout()
-        self.replace_label = QtWidgets.QLabel("Replace:")
-        self.replace_input = QtWidgets.QLineEdit()
-        self.replace_button = QtWidgets.QPushButton("Replace")
-        self.replace_all_button = QtWidgets.QPushButton("Replace All")
+        replace_layout = QHBoxLayout()
+        self.replace_label = QLabel("Replace:")
+        self.replace_input = QLineEdit()
+        self.replace_button = QPushButton("Replace")
+        self.replace_all_button = QPushButton("Replace All")
         replace_layout.addWidget(self.replace_label)
         replace_layout.addWidget(self.replace_input)
         replace_layout.addWidget(self.replace_button)
@@ -42,8 +48,8 @@ class SearchReplaceDialog(QtWidgets.QDialog):
         self.replace_button.clicked.connect(self.replace_text)
         self.replace_all_button.clicked.connect(self.replace_all_text)
 
-        self.up_button = QtWidgets.QPushButton("↑")
-        self.down_button = QtWidgets.QPushButton("↓")
+        self.up_button = QPushButton("↑")
+        self.down_button = QPushButton("↓")
         search_layout.addWidget(self.up_button)
         search_layout.addWidget(self.down_button)
 
@@ -80,9 +86,9 @@ class SearchReplaceDialog(QtWidgets.QDialog):
             found = True
         if found:
             self.current_result_index = 0
-            new_cursor = QtGui.QTextCursor(doc)
+            new_cursor = QTextCursor(doc)
             new_cursor.setPosition(self.results[self.current_result_index])
-            new_cursor.setPosition(self.results[self.current_result_index + 1], QtGui.QTextCursor.KeepAnchor)
+            new_cursor.setPosition(self.results[self.current_result_index + 1], QTextCursor.KeepAnchor)
             self.text_edit.setTextCursor(new_cursor)
             self.highlight_text(text_to_find)
         else:
@@ -95,7 +101,7 @@ class SearchReplaceDialog(QtWidgets.QDialog):
             start = self.results[self.current_result_index]
             end = self.results[self.current_result_index + 1]
             cursor.setPosition(start)
-            cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
             cursor.insertText(self.replace_input.text())
             self.find_text()
             # Adjust the current result index to avoid out of range error
@@ -122,7 +128,7 @@ class SearchReplaceDialog(QtWidgets.QDialog):
             start = match.start()
             end = match.end()
             cursor.setPosition(start)
-            cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
             cursor.insertText(replacement_text)
             # Adjust the positions of the remaining matches
             shift = len(replacement_text) - (end - start)
@@ -135,27 +141,27 @@ class SearchReplaceDialog(QtWidgets.QDialog):
     def move_to_previous_result(self):
         if self.results and len(self.results) > self.current_result_index + 1:
             self.current_result_index = (self.current_result_index - 2) % len(self.results)
-            cursor = QtGui.QTextCursor(self.text_edit.document())
+            cursor = QTextCursor(self.text_edit.document())
             start = self.results[self.current_result_index]
             end = self.results[self.current_result_index + 1]
             cursor.setPosition(start)
-            cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
             self.text_edit.setTextCursor(cursor)
 
     def move_to_next_result(self):
         if self.results and len(self.results) > self.current_result_index + 1:
             self.current_result_index = (self.current_result_index + 2) % len(self.results)
-            cursor = QtGui.QTextCursor(self.text_edit.document())
+            cursor = QTextCursor(self.text_edit.document())
             start = self.results[self.current_result_index]
             end = self.results[self.current_result_index + 1]
             cursor.setPosition(start)
-            cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
             self.text_edit.setTextCursor(cursor)
 
     def highlight_text(self, text):
         selections = []
-        format = QtGui.QTextCharFormat()
-        format.setBackground(QtGui.QColor("yellow"))
+        format = QTextCharFormat()
+        format.setBackground(QColor("yellow"))
         regex_flags = 0
         if not self.case_sensitive_checkbox.isChecked():
             regex_flags |= re.IGNORECASE
@@ -166,10 +172,10 @@ class SearchReplaceDialog(QtWidgets.QDialog):
         for match in regex.finditer(self.text_edit.toPlainText()):
             start = match.start()
             end = match.end()
-            selection = QtWidgets.QTextEdit.ExtraSelection()
+            selection = QTextEdit.ExtraSelection()
             selection.format = format
-            selection.cursor = QtGui.QTextCursor(self.text_edit.document())
+            selection.cursor = QTextCursor(self.text_edit.document())
             selection.cursor.setPosition(start)
-            selection.cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+            selection.cursor.setPosition(end, QTextCursor.KeepAnchor)
             selections.append(selection)
         self.text_edit.setExtraSelections(selections)

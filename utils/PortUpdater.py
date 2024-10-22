@@ -1,4 +1,4 @@
-from PySide6.QtCore import *
+from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker
 from serial.tools import list_ports
 
 class PortUpdater(QThread):
