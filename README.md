@@ -9,10 +9,9 @@ SCOM - Serial Communication是一个简单且易于扩展的开源串口通信�
 
 ## 二、系统要求
 
-- **操作系统：**Windows、
-
+- **操作系统**：Windows、
 - **Python 版本**：Python 3.6 及以上。
-- **依赖库：**
+- **依赖库**：
 1. PySide6：用于构建用户界面。
 2. pyserial：实现串口通信功能。
 

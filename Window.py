@@ -36,24 +36,28 @@ from utils.LayoutConifgDialog import LayoutConfigDialog
 class MyWidget(QWidget):
     def __init__(self):
         super().__init__()
+        
+        # Init constants for the widget
+        self.main_Serial = None
+        self.prompt_index = 0
+        self.total_times = 0
+        self.is_stop_batch = False
+        
+        # Before init the UI, read the Configurations of SCOM from the config.ini
+        self.config = self.read_config()
+        
         self.init_UI()
         
         # After init the UI, set the layout of the widget
         if not os.path.exists("config.ini"):
             self.create_default_config()
-        self.layout_config_dialog = LayoutConfigDialog(self)
-        self.layout_config_dialog.apply()
         
-        # Init constants for the widget
-        self.prompt_index = 0
-        self.total_times = 0
-        self.is_stop_batch = False
-        
-        
-        # Read and apply the Configurations of SCOM from the config.ini
-        self.config = self.read_config()
         self.apply_config(self.config)
-
+        
+        self.save_settings_action.triggered.connect(self.save_config(self.config))
+        
+        
+        
         self.thread_pool = QThreadPool()
         # Init the thread
         self.port_updater = PortUpdater()
@@ -89,10 +93,8 @@ class MyWidget(QWidget):
         self.settings_menu = self.menu_bar.addMenu("Settings")
         
         self.save_settings_action = self.settings_menu.addAction("Save Config")
-        self.save_settings_action.triggered.connect(self.save_config)
         self.layout_config_action = self.settings_menu.addAction("Layout Config")
         self.layout_config_action.triggered.connect(self.layout_config)
-
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
@@ -165,7 +167,7 @@ class MyWidget(QWidget):
 
         self.flowcontrol_label = QLabel("FlowControl:")
         self.flowcontrol_checkbox = QComboBox()
-        self.flowcontrol_checkbox.addItems(["None", "RTS/CTS", "XON/XOFF"])
+        self.flowcontrol_checkbox.addItems(["None", "RTS/CTS", "XON/XOFF", "DSR/DTR"])
         self.flowcontrol_checkbox.setCurrentText("None")
         
         self.dtr_label = QLabel("DTR:")
@@ -188,7 +190,7 @@ class MyWidget(QWidget):
         self.timeStamp_checkbox = QCheckBox()
         self.timeStamp_checkbox.stateChanged.connect(self.timeStamp_state_changed)
         
-        self.label_data_received = QLabel("Data Received:")
+        self.label_data_received = QLabel("Data Received:", Alignment=Qt.AlignRight)
         self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
         self.input_path_data_received.setReadOnly(True)
@@ -640,7 +642,7 @@ class MyWidget(QWidget):
         self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
         self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
         self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
-        # self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamps"))
+        self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
         self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
         self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
         self.file_input.setText(config.get("Set", "PathFileSend"))
@@ -651,7 +653,7 @@ class MyWidget(QWidget):
             self.hotkeys_buttons[i - 1].setText(hotkey_name)
             hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}")
             self.hotkeys_buttons[i - 1].clicked.connect(self.handle_hotkey_click(i, hotkey_value))
-    
+
     def save_config(self, config: configparser.ConfigParser):
         # Set
         config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
@@ -663,7 +665,7 @@ class MyWidget(QWidget):
         config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
         config.set("Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked()))
         config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
-        config.set("Set", "TimeStamps", str(self.timeStamp_checkbox.isChecked()))
+        config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
         config.set("Set", "PathDataReceived", self.input_path_data_received.text())
         config.set("Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked()))
         config.set("Set", "PathFileSend", self.file_input.text())
@@ -739,6 +741,7 @@ class MyWidget(QWidget):
 
     def layout_config(self):
         # LayoutConfigDialog
+        self.layout_config_dialog = LayoutConfigDialog(self)
         self.layout_config_dialog.exec()
 
     def show_about_info(self):
@@ -766,38 +769,51 @@ class MyWidget(QWidget):
             "</div>"
         )
         text_label.setAlignment(Qt.AlignCenter)
+        text_label.setOpenExternalLinks(True)
         layout.addWidget(text_label)
 
         about_dialog.setLayout(layout)
         about_dialog.exec()
 
     def dtr_state_changed(self, state):
-        if state == 2:
-            self.data_receiver.serial_port.dtr = True
-            self.main_Serial.dtr = True
+        if self.main_Serial:
+            if state == 2:
+                self.data_receiver.serial_port.dtr = True
+                self.main_Serial.dtr = True
+            else:
+                self.data_receiver.serial_port.dtr = False
+                self.main_Serial.dtr = False
         else:
-            self.data_receiver.serial_port.dtr = False
-            self.main_Serial.dtr = False
+            self.dtr_checkbox.setChecked(state)
     
     def rts_state_changed(self, state):
-        if state == 2:
-            self.data_receiver.serial_port.rts = True
-            self.main_Serial.rts = True
+        if self.main_Serial:
+            if state == 2:
+                self.data_receiver.serial_port.rts = True
+                self.main_Serial.rts = True
+            else:
+                self.data_receiver.serial_port.rts = False
+                self.main_Serial.rts = False
         else:
-            self.data_receiver.serial_port.rts = False
-            self.main_Serial.rts = False
+            self.rts_checkbox.setChecked(state)
 
     def symbol_state_changed(self, state):
-        if state == 2:
-            self.data_receiver.is_show_symbol = True
+        if self.main_Serial:
+            if state == 2:
+                self.data_receiver.is_show_symbol = True
+            else:
+                self.data_receiver.is_show_symbol = False
         else:
-            self.data_receiver.is_show_symbol = False
+            self.symbol_checkbox.setChecked(state)
             
     def timeStamp_state_changed(self, state):
-        if state == 2:
-            self.data_receiver.is_show_timeStamp = True
+        if self.main_Serial:
+            if state == 2:
+                self.data_receiver.is_show_timeStamp = True
+            else:
+                self.data_receiver.is_show_timeStamp = False
         else:
-            self.data_receiver.is_show_timeStamp = False
+            self.timeStamp_checkbox.setChecked(state)
 
     def show_more_options(self):
         for i in range(self.settings_more_layout.count()):
@@ -987,7 +1003,7 @@ class MyWidget(QWidget):
                     )
                     self.port_button.clicked.disconnect(self.port_on)
                     self.port_button.clicked.connect(self.port_off)
-                    # 禁用相关控件
+                    # Disable the serial port and baud rate combo boxes
                     self.serial_port_combo.setEnabled(False)
                     self.baud_rate_combo.setEnabled(False)
                     self.send_button.setEnabled(True)
@@ -1001,17 +1017,15 @@ class MyWidget(QWidget):
                     )
             except serial.SerialException as e:
                 print(f"Error opening serial port: {e}")
-                print("suggestion:11")
             
             self.data_receiver.serial_port = self.main_Serial
-            self.data_receiver.serial_port.dtr = False
-            self.data_receiver.serial_port.rts = False
+            self.data_receiver.is_show_symbol = self.symbol_checkbox.isChecked()
+            self.data_receiver.is_show_timeStamp = self.timeStamp_checkbox.isChecked()
             self.data_receiver.resume_thread()
             
             
     def port_off(self):
         self.data_receiver.pause_thread()
-        
         try:
             self.main_Serial = common.port_off(self.main_Serial)
             if self.main_Serial is None:

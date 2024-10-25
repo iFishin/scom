@@ -55,6 +55,8 @@ def port_on(
     parity=serial.PARITY_NONE,
     bytesize=serial.EIGHTBITS,
     flowcontrol=None,
+    dtr=False,
+    rts=False,
 ) -> serial.Serial:
     """
     打开指定参数的串口
@@ -66,46 +68,44 @@ def port_on(
     parity: 校验位（默认 serial.PARITY_NONE）
     bytesize: 数据位（默认 serial.EIGHTBITS）
     flowcontrol: 流控制（默认 None）
+    dtr: DTR 控制（默认 False）
+    rts: RTS 控制（默认 False）
 
     返回：
     serial.Serial or None: 成功打开的串口对象或 None（如果打开失败）
     """
     try:
+        # 创建一个 Serial 对象但不打开串口连接
+        ser = serial.Serial()
+        ser.port = port
+        ser.baudrate = baudrate
+        ser.stopbits = stopbits
+        ser.parity = parity
+        ser.bytesize = bytesize
         if flowcontrol == "RTS/CTS":
-            port_serial = serial.Serial(
-                port,
-                baudrate,
-                stopbits=stopbits,
-                parity=parity,
-                bytesize=bytesize,
-                rtscts=True,
-                timeout=0.1,
-            )
+            ser.rtscts = True
+            ser.xonxoff = False
+            ser.dsrdtr = False
         elif flowcontrol == "XON/XOFF":
-            port_serial = serial.Serial(
-                port,
-                baudrate,
-                stopbits=stopbits,
-                parity=parity,
-                bytesize=bytesize,
-                xonxoff=True,
-                timeout=0.1,
-            )
+            ser.xonxoff = True
+            ser.rtscts = False
+            ser.dsrdtr = False
+        elif flowcontrol == "DSR/DTR":
+            ser.dsrdtr = True
+            ser.rtscts = False
+            ser.xonxoff = False
         else:
-            port_serial = serial.Serial(
-                port,
-                baudrate,
-                stopbits=stopbits,
-                parity=parity,
-                bytesize=bytesize,
-                timeout=0.1,
-            )
-        return port_serial
+            ser.rtscts = False
+            ser.xonxoff = False
+            ser.dsrdtr = False
+        ser.rts = rts
+        ser.dtr = dtr
+        ser.open()
+        return ser
     except serial.SerialException as e:
         print(f"{port}口连接失败，可能是串口被占用。")
         print(e)
         return None
-
 
 def port_off(port_serial: serial.Serial) -> None:
     """
@@ -117,7 +117,7 @@ def port_off(port_serial: serial.Serial) -> None:
     返回：
     None
     """
-    if port_serial and port_serial.is_open:
+    if port_serial:
         try:
             port_serial.close()
         except Exception as e:
