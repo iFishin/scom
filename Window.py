@@ -5,7 +5,6 @@ import re
 import time
 import json
 import serial
-import random
 import logging
 import configparser
 from PySide6.QtWidgets import (
@@ -19,8 +18,8 @@ from PySide6.QtCore import (
     
 )
 from PySide6.QtGui import (
-    QTextDocument, QTextCursor, QIcon, QIntValidator, QTextFormat, QBrush, 
-    QPen, QColor, QPixmap, QShortcut
+    QTextDocument, QTextCursor, QIcon, QIntValidator, QBrush, 
+    QPen, QColor, QPixmap, QShortcut, QTextCharFormat, QFont
 )
 from serial.tools import list_ports
 import utils.common as common
@@ -30,6 +29,7 @@ from utils.PortUpdater import PortUpdater
 from utils.FileSender import FileSender
 from utils.CommandExecutor import CommandExecutor
 from utils.SearchReplaceDialog import SearchReplaceDialog
+from utils.HotkeysConfigDialog import HotkeysConfigDialog
 from utils.LayoutConifgDialog import LayoutConfigDialog
 
 
@@ -95,6 +95,8 @@ class MyWidget(QWidget):
         self.save_settings_action = self.settings_menu.addAction("Save Config")
         self.layout_config_action = self.settings_menu.addAction("Layout Config")
         self.layout_config_action.triggered.connect(self.layout_config)
+        self.hotkeys_config_action = self.settings_menu.addAction("Hotkeys Config")
+        self.hotkeys_config_action.triggered.connect(self.hotkeys_config)
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
@@ -678,42 +680,49 @@ class MyWidget(QWidget):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"), "w", encoding="utf-8") as configfile:
             config.write(configfile)
         
-    def apply_style(self):
+    def apply_style(self, data):
         text = self.received_data_textarea.toPlainText()
         doc = self.received_data_textarea.document()
         cursor = QTextCursor(doc)
 
-        # 使用正则表达式查找匹配的字符串
-        pattern_timestamp = r"\[20(.*?)\]"
-        matches_timestamp = re.finditer(pattern_timestamp, text)
-        
-        # pattern_ATCommand = r"AT\+[^（）\n\t\\\r]+"
-        # matches_ATCommand = re.finditer(pattern_ATCommand, text)
+        # 创建字符格式对象
+        ok_char_format = QTextCharFormat()
+        ok_char_format.setForeground(QBrush(QColor("#198754")))
+        ok_char_format.setFontWeight(QFont.Bold)
 
-        # for match in matches_ATCommand:
-        #     start_pos = match.start()
-        #     end_pos = match.end()
+        error_char_format = QTextCharFormat()
+        error_char_format.setForeground(QBrush(QColor("#dc3545")))
+        error_char_format.setFontWeight(QFont.Bold)
 
-        #     # 设置底色和圆角
-        #     cursor.setPosition(start_pos)
-        #     cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, end_pos - start_pos)
-        #     char_format = cursor.charFormat()
-        #     # 设置字体颜色
-        #     char_format.setForeground(QBrush(QColor("#198754")))
-        #     cursor.setCharFormat(char_format)
-
-        for match in matches_timestamp:
-            # 设置底色和圆角
+        # 匹配字符串 "OK" 并设置样式
+        pattern_ok = r"OK\n"
+        matches_ok = re.finditer(pattern_ok, text, re.MULTILINE)
+        for match in matches_ok:
             start_pos = match.start()
             end_pos = match.end()
             cursor.setPosition(start_pos)
             cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, end_pos - start_pos)
-            char_format = cursor.charFormat()
-            char_format.setProperty(QTextFormat.FullWidthSelection, True)
-            char_format.setBackground(QBrush(QColor("#cccccc")))
-            char_format.setProperty(QTextFormat.OutlinePen, QPen(QColor("#cccccc")))
-            
-            cursor.setCharFormat(char_format)
+            existing_format = cursor.charFormat()
+            new_format = QTextCharFormat(existing_format)
+            new_format.setForeground(ok_char_format.foreground())
+            new_format.setFontWeight(ok_char_format.fontWeight())
+            cursor.setCharFormat(new_format)
+
+        # 匹配字符串 "ERROR" 并设置样式
+        pattern_error = r"ERROR\n"
+        matches_error = re.finditer(pattern_error, text, re.MULTILINE)
+        for match in matches_error:
+            start_pos = match.start()
+            end_pos = match.end()
+            cursor.setPosition(start_pos)
+            cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, end_pos - start_pos)
+            existing_format = cursor.charFormat()
+            new_format = QTextCharFormat(existing_format)
+            new_format.setForeground(error_char_format.foreground())
+            new_format.setFontWeight(error_char_format.fontWeight())
+            cursor.setCharFormat(new_format)
+
+        self.received_data_textarea.setDocument(doc)
     
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
@@ -743,6 +752,10 @@ class MyWidget(QWidget):
         # LayoutConfigDialog
         self.layout_config_dialog = LayoutConfigDialog(self)
         self.layout_config_dialog.exec()
+        
+    def hotkeys_config(self):
+        self.hotkeys_config_dialog = HotkeysConfigDialog(self)
+        self.hotkeys_config_dialog.exec()
 
     def show_about_info(self):
         about_dialog = QDialog(self)
@@ -939,8 +952,9 @@ class MyWidget(QWidget):
             self.serial_port_combo.addItems(data)
         
     def update_main_textarea(self, data):
-        self.received_data_textarea.append(data.strip().replace('\r\n', '\n'))
-        # self.apply_style()
+        current_text = self.received_data_textarea.toPlainText()
+        new_text = "{}{}\n".format(current_text, data.strip().replace('\\r\\n', '\\n'))
+        self.received_data_textarea.setPlainText(new_text)
         file_path = self.input_path_data_received.text()
         if file_path and self.checkbox_data_received.isChecked():
             common.print_write(data, file_path)
@@ -948,8 +962,10 @@ class MyWidget(QWidget):
             common.print_write(data)
         else:
             pass
-        self.received_data_textarea.ensureCursorVisible()
+
         self.received_data_textarea.moveCursor(QTextCursor.End)
+
+        # self.apply_style(data)
         
     def show_search_dialog(self):
         #如果是在winow 1，则传入对应的文本框
@@ -1185,7 +1201,7 @@ class MyWidget(QWidget):
         for i in range(len(self.interVal)):
             self.interVal[i].setText("")
         
-    # 过滤已选择的命令    
+    # Filter selected commands  
     def filter_selected_command(self):
         self.selected_commands = []
         for i in range(len(self.input_fields)):
