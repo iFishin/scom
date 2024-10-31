@@ -755,7 +755,7 @@ class MyWidget(QWidget):
         
     def hotkeys_config(self):
         self.hotkeys_config_dialog = HotkeysConfigDialog(self)
-        self.hotkeys_config_dialog.exec()
+        self.hotkeys_config_dialog.show()
 
     def show_about_info(self):
         about_dialog = QDialog(self)
@@ -952,9 +952,8 @@ class MyWidget(QWidget):
             self.serial_port_combo.addItems(data)
         
     def update_main_textarea(self, data):
-        current_text = self.received_data_textarea.toPlainText()
-        new_text = "{}{}\n".format(current_text, data.strip().replace('\\r\\n', '\\n'))
-        self.received_data_textarea.setPlainText(new_text)
+        self.received_data_textarea.append(data.strip().replace('\r\n', '\n'))
+        # self.apply_style()
         file_path = self.input_path_data_received.text()
         if file_path and self.checkbox_data_received.isChecked():
             common.print_write(data, file_path)
@@ -962,10 +961,8 @@ class MyWidget(QWidget):
             common.print_write(data)
         else:
             pass
-
+        self.received_data_textarea.ensureCursorVisible()
         self.received_data_textarea.moveCursor(QTextCursor.End)
-
-        # self.apply_style(data)
         
     def show_search_dialog(self):
         #如果是在winow 1，则传入对应的文本框
@@ -978,7 +975,7 @@ class MyWidget(QWidget):
         elif self.stacked_widget.currentIndex() == 3:
             dialog = SearchReplaceDialog(self.text_input_layout_4, self)
             
-        dialog.exec()
+        dialog.show()
 
     def port_on(self):
             self.port_updater.pause_thread()

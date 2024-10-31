@@ -147,6 +147,7 @@ class SearchReplaceDialog(QDialog):
             cursor.setPosition(start)
             cursor.setPosition(end, QTextCursor.KeepAnchor)
             self.text_edit.setTextCursor(cursor)
+            self.highlight_text(self.search_input.text())
 
     def move_to_next_result(self):
         if self.results and len(self.results) > self.current_result_index + 1:
@@ -157,11 +158,14 @@ class SearchReplaceDialog(QDialog):
             cursor.setPosition(start)
             cursor.setPosition(end, QTextCursor.KeepAnchor)
             self.text_edit.setTextCursor(cursor)
+            self.highlight_text(self.search_input.text())
 
     def highlight_text(self, text):
         selections = []
-        format = QTextCharFormat()
-        format.setBackground(QColor("yellow"))
+        normal_format = QTextCharFormat()
+        normal_format.setBackground(QColor("yellow"))
+        selected_format = QTextCharFormat()
+        selected_format.setBackground(QColor("green"))
         regex_flags = 0
         if not self.case_sensitive_checkbox.isChecked():
             regex_flags |= re.IGNORECASE
@@ -169,13 +173,18 @@ class SearchReplaceDialog(QDialog):
             regex = re.compile(text, regex_flags)
         else:
             regex = re.compile(re.escape(text), regex_flags)
+        cursor = self.text_edit.textCursor()
         for match in regex.finditer(self.text_edit.toPlainText()):
             start = match.start()
             end = match.end()
             selection = QTextEdit.ExtraSelection()
-            selection.format = format
+
             selection.cursor = QTextCursor(self.text_edit.document())
             selection.cursor.setPosition(start)
             selection.cursor.setPosition(end, QTextCursor.KeepAnchor)
             selections.append(selection)
+            if cursor.hasSelection() and (start <= cursor.selectionStart() and cursor.selectionEnd() <= end or cursor.selectionStart() <= start and end <= cursor.selectionEnd()):
+                selection.format = selected_format
+            else:
+                selection.format = normal_format
         self.text_edit.setExtraSelections(selections)

@@ -270,17 +270,19 @@ def reset(port_serial: serial.Serial) -> None:
         port_read(port_serial)
 
 
-def print_write(text: str, log_file=None) -> None:
+def print_write(text: str, log_file=None, isPrint=False) -> None:
     """
     打印并写入文本到日志
 
     参数：
     text (str): 要打印和写入日志的文本
+    isPrint (bool): 是否打印文本（默认 False）
     """
     for line in text.strip().split("\n"):
         if line.strip():
-            print(f"{line}")
             log_write(f"{line}", log_file=log_file)
+            if isPrint:
+                print(f"{line}")
 
 
 def clear_terminal() -> None:
