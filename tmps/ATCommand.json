@@ -2,229 +2,25 @@
     "commands": [
         {
             "selected": false,
-            "command": "1. 初始化BLE为外围设备",
+            "command": "Command_1",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEINIT=2",
+            "command": "Command_2",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "",
+            "command": "Command_3",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "2. 设置广播参数，并完成参数配置",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRV=fff1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSCHAR=fff2",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "3. 保存广播参数配置，并查询是否保存成功",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "4. 开启广播，手机能够正常连接",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEADVSTART",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "5. 重启模块并查询参数配置是否保存",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QRST",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QECHO=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV?",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "6. 使用手机查看是否能扫描到广播，是否能够正常连接",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "7. 模块断电然后上电，查看是否保存参数配置，是否能够直接连接",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QECHO=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV?",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "8. 清除广播参数配置，查看是否清除成功",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV=0",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV?",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "9. 重启模块并查询参数配置是否保存，查看是否能够直接连接",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QRST",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QECHO=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV?",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "10. 将模块断电重启，查询参数配置是否保存，查看手机能否直接连接",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "[断电然后上电]",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QECHO=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESERVERENV?",
+            "command": "Command_4",
             "withEnter": true,
             "interval": ""
         }

@@ -25,7 +25,6 @@ from serial.tools import list_ports
 import utils.common as common
 from utils.QSSLoader import QSSLoader
 from utils.DataReceiver import DataReceiver
-from utils.PortUpdater import PortUpdater
 from utils.FileSender import FileSender
 from utils.CommandExecutor import CommandExecutor
 from utils.SearchReplaceDialog import SearchReplaceDialog
@@ -56,17 +55,8 @@ class MyWidget(QWidget):
         
         self.save_settings_action.triggered.connect(self.save_config(self.config))
         
-        
-        
         self.thread_pool = QThreadPool()
         # Init the thread
-        self.port_updater = PortUpdater()
-        self.port_updater.portUpdated.connect(self.port_update)
-        self.port_update_thread = QThread()
-        self.port_updater.moveToThread(self.port_update_thread)
-        self.port_update_thread.started.connect(self.port_updater.run)
-        self.port_update_thread.finished.connect(self.port_updater.deleteLater)
-        self.port_update_thread.start()
 
         self.data_receiver = DataReceiver(None)
         self.data_receiver.dataReceived.connect(self.update_main_textarea)
@@ -114,6 +104,8 @@ class MyWidget(QWidget):
         self.serial_port_label = QLabel("Port:")
         self.serial_port_combo = QComboBox()
         self.serial_port_combo.addItems([port.device for port in list_ports.comports()])
+        # Use the default showPopup method
+        self.serial_port_combo.showPopup = self.port_update
 
         self.baud_rate_label = QLabel("BaudRate:")
         self.baud_rate_combo = QComboBox()
@@ -944,12 +936,12 @@ class MyWidget(QWidget):
         else:
             # Let other key events be handled normally
             QTextEdit.keyPressEvent(self.command_input, event)
-
-    def port_update(self, data):
-        old_ports = [self.serial_port_combo.itemText(i) for i in range(self.serial_port_combo.count())]
-        if old_ports != data:
-            self.serial_port_combo.clear()
-            self.serial_port_combo.addItems(data)
+            
+    def port_update(self):
+        current_ports = [port.device for port in list_ports.comports()]
+        self.serial_port_combo.clear()
+        self.serial_port_combo.addItems(current_ports)
+        QComboBox.showPopup(self.serial_port_combo)
         
     def update_main_textarea(self, data):
         self.received_data_textarea.append(data.strip().replace('\r\n', '\n'))
@@ -978,8 +970,6 @@ class MyWidget(QWidget):
         dialog.show()
 
     def port_on(self):
-            self.port_updater.pause_thread()
-
             serial_port = self.serial_port_combo.currentText()
             baud_rate = int(self.baud_rate_combo.currentText())
             stop_bits = float(self.stopbits_combo.currentText())
@@ -1060,8 +1050,6 @@ class MyWidget(QWidget):
                 self.port_button.setEnabled(True)
         except Exception as e:
             print(f"Error closing serial port: {e}")
-        
-        self.port_updater.resume_thread()
 
 
     """
@@ -1297,6 +1285,14 @@ class MyWidget(QWidget):
 # Create a logger for the application
 logger = logging.getLogger(__name__)
 
+# Create a logger for user activities
+user_activity_logger = logging.getLogger('user_activity')
+user_activity_handler = logging.FileHandler('logs/user_activity.log')
+user_activity_handler.setLevel(logging.INFO)
+user_activity_formatter = logging.Formatter('%(asctime)s - %(message)s')
+user_activity_handler.setFormatter(user_activity_formatter)
+user_activity_logger.addHandler(user_activity_handler)
+
 def main():
     try:
         app = QApplication([])
@@ -1308,9 +1304,13 @@ def main():
         # widget.showMaximized()
         widget.resize(1000, 900)
         widget.show()
+
         sys.exit(app.exec())
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+
+def record_user_activity(activity):
+    user_activity_logger.info(activity)
 
 if __name__ == "__main__":
     logging.basicConfig(

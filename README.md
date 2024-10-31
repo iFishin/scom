@@ -1,9 +1,9 @@
 
 ## 一、简介
 
-![SCOM](./favicon.ico)
+![SCOM](./res/Samples.png)
 
-SCOM - Serial Communication是一个简单且易于扩展的开源串口通信工具，旨在为使用者提供便捷的方式与各种串口设备进行交互。
+**SCOM - Serial Communication**是一个简单且易于扩展的开源串口通信工具，旨在为使用者提供便捷的方式与各种串口设备进行交互。
 
 无论是开发人员还是测试人员，都可以在此项目的基础之上编写拓展自定义功能。
 
