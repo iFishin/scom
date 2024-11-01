@@ -42,12 +42,12 @@ class DataReceiver(QThread):
                         response = common.port_read(self.serial_port)
                         if response == "":
                             continue
-                        response = repr(response)[1:-1].replace("\\n", "\\n\n")
+                        response = repr(response)[1:-1].replace("\\r\\n", "\\r\\n\r\n")
                     else:
                         if self.is_show_hex:
                             response = common.port_read_hex(self.serial_port)
                         else:
-                            response = common.port_read(self.serial_port)
+                            response = common.port_readline(self.serial_port)
                         if response == "":
                             continue
                     response = response.strip()
@@ -57,7 +57,7 @@ class DataReceiver(QThread):
                         formatted_lines = [f"{now_time}{item}" for item in response.split("\n")]
                     else:
                         formatted_lines = [item for item in response.split("\n")]
-                    combined_data = "".join(formatted_lines)
+                    combined_data = "\n".join(formatted_lines)
                     self.dataReceived.emit(combined_data)
                     QThread.sleep(0.1)
             except UnicodeDecodeError as e:

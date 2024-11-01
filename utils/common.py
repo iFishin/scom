@@ -170,6 +170,7 @@ def port_read(port_serial: serial.Serial, size: int=1) -> str:
                 reply += port_serial.read(size=size).decode("UTF-8", errors="ignore")
         except Exception as e:
             print(f"Error reading from serial port: {e}")
+            raise e
         return reply
 
 def port_read_hex(port_serial: serial.Serial, size: int=1) -> str:
