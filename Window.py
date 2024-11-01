@@ -19,7 +19,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QTextDocument, QTextCursor, QIcon, QIntValidator, QBrush, 
-    QPen, QColor, QPixmap, QShortcut, QTextCharFormat, QFont
+    QPen, QColor, QPixmap, QShortcut, QTextCharFormat, QFont, QPainter
 )
 from serial.tools import list_ports
 import utils.common as common
@@ -30,7 +30,6 @@ from utils.CommandExecutor import CommandExecutor
 from utils.SearchReplaceDialog import SearchReplaceDialog
 from utils.HotkeysConfigDialog import HotkeysConfigDialog
 from utils.LayoutConifgDialog import LayoutConfigDialog
-
 
 class MyWidget(QWidget):
     def __init__(self):
@@ -48,10 +47,13 @@ class MyWidget(QWidget):
         self.init_UI()
         
         # After init the UI, set the layout of the widget
+        self.layout_config_dialog = LayoutConfigDialog(self)
+        
         if not os.path.exists("config.ini"):
             self.create_default_config()
         
         self.apply_config(self.config)
+        self.layout_config_dialog.apply()
         
         self.save_settings_action.triggered.connect(self.save_config(self.config))
         
@@ -184,6 +186,10 @@ class MyWidget(QWidget):
         self.timeStamp_checkbox = QCheckBox()
         self.timeStamp_checkbox.stateChanged.connect(self.timeStamp_state_changed)
         
+        self.received_hex_data_label = QLabel("ReceivedHexData:")
+        self.received_hex_data_checkbox = QCheckBox()
+        self.received_hex_data_checkbox.stateChanged.connect(self.received_hex_data_state_changed)
+        
         self.label_data_received = QLabel("Data Received:", Alignment=Qt.AlignRight)
         self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"))
@@ -290,6 +296,8 @@ class MyWidget(QWidget):
         self.settings_more_layout.addWidget(self.timeStamp_checkbox, 3, 3, 1, 1)
         self.settings_more_layout.addWidget(self.label_send_with_enter, 4, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_more_layout.addWidget(self.checkbox_send_with_enter, 4, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.received_hex_data_label, 4, 2, 1, 1, alignment=Qt.AlignRight)
+        self.settings_more_layout.addWidget(self.received_hex_data_checkbox, 4, 3, 1, 1)
 
         self.settings_more_layout.addWidget(self.label_data_received, 5, 0, 1, 1)
         self.settings_more_layout.addWidget(self.input_path_data_received, 5, 1, 1, 2)
@@ -637,6 +645,7 @@ class MyWidget(QWidget):
         self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
         self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
         self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
+        self.received_hex_data_checkbox.setChecked(config.getboolean("Set", "ReceivedHex"))
         self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
         self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
         self.file_input.setText(config.get("Set", "PathFileSend"))
@@ -647,6 +656,9 @@ class MyWidget(QWidget):
             self.hotkeys_buttons[i - 1].setText(hotkey_name)
             hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}")
             self.hotkeys_buttons[i - 1].clicked.connect(self.handle_hotkey_click(i, hotkey_value))
+        
+        # Layout
+        
 
     def save_config(self, config: configparser.ConfigParser):
         # Set
@@ -660,6 +672,7 @@ class MyWidget(QWidget):
         config.set("Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked()))
         config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
         config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
+        config.set("Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked()))
         config.set("Set", "PathDataReceived", self.input_path_data_received.text())
         config.set("Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked()))
         config.set("Set", "PathFileSend", self.file_input.text())
@@ -742,7 +755,6 @@ class MyWidget(QWidget):
 
     def layout_config(self):
         # LayoutConfigDialog
-        self.layout_config_dialog = LayoutConfigDialog(self)
         self.layout_config_dialog.exec()
         
     def hotkeys_config(self):
@@ -819,6 +831,13 @@ class MyWidget(QWidget):
                 self.data_receiver.is_show_timeStamp = False
         else:
             self.timeStamp_checkbox.setChecked(state)
+    
+    def received_hex_data_state_changed(self, state):
+        if self.main_Serial:
+            if state == 2:
+                self.data_receiver.is_show_hex = True
+            else:
+                self.data_receiver.is_show_hex = False
 
     def show_more_options(self):
         for i in range(self.settings_more_layout.count()):
@@ -944,7 +963,7 @@ class MyWidget(QWidget):
         QComboBox.showPopup(self.serial_port_combo)
         
     def update_main_textarea(self, data):
-        self.received_data_textarea.append(data.strip().replace('\r\n', '\n'))
+        self.received_data_textarea.append(data)
         # self.apply_style()
         file_path = self.input_path_data_received.text()
         if file_path and self.checkbox_data_received.isChecked():
@@ -1024,6 +1043,7 @@ class MyWidget(QWidget):
             self.data_receiver.serial_port = self.main_Serial
             self.data_receiver.is_show_symbol = self.symbol_checkbox.isChecked()
             self.data_receiver.is_show_timeStamp = self.timeStamp_checkbox.isChecked()
+            self.data_receiver.is_show_hex = self.received_hex_data_checkbox.isChecked()
             self.data_receiver.resume_thread()
             
             
@@ -1150,6 +1170,7 @@ class MyWidget(QWidget):
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.input_prompt.setCursorPosition(0)
             self.prompt_index += 1
+            self.input_prompt_index.setText(str(self.prompt_index))
         # Set Input Prompt Index read-only
         self.input_prompt_index.setReadOnly(True)
 
@@ -1159,6 +1180,7 @@ class MyWidget(QWidget):
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.input_prompt.setCursorPosition(0)
             self.prompt_index += 1
+            self.input_prompt_index.setText(str(self.prompt_index))
             
     def handle_right_double_click(self):
         pass
@@ -1167,6 +1189,7 @@ class MyWidget(QWidget):
         if self.prompt_index >= 0:
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.prompt_index -= 1
+            self.input_prompt_index.setText(str(self.prompt_index))
 
     def handle_right_shift_click(self):
         print("Right button click with Shift modifier")
@@ -1175,6 +1198,7 @@ class MyWidget(QWidget):
         if self.prompt_index >= 0:
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.prompt_index -= 1
+            self.input_prompt_index.setText(str(self.prompt_index))
     
     def set_prompt_index(self):
         self.prompt_index = int(self.input_prompt_index.text())
@@ -1319,3 +1343,5 @@ if __name__ == "__main__":
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
     main()
+
+

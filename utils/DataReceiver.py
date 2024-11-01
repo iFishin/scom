@@ -1,4 +1,5 @@
 import datetime
+import binascii
 from utils import common
 from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker
 
@@ -13,6 +14,7 @@ class DataReceiver(QThread):
         self.is_paused = bool(0)
         self.is_show_symbol = bool(0)
         self.is_show_timeStamp = bool(1)
+        self.is_show_hex = bool(0)
         self.mutex = QMutex()
         self.cond = QWaitCondition()
 
@@ -36,21 +38,28 @@ class DataReceiver(QThread):
             try:
                 if not self.is_paused:
                     if self.is_show_symbol:
-                        response = common.port_read_until(self.serial_port, is_show_symbol=self.is_show_symbol)
-                    else:
-                        response = common.port_readline(self.serial_port)
+                        # response = common.port_read_until(self.serial_port, is_show_symbol=self.is_show_symbol)
+                        response = common.port_read(self.serial_port)
                         if response == "":
                             continue
+                        response = repr(response)[1:-1].replace("\\n", "\\n\n")
+                    else:
+                        if self.is_show_hex:
+                            response = common.port_read_hex(self.serial_port)
+                        else:
+                            response = common.port_read(self.serial_port)
+                        if response == "":
+                            continue
+                    response = response.strip()
                     if self.is_show_timeStamp:
                         now_time = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
                         now_time = "[" + now_time + "]"
-                        response = response.strip()
                         formatted_lines = [f"{now_time}{item}" for item in response.split("\n")]
                     else:
                         formatted_lines = [item for item in response.split("\n")]
-                    combined_data = "\n".join(formatted_lines)
+                    combined_data = "".join(formatted_lines)
                     self.dataReceived.emit(combined_data)
-                    QThread.sleep(0.2)
+                    QThread.sleep(0.1)
             except UnicodeDecodeError as e:
                 print(f"Error decoding serial data: {e}")
                 self.dataReceived.emit("⚙ Error decoding serial data")

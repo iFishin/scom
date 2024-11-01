@@ -150,31 +150,54 @@ def port_write(
             raise e
 
 
-def port_read(port_serial: serial.Serial) -> str:
+def port_read(port_serial: serial.Serial, size: int=1) -> str:
     """
     从串口读取数据
 
     参数：
     port_serial (serial.Serial): 串口对象
+    size (int): 读取的最大字节数（默认 1）
 
     返回：
     str: 读取到的数据
     """
     if port_serial is None:
-        print("Serial port is not initialized.")
         return ""
     else:
         reply = ""
         try:
-            time.sleep(0.5)
             while port_serial.inWaiting() > 0:
-                reply += port_serial.read(size=1).decode("UTF-8", errors="ignore")
-        except UnicodeDecodeError as e:
-            print(f"Error decoding byte. Skipping... {e}")
+                reply += port_serial.read(size=size).decode("UTF-8", errors="ignore")
         except Exception as e:
             print(f"Error reading from serial port: {e}")
         return reply
 
+def port_read_hex(port_serial: serial.Serial, size: int=1) -> str:
+    """
+    从串口读取数据并以带空格的大写十六进制形式返回
+
+    参数：
+    port_serial (serial.Serial): 串口对象
+    size (int): 读取的最大字节数（默认 1）
+
+    返回：
+    str: 读取到的数据的十六进制表示，每个字节之间有一个空格且为大写
+    """
+    if port_serial is None:
+        return ""
+    else:
+        try:
+            reply = bytearray()
+            while port_serial.inWaiting() > 0:
+                reply.extend(port_serial.read(size=size))
+            if reply:
+                hex_reply = ' '.join(f'{byte:02X}' for byte in reply)
+                return hex_reply
+            else:
+                return ""
+        except Exception as e:
+            print(f"Error reading from serial port as hex: {e}")
+            raise e
 
 def port_read_until(
     port_serial: serial.Serial,
@@ -195,7 +218,6 @@ def port_read_until(
     str: 读取到的数据
     """
     if port_serial is None:
-        print("Serial port is not initialized.")
         return ""
     else:
         reply = ""
@@ -226,7 +248,6 @@ def port_readline(port_serial: serial.Serial) -> str:
     str: 读取到的一行数据，如果发生异常则上报
     """
     if port_serial is None:
-        print("Serial port is not initialized.")
         return ""
     else:
         try:
@@ -239,6 +260,30 @@ def port_readline(port_serial: serial.Serial) -> str:
             print(f"Error reading a line from serial port: {e}")
             raise e
 
+def port_readline_hex(port_serial: serial.Serial) -> str:
+    """
+    从串口按行读取数据并以带空格的大写十六进制形式返回
+
+    参数：
+    port_serial (serial.Serial): 串口对象
+
+    返回：
+    str: 读取到的一行数据的十六进制表示，每个字节之间有一个空格且为大写，如果发生异常则上报
+    """
+    if port_serial is None:
+        print("Serial port is not initialized.")
+        return ""
+    else:
+        try:
+            line = port_serial.readline()
+            if line:
+                hex_line = ' '.join(f'{byte:02X}' for byte in line)
+                return hex_line
+            else:
+                return ""
+        except Exception as e:
+            print(f"Error reading a line from serial port as hex: {e}")
+            raise e
 
 def echo(port_serial: serial.Serial) -> None:
     """
@@ -283,7 +328,6 @@ def print_write(text: str, log_file=None, isPrint=False) -> None:
             log_write(f"{line}", log_file=log_file)
             if isPrint:
                 print(f"{line}")
-
 
 def clear_terminal() -> None:
     """
