@@ -44,51 +44,9 @@ QMenuBar::item {
     padding: 2px 8px;
 }
 
-QMenuBar::item:selected {
+QMenuBar::item:hover {
     background-color: #0078d7;
     color: white;
-}
-
-QMenuBar::separator {
-    height: 1px;
-    background-color: #ccc;
-}
-
-QMenuBar::indicator {
-    background-color: #f5f5f5;
-    border: 2px solid #ccc;
-    border-radius: 6px;
-}
-
-QMenuBar::indicator:checked {
-    background-color: #0078d7;
-    border: 2px solid #0078d7;
-}
-
-QMenuBar::indicator:disabled {
-    background-color: #ccc;
-    border: 2px solid #ccc;
-}
-
-QMenuBar::indicator:checked:disabled {
-    background-color: #ccc;
-    border: 2px solid #ccc;
-}
-
-/* Custom styles for QPushButton in QMenuBar */
-QMenuBar QPushButton {
-    background-color: transparent;
-    color: #333;
-    border: none;
-}
-
-QMenuBar QPushButton:hover {
-    background-color: #0078d7;
-    color: white;
-}
-
-QMenuBar QPushButton:pressed {
-    background-color: #004578;
 }
 
 QMenuBar::item:selected {
@@ -122,20 +80,30 @@ QMenuBar::indicator:checked:disabled {
     border: 2px solid #ccc;
 }
 
-/* Custom styles for QPushButton in QMenuBar */
-QMenuBar QPushButton {
+QAction {
     background-color: transparent;
     color: #333;
-    border: none;
+    padding: 4px 16px;
 }
 
-QMenuBar QPushButton:hover {
+QAction:hover {
     background-color: #0078d7;
     color: white;
 }
 
-QMenuBar QPushButton:pressed {
-    background-color: #004578;
+QAction:selected {
+    background-color: #0078d7;
+    color: white;
+}
+
+QAction:disabled {
+    background-color: #ccc;
+    color: #999;
+}
+
+QAction:checked {
+    background-color: #0078d7;
+    color: white;
 }
 
 QMessageBox {

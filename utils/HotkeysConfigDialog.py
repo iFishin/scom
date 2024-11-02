@@ -37,23 +37,9 @@ class HotkeysConfigDialog(QDialog):
         self.layout.addWidget(self.cancel_button, row, 1, 1, 1)
 
         self.setLayout(self.layout)
-        self.installEventFilter(self)
 
     def save_hotkeys(self):
         for action, input_field in self.hotkey_inputs.items():
             self.hotkeys[action] = input_field.text()
         print("Hotkeys saved:", self.hotkeys)
         self.accept()
-
-    def eventFilter(self, watched, event):
-        if event.type() == event.Type.MouseButtonPress and not self.rect().contains(event.pos()):
-            print("Mouse click outside dialog")
-            self.reject()
-            return True
-        elif event.type() == event.Type.FocusOut:
-            print("Dialog lost focus")
-            self.reject()
-            return True
-        else:
-            print("Other event")
-        return super().eventFilter(watched, event)

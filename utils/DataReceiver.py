@@ -1,5 +1,4 @@
 import datetime
-import binascii
 from utils import common
 from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker
 
@@ -22,39 +21,45 @@ class DataReceiver(QThread):
         if not self.is_paused:
             with QMutexLocker(self.mutex):
                 self.is_paused = True
-    
+
     def resume_thread(self):
         if self.is_paused:
             with QMutexLocker(self.mutex):
                 self.is_paused = False
                 self.cond.wakeOne()
-                
+
     def run(self):
         while True:
             with QMutexLocker(self.mutex):
                 if self.is_paused:
                     self.cond.wait(self.mutex)
-            # 互斥范围之外进行线程操作
             try:
                 if not self.is_paused:
                     if self.is_show_symbol:
-                        # response = common.port_read_until(self.serial_port, is_show_symbol=self.is_show_symbol)
                         response = common.port_read(self.serial_port)
                         if response == "":
                             continue
                         response = repr(response)[1:-1].replace("\\r\\n", "\\r\\n\r\n")
-                    else:
-                        if self.is_show_hex:
-                            response = common.port_read_hex(self.serial_port)
-                        else:
-                            response = common.port_readline(self.serial_port)
+                    elif self.is_show_hex:
+                        response = common.port_read_hex(self.serial_port)
                         if response == "":
                             continue
+                    else:
+                        response = common.port_read(self.serial_port)
+                        if response == "":
+                            continue
+                        response = (
+                            repr(response)[1:-1].replace("\\r", "").replace("\\n", "\n")
+                        )
                     response = response.strip()
                     if self.is_show_timeStamp:
-                        now_time = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
+                        now_time = datetime.datetime.now().strftime(
+                            "%Y-%m-%d_%H:%M:%S:%f"
+                        )[:-3]
                         now_time = "[" + now_time + "]"
-                        formatted_lines = [f"{now_time}{item}" for item in response.split("\n")]
+                        formatted_lines = [
+                            f"{now_time}{item}" for item in response.split("\n")
+                        ]
                     else:
                         formatted_lines = [item for item in response.split("\n")]
                     combined_data = "\n".join(formatted_lines)
