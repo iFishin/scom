@@ -46,15 +46,15 @@ from PySide6.QtGui import (
 )
 from serial.tools import list_ports
 import utils.common as common
-from utils.QSSLoader import QSSLoader
-from utils.DataReceiver import DataReceiver
-from utils.FileSender import FileSender
-from utils.CommandExecutor import CommandExecutor
-from utils.SearchReplaceDialog import SearchReplaceDialog
-from utils.HotkeysConfigDialog import HotkeysConfigDialog
-from utils.LayoutConifgDialog import LayoutConfigDialog
-from utils.AboutDialog import AboutDialog
-from utils.HelpDialog import HelpDialog
+from components.QSSLoader import QSSLoader
+from components.DataReceiver import DataReceiver
+from components.FileSender import FileSender
+from components.CommandExecutor import CommandExecutor
+from components.SearchReplaceDialog import SearchReplaceDialog
+from components.HotkeysConfigDialog import HotkeysConfigDialog
+from components.LayoutConifgDialog import LayoutConfigDialog
+from components.AboutDialog import AboutDialog
+from components.HelpDialog import HelpDialog
 
 
 class MyWidget(QWidget):
@@ -69,7 +69,7 @@ class MyWidget(QWidget):
         self.received_data_textarea_scrollBottom = True
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
-        self.config = self.read_config()
+        self.config = common.read_config("config.ini")
 
         self.init_UI()
 
@@ -80,7 +80,7 @@ class MyWidget(QWidget):
             self.create_default_config()
 
         self.apply_config(self.config)
-        self.layout_config_dialog.apply()
+        # self.layout_config_dialog.apply()
 
         self.save_settings_action.triggered.connect(self.save_config(self.config))
 
@@ -627,7 +627,7 @@ class MyWidget(QWidget):
         self.button1 = QPushButton("Main")
         self.button1.setToolTip("Shortcut: F1")
         self.button1.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #4CAF50; }"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; border-bottom: 2px solid #00A86B; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -637,7 +637,7 @@ class MyWidget(QWidget):
         self.button2 = QPushButton("ATCommand")
         self.button2.setToolTip("Shortcut: F2")
         self.button2.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -646,7 +646,7 @@ class MyWidget(QWidget):
         self.button3 = QPushButton("Log")
         self.button3.setToolTip("Shortcut: F3")
         self.button3.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -655,7 +655,7 @@ class MyWidget(QWidget):
         self.button4 = QPushButton("NoTimeStamp")
         self.button4.setToolTip("Shortcut: F4")
         self.button4.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -722,86 +722,70 @@ class MyWidget(QWidget):
                 break
 
     """
+    ⚙⚙⚙
     Summary:
-        The function to handle the event when the button is clicked. 
+        The FUNCTION to handle the window event.
     
     """
-
-    def read_config(self):
-        config = configparser.ConfigParser()
-        config.read(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
-        )
-        return config
-
-    def apply_config(self, config: configparser.ConfigParser):
+    def apply_config(self, config):
         # Set
-        self.baud_rate_combo.setCurrentText(config.get("Set", "BaudRate"))
-        self.stopbits_combo.setCurrentText(config.get("Set", "StopBits"))
-        self.parity_combo.setCurrentText(config.get("Set", "Parity"))
-        self.bytesize_combo.setCurrentText(config.get("Set", "ByteSize"))
-        self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
-        self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
-        self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
-        self.checkbox_send_with_enter.setChecked(
-            config.getboolean("Set", "SendWithEnter")
-        )
-        self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
-        self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
-        self.received_hex_data_checkbox.setChecked(
-            config.getboolean("Set", "ReceivedHex")
-        )
-        self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
-        self.checkbox_data_received.setChecked(
-            config.getboolean("Set", "IsSaveDataReceived")
-        )
-        self.file_input.setText(config.get("Set", "PathFileSend"))
+        try:
+            self.baud_rate_combo.setCurrentText(config.get("Set", "BaudRate"))
+            self.stopbits_combo.setCurrentText(config.get("Set", "StopBits"))
+            self.parity_combo.setCurrentText(config.get("Set", "Parity"))
+            self.bytesize_combo.setCurrentText(config.get("Set", "ByteSize"))
+            self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
+            self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
+            self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
+            self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
+            self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
+            self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
+            self.received_hex_data_checkbox.setChecked(config.getboolean("Set", "ReceivedHex"))
+            self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
+            self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
+            self.file_input.setText(config.get("Set", "PathFileSend"))
+        except configparser.NoSectionError as e:
+            logging.error(f"Error applying config: {e}")
+        except configparser.NoOptionError as e:
+            logging.error(f"Error applying config: {e}")
 
         # Hotkeys
         for i in range(1, 9):
-            hotkey_name = config.get("Hotkeys", f"Hotkey_{i}")
-            self.hotkeys_buttons[i - 1].setText(hotkey_name)
-            hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}")
+            hotkey_text = config.get("Hotkeys", f"Hotkey_{i}", fallback="")
+            self.hotkeys_buttons[i - 1].setText(hotkey_text)
+            hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
             self.hotkeys_buttons[i - 1].clicked.connect(
                 self.handle_hotkey_click(i, hotkey_value)
             )
 
-        # Layout
+    def save_config(self, config):
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+        try:
+            # Set
+            config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
+            config.set("Set", "StopBits", self.stopbits_combo.currentText())
+            config.set("Set", "Parity", self.parity_combo.currentText())
+            config.set("Set", "ByteSize", self.bytesize_combo.currentText())
+            config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
+            config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
+            config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
+            config.set("Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked()))
+            config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
+            config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
+            config.set("Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked()))
+            config.set("Set", "PathDataReceived", self.input_path_data_received.text())
+            config.set("Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked()))
+            config.set("Set", "PathFileSend", self.file_input.text())
 
-    def save_config(self, config: configparser.ConfigParser):
-        # Set
-        config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
-        config.set("Set", "StopBits", self.stopbits_combo.currentText())
-        config.set("Set", "Parity", self.parity_combo.currentText())
-        config.set("Set", "ByteSize", self.bytesize_combo.currentText())
-        config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
-        config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
-        config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
-        config.set(
-            "Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked())
-        )
-        config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
-        config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
-        config.set(
-            "Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked())
-        )
-        config.set("Set", "PathDataReceived", self.input_path_data_received.text())
-        config.set(
-            "Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked())
-        )
-        config.set("Set", "PathFileSend", self.file_input.text())
+            # Hotkeys
+            # for i in range(1, 9):
+            #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
+            #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
 
-        # Hotkeys
-        # for i in range(1, 9):
-        #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
-        #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
-
-        with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"),
-            "w",
-            encoding="utf-8",
-        ) as configfile:
-            config.write(configfile)
+            with open(file_path, "w", encoding="utf-8") as configfile:
+                config.write(configfile)
+        except Exception as e:
+            logging.error(f"Error saving config: {e}")
 
     def apply_style(self, data):
         text = self.received_data_textarea.toPlainText()
@@ -888,13 +872,13 @@ class MyWidget(QWidget):
         for i, button in enumerate(buttons):
             if i == index:
                 button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #4CAF50; }"
+                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; border-bottom: 2px solid #00A86B;; }"
                     "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
                     "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
                 )
             else:
                 button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #4CAF50; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; }"
                     "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
                     "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
                 )
@@ -1040,7 +1024,7 @@ class MyWidget(QWidget):
         file_dialog.setFileMode(QFileDialog.AnyFile)
         file_dialog.setNameFilter("Files (*)")
         if file_dialog.exec():
-            file_path = file_dialog.selectedFiles()[0]
+            file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
                 self.input_path_data_received.setText(file_path)
 
@@ -1049,7 +1033,7 @@ class MyWidget(QWidget):
         file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setNameFilter("Files (*)")
         if file_dialog.exec():
-            file_path = file_dialog.selectedFiles()[0]
+            file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
                 self.file_input.setText(file_path)
 
@@ -1103,7 +1087,7 @@ class MyWidget(QWidget):
         self.received_data_textarea_scrollBottom = (
             scrollbar.value() == scrollbar.maximum()
         )
-        self.received_data_textarea.append(data)
+        self.received_data_textarea.insertPlainText(data+"\n")
         if self.received_data_textarea_scrollBottom:
             scrollbar.setValue(scrollbar.maximum())
         file_path = self.input_path_data_received.text()
@@ -1500,7 +1484,7 @@ class MyWidget(QWidget):
 
     def closeEvent(self, event):
         # Save configuration settings
-        self.save_config(self.read_config())
+        self.save_config(common.read_config())
 
         # Signal all running threads to stop
         active_threads = self.thread_pool.activeThreadCount()
@@ -1512,15 +1496,6 @@ class MyWidget(QWidget):
 
 # Create a logger for the application
 logger = logging.getLogger(__name__)
-
-# Create a logger for user activities
-user_activity_logger = logging.getLogger("user_activity")
-user_activity_handler = logging.FileHandler("logs/user_activity.log")
-user_activity_handler.setLevel(logging.INFO)
-user_activity_formatter = logging.Formatter("%(asctime)s - %(message)s")
-user_activity_handler.setFormatter(user_activity_formatter)
-user_activity_logger.addHandler(user_activity_handler)
-
 
 def main():
     try:
@@ -1537,11 +1512,6 @@ def main():
         sys.exit(app.exec())
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
-
-
-def record_user_activity(activity):
-    user_activity_logger.info(activity)
-
 
 if __name__ == "__main__":
     logging.basicConfig(

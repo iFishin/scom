@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import serial
+import configparser
 
 
 class SerialPortNotInitializedError(Exception):
@@ -26,6 +27,71 @@ def force_decode(text: bytes) -> str:
         except UnicodeDecodeError:
             continue
     return text.decode("utf-8", "ignore")
+
+
+def create_default_config() -> None:
+    """
+    创建默认配置文件
+
+    参数：
+    None
+
+    返回：
+    None
+    """
+    config_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    config_path = os.path.join(config_dir, "config.ini")
+    default_config_path = os.path.join(config_dir, "config", "config_default")
+
+    print(config_path, default_config_path)
+    if not os.path.exists(config_path):
+        if os.path.exists(default_config_path):
+            try:
+                with open(default_config_path, 'r', encoding='utf-8') as src, open(config_path, 'w', encoding='utf-8') as dst:
+                    dst.write(src.read())
+            except IOError as e:
+                print(f"Error creating default config file: {e}")
+                raise e
+        else:
+            raise FileNotFoundError(f"Default config file not found at {default_config_path}")
+
+
+def read_config(config_path: str = None) -> configparser.ConfigParser:
+    """
+    读取配置文件，如果不存在则创建默认配置文件
+    
+    参数：
+    config_path (str): 配置文件路径，默认为 None
+
+    返回：
+    configparser.ConfigParser: 配置文件对象
+    """
+    if config_path is None:
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+    else:
+        config_path = os.path.abspath(config_path)
+    config = configparser.ConfigParser()
+    
+    if not os.path.exists(config_path):
+        create_default_config()
+        try:
+            config.read(config_path, encoding="utf-8")
+        except configparser.Error as e:
+            print(f"Error reading config file: {e}")
+            raise e
+    else:
+        try:
+            config.read(config_path, encoding="utf-8")
+        except configparser.MissingSectionHeaderError as e:
+            print("Configuration file is corrupted or missing section headers.")
+            create_default_config()
+            try:
+                config.read(config_path, encoding="utf-8")
+            except configparser.Error as e:
+                print(f"Error reading config file: {e}")
+                raise e
+    
+    return config
 
 
 def log_write(res: str, log_file: str = None) -> bool:

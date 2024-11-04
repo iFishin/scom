@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog, QGridLayout, QLabel, QCheckBox, QPushButton
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 import configparser
 
 
@@ -9,6 +9,9 @@ class LayoutConfigDialog(QDialog):
         self.setWindowTitle("Layout Configuration")
         self.parent = parent
 
+        # Create Signal
+        signal_config = Signal(configparser.ConfigParser)
+        
         # Create layout
         layout = QGridLayout()
 
@@ -96,7 +99,7 @@ class LayoutConfigDialog(QDialog):
 
     def accept(self):
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read("config.ini", encoding="utf-8")
         config["LayoutConfig"]["settings"] = str(self.checkbox_settings_box.isChecked())
         config["LayoutConfig"]["command"] = str(self.checkbox_command_box.isChecked())
         config["LayoutConfig"]["file"] = str(self.checkbox_file_box.isChecked())
@@ -109,7 +112,7 @@ class LayoutConfigDialog(QDialog):
         
     def apply(self):
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read("config.ini", encoding="utf-8")
         self.checkbox_settings_box.setChecked(config.getboolean("LayoutConfig", "settings"))
         self.checkbox_command_box.setChecked(config.getboolean("LayoutConfig", "command"))
         self.checkbox_file_box.setChecked(config.getboolean("LayoutConfig", "file"))
@@ -120,7 +123,7 @@ class LayoutConfigDialog(QDialog):
         
     def cancel(self):
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read("config.ini", encoding="utf-8")
         self.checkbox_settings_box.setChecked(config.getboolean("LayoutConfig", "settings"))
         self.checkbox_command_box.setChecked(config.getboolean("LayoutConfig", "command"))
         self.checkbox_file_box.setChecked(config.getboolean("LayoutConfig", "file"))

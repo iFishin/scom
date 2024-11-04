@@ -3,14 +3,14 @@ baudrate = 115200
 stopbits = 1
 parity = None
 bytesize = 8
-flowcontrol = RTS/CTS
+flowcontrol = 
 dtr = False
 rts = False
 sendwithenter = True
 showsymbol = False
 timestamp = True
 receivedhex = False
-pathdatareceived = C:\Users\fishley.gong\SCOM\tmps\temp.log
+pathdatareceived = 
 issavedatareceived = True
 pathfilesend = 
 
@@ -37,7 +37,7 @@ hotkeyvalue_8 = AT+QVERSION
 [LayoutConfig]
 settings = True
 command = True
-file = False
+file = True
 hotkeys = True
 data_received = True
 button_group = True
