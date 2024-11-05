@@ -11,6 +11,7 @@ class DataReceiver(QThread):
         super().__init__()
         self.serial_port = serial_port
         self.is_paused = bool(0)
+        self.is_stopped = bool(0)
         self.is_show_symbol = bool(0)
         self.is_show_timeStamp = bool(1)
         self.is_show_hex = bool(0)
@@ -27,9 +28,15 @@ class DataReceiver(QThread):
             with QMutexLocker(self.mutex):
                 self.is_paused = False
                 self.cond.wakeOne()
+    
+    def stop_thread(self):
+        if not self.is_stopped:
+            with QMutexLocker(self.mutex):
+                self.is_stopped = True
+                self.cond.wakeOne()
 
     def run(self):
-        while True:
+        while not self.is_stopped:
             with QMutexLocker(self.mutex):
                 if self.is_paused:
                     self.cond.wait(self.mutex)

@@ -67,6 +67,9 @@ class MyWidget(QWidget):
         self.total_times = 0
         self.is_stop_batch = False
         self.received_data_textarea_scrollBottom = True
+        self.thread_pool = QThreadPool()
+        self.data_receiver = None
+        self.command_executor = None
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
@@ -80,30 +83,16 @@ class MyWidget(QWidget):
             self.create_default_config()
 
         self.apply_config(self.config)
-        # self.layout_config_dialog.apply()
+        self.layout_config_dialog.apply()
 
         self.save_settings_action.triggered.connect(self.save_config(self.config))
 
-        self.thread_pool = QThreadPool()
-        # Init the thread
-
-        self.data_receiver = DataReceiver(None)
-        self.data_receiver.dataReceived.connect(self.update_main_textarea)
-        self.data_receive_thread = QThread()
-        self.data_receiver.moveToThread(self.data_receive_thread)
-        self.data_receive_thread.started.connect(self.data_receiver.run)
-        self.data_receive_thread.finished.connect(self.data_receiver.deleteLater)
-        self.data_receiver.exceptionOccurred.connect(self.port_off)
-        self.data_receive_thread.start()
-        self.data_receiver.pause_thread()
-
-        self.command_executor = None
-
     """
+    ✨✨✨
     Summary:
          Initialize the UI of the widget.
+         
     """
-
     def init_UI(self):
         # Create menu bar
         self.menu_bar = QMenuBar()
@@ -112,18 +101,24 @@ class MyWidget(QWidget):
         self.settings_menu = self.menu_bar.addMenu("Settings")
 
         self.save_settings_action = self.settings_menu.addAction("Save Config")
+        self.save_settings_action.setShortcut("Ctrl+S")
+        self.save_settings_action.triggered.connect(self.config_save)
         self.layout_config_action = self.settings_menu.addAction("Layout Config")
+        self.layout_config_action.setShortcut("Ctrl+L")
         self.layout_config_action.triggered.connect(self.layout_config)
         self.hotkeys_config_action = self.settings_menu.addAction("Hotkeys Config")
+        self.hotkeys_config_action.setShortcut("Ctrl+H")
         self.hotkeys_config_action.triggered.connect(self.hotkeys_config)
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
 
         self.help_menu_action = self.about_menu.addAction("Help")
+        self.help_menu_action.setShortcut("Ctrl+/")
         self.help_menu_action.triggered.connect(self.show_help_info)
         
         self.about_menu_action = self.about_menu.addAction("About")
+        self.about_menu_action.setShortcut("Ctrl+I")
         self.about_menu_action.triggered.connect(self.show_about_info)
 
 
@@ -260,6 +255,7 @@ class MyWidget(QWidget):
         self.command_input.keyPressEvent = (
             self.handle_key_press
         )  # Override keyPressEvent method
+        self.command_input.setEnabled(False)
 
         self.file_label = QLabel("File:")
         self.file_input = QLineEdit()
@@ -440,6 +436,7 @@ class MyWidget(QWidget):
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
         self.prompt_button.installEventFilter(self)
+        self.prompt_button.setEnabled(False)
 
         self.input_prompt = QLineEdit()
         self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
@@ -466,6 +463,7 @@ class MyWidget(QWidget):
             "QPushButton:hover { background-color: #0d6e3f; }"
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
+        self.prompt_batch_start_button.setEnabled(False)
 
         self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
 
@@ -475,8 +473,10 @@ class MyWidget(QWidget):
             "QPushButton:hover { background-color: #a71d2a; }"
             "QPushButton:pressed { background-color: #7b1520; }"
         )
+        self.prompt_batch_stop_button.setEnabled(False)
 
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
+        
 
         self.input_prompt_batch_times = QLineEdit()
         self.input_prompt_batch_times.setPlaceholderText("Total Times")
@@ -552,6 +552,7 @@ class MyWidget(QWidget):
             self.checkbox_send_with_enters.append(checkbox_send_with_enter)
             self.interVal.append(input_interval)
             button.setEnabled(False)
+            input_field.setEnabled(False)
             input_field.returnPressed.connect(
                 self.handle_button_click(
                     i,
@@ -688,21 +689,6 @@ class MyWidget(QWidget):
         main_layout.addLayout(button_switch_layout)
         main_layout.addWidget(self.stacked_widget)
 
-        hotkeys_names = [
-            "Clear-Log",
-            "Read-ATC",
-            "Update-ATC",
-            "Restore-ATC",
-            "Internet",
-            "RST",
-            "ECHO",
-            "",
-        ]
-        for i, button in enumerate(self.hotkeys_buttons):
-            if i == len(hotkeys_names):
-                break
-            button.setText(hotkeys_names[i])
-
         input_fields_values = [
             "AT+QECHO=1",
             "AT+QVERSION",
@@ -759,7 +745,6 @@ class MyWidget(QWidget):
             )
 
     def save_config(self, config):
-        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
         try:
             # Set
             config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
@@ -782,8 +767,7 @@ class MyWidget(QWidget):
             #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
             #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
 
-            with open(file_path, "w", encoding="utf-8") as configfile:
-                config.write(configfile)
+            common.write_config(config)
         except Exception as e:
             logging.error(f"Error saving config: {e}")
 
@@ -834,6 +818,14 @@ class MyWidget(QWidget):
             cursor.setCharFormat(new_format)
 
         self.received_data_textarea.setDocument(doc)
+
+    def update_hotkeys(self):
+        for i in range(1, 9):
+            hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
+            hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
+            hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
+            hotkey_shortcut.activated.connect(self.handle_hotkey_click(i), hotkey_value, hotkey_shortcut)
+            self.hotkeys_buttons[i - 1].setText(hotkey_name)
 
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
@@ -892,6 +884,10 @@ class MyWidget(QWidget):
             self.show_page(2)
         elif event.key() == Qt.Key_F4:
             self.show_page(3)
+            
+    def config_save(self):
+        self.save_config(self.config)
+        QMessageBox.information(self, "Save", "Save successfully")
 
     def layout_config(self):
         # LayoutConfigDialog
@@ -981,19 +977,30 @@ class MyWidget(QWidget):
         self.expand_button.setChecked(False)
         self.expand_button.clicked.connect(self.expand_command_input)
 
-    def send_command(self):
-        command = self.command_input.toPlainText()
-        try:
-            common.port_write(
-                command, self.main_Serial, self.checkbox_send_with_enter.isChecked()
+    def set_status_label(self, text, color):
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet(
+                f"QLabel {{ color: {color}; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }}"
             )
+
+    def port_write(self, command, serial_port, send_with_enter):
+        try:
+            if send_with_enter:
+                common.port_write(command, serial_port, True)
+            else:
+                common.port_write(command, serial_port, False)
         except Exception as e:
             print(f"Error sending command: {e}")
-            self.status_label.setText("Failed")
-            self.status_label.setStyleSheet(
-                "QLabel { color: #dc3545; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            )
-            self.port_off()
+            self.set_status_label("Failed", "#dc3545")
+
+    def send_command(self):
+        command = self.command_input.toPlainText()
+        if not command:
+            return
+        if self.checkbox_send_with_enter.isChecked():
+            self.port_write(command, self.main_Serial, True)
+        else:
+            self.port_write(command, self.main_Serial, False)
 
     def handle_data_received_checkbox(self, state):
         if state == 2:
@@ -1138,56 +1145,77 @@ class MyWidget(QWidget):
             )
             if self.main_Serial:
                 self.port_button.setText("Close Port")
-                self.status_label.setText("Opened")
-                self.status_label.setStyleSheet(
-                    "QLabel { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-                )
+                self.set_status_label("Open", "#198754")
                 self.port_button.clicked.disconnect(self.port_on)
                 self.port_button.clicked.connect(self.port_off)
                 # Disable the serial port and baud rate combo boxes
                 self.serial_port_combo.setEnabled(False)
                 self.baud_rate_combo.setEnabled(False)
+                self.stopbits_combo.setEnabled(False)
+                self.parity_combo.setEnabled(False)
+                self.bytesize_combo.setEnabled(False)
+                self.flowcontrol_checkbox.setEnabled(False)
+                self.command_input.setEnabled(True)
                 self.send_button.setEnabled(True)
+                self.prompt_button.setEnabled(True)
+                self.prompt_batch_start_button.setEnabled(True)
+                self.prompt_batch_stop_button.setEnabled(True)
                 for button in self.buttons:
                     button.setEnabled(True)
-            else:
-                print("⚙ Port Open Failed")
-                self.status_label.setText("Failed")
-                self.status_label.setStyleSheet(
-                    "QLabel { color: #dc3545; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-                )
-        except serial.SerialException as e:
+                for input in self.input_fields:
+                    input.setEnabled(True)
+            
+            self.data_receiver = DataReceiver(self.main_Serial)
+            self.data_receiver.dataReceived.connect(self.update_main_textarea)
+            self.data_receive_thread = QThread()
+            self.data_receiver.moveToThread(self.data_receive_thread)
+            self.data_receive_thread.started.connect(self.data_receiver.run)
+            self.data_receive_thread.finished.connect(self.data_receiver.deleteLater)
+            self.data_receiver.exceptionOccurred.connect(self.port_off)
+            self.data_receiver.is_show_symbol = self.symbol_checkbox.isChecked()
+            self.data_receiver.is_show_timeStamp = self.timeStamp_checkbox.isChecked()
+            self.data_receiver.is_show_hex = self.received_hex_data_checkbox.isChecked()
+            self.data_receive_thread.start()
+        except Exception as e:
             print(f"Error opening serial port: {e}")
+            self.set_status_label("Failed", "#dc3545")
 
-        self.data_receiver.serial_port = self.main_Serial
-        self.data_receiver.is_show_symbol = self.symbol_checkbox.isChecked()
-        self.data_receiver.is_show_timeStamp = self.timeStamp_checkbox.isChecked()
-        self.data_receiver.is_show_hex = self.received_hex_data_checkbox.isChecked()
-        self.data_receiver.resume_thread()
 
     def port_off(self):
-        self.data_receiver.pause_thread()
+        self.data_receiver.stop_thread()
+        self.data_receive_thread.quit()
+        # No wait for the thread to finish, it will finish itself
+        # self.data_receive_thread.wait()
+        
         try:
             self.main_Serial = common.port_off(self.main_Serial)
             if self.main_Serial is None:
                 self.port_button.setText("Open Port")
-                self.status_label.setText("Closed")
-                self.status_label.setStyleSheet(
-                    "QLabel { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-                )
+                self.set_status_label("Closed", "#198754")
                 self.port_button.clicked.disconnect(self.port_off)
                 self.port_button.clicked.connect(self.port_on)
 
                 self.serial_port_combo.setEnabled(True)
                 self.baud_rate_combo.setEnabled(True)
+                self.stopbits_combo.setEnabled(True)
+                self.parity_combo.setEnabled(True)
+                self.bytesize_combo.setEnabled(True)
+                self.flowcontrol_checkbox.setEnabled(True)
+                self.command_input.setEnabled(False)
                 self.send_button.setEnabled(False)
+                self.prompt_button.setEnabled(False)
+                self.prompt_batch_start_button.setEnabled(False)
+                self.prompt_batch_stop_button.setEnabled(False)
                 for button in self.buttons:
                     button.setEnabled(False)
+                for input in self.input_fields:
+                    input.setEnabled(False)
             else:
                 print("⚙ Port Close Failed")
                 self.port_button.setEnabled(True)
         except Exception as e:
             print(f"Error closing serial port: {e}")
+            self.set_status_label("Failed", "#dc3545")
 
     """
     Summary:
@@ -1269,10 +1297,10 @@ class MyWidget(QWidget):
                 command_list.append(command_info)
             json.dump({"commands": command_list}, f, ensure_ascii=False, indent=4)
 
-    def handle_hotkey_click(self, index: int, value: str = ""):
+    def handle_hotkey_click(self, index: int, value: str = "", shortcut: str = ""):
         def hotkey_clicked():
             if value:
-                common.port_write(value, self.main_Serial)
+                self.port_write(value, self.main_Serial, True)
             else:
                 if index == 1:
                     self.clear_log()
@@ -1313,7 +1341,7 @@ class MyWidget(QWidget):
 
     def handle_left_click(self):
         # Left button click to SEND
-        common.port_write(
+        self.port_write(
             self.input_prompt.text(),
             self.main_Serial,
             self.checkbox_send_with_enters[self.prompt_index].isChecked(),
@@ -1459,7 +1487,7 @@ class MyWidget(QWidget):
             global last_one_click_time
             if not last_one_click_time:
                 last_one_click_time = time.time()
-            common.port_write(
+            self.port_write(
                 input_field.text(),
                 self.main_Serial,
                 checkbox_send_with_enter.isChecked(),
@@ -1484,7 +1512,11 @@ class MyWidget(QWidget):
 
     def closeEvent(self, event):
         # Save configuration settings
-        self.save_config(common.read_config())
+        self.save_config(self.config)
+        
+        # Close serial port
+        if self.main_Serial:
+            self.port_off()
 
         # Signal all running threads to stop
         active_threads = self.thread_pool.activeThreadCount()

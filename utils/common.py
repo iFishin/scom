@@ -43,7 +43,6 @@ def create_default_config() -> None:
     config_path = os.path.join(config_dir, "config.ini")
     default_config_path = os.path.join(config_dir, "config", "config_default")
 
-    print(config_path, default_config_path)
     if not os.path.exists(config_path):
         if os.path.exists(default_config_path):
             try:
@@ -71,7 +70,7 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     else:
         config_path = os.path.abspath(config_path)
     config = configparser.ConfigParser()
-    
+
     if not os.path.exists(config_path):
         create_default_config()
         try:
@@ -92,6 +91,30 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
                 raise e
     
     return config
+
+
+def write_config(config: configparser.ConfigParser, config_path: str = None) -> None:
+    """
+    写入配置文件
+
+    参数：
+    config (configparser.ConfigParser): 配置文件对象
+    config_path (str): 配置文件路径，默认为 None
+
+    返回：
+    None
+    """
+    if config_path is None:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.ini"))
+    else:
+        config_path = os.path.abspath(config_path)
+    try:
+        print(f"Writing config file to {config_path}")
+        with open(config_path, "w", encoding="utf-8") as configfile:
+            config.write(configfile)
+    except IOError as e:
+        print(f"Error writing config file: {e}")
+        raise e
 
 
 def log_write(res: str, log_file: str = None) -> bool:
@@ -169,8 +192,8 @@ def port_on(
         ser.dtr = dtr
         ser.open()
         return ser
-    except serial.SerialException as e:
-        print(f"Failed to open {port} : {e}")
+    except Exception as e:
+        print(f"Error opening serial port: {e}")
         raise e
 
 

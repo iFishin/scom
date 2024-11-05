@@ -34,6 +34,16 @@ hotkeyvalue_6 = AT+QRST
 hotkeyvalue_7 = AT+QECHO=1
 hotkeyvalue_8 = AT+QVERSION
 
+[HotkeyShortcuts]
+hotkeyshortcut_1 = 
+hotkeyshortcut_2 =
+hotkeyshortcut_3 =
+hotkeyshortcut_4 =
+hotkeyshortcut_5 =
+hotkeyshortcut_6 =
+hotkeyshortcut_7 =
+hotkeyshortcut_8 =
+
 [LayoutConfig]
 settings = True
 command = True
