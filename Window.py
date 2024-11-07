@@ -63,6 +63,7 @@ class MyWidget(QWidget):
 
         # Init constants for the widget
         self.main_Serial = None
+        self.hotkey_buttons = []
         self.prompt_index = 0
         self.total_times = 0
         self.is_stop_batch = False
@@ -73,10 +74,33 @@ class MyWidget(QWidget):
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
+        for i in range(1, 9):
+            button = QPushButton(f"Hotkey {i}")
+            button.clicked.connect(self.handle_hotkey_click(i))
+            self.hotkey_buttons.append(button)
 
         self.init_UI()
 
         # After init the UI, set the layout of the widget
+        
+        input_fields_values = [
+            "AT+QECHO=1",
+            "AT+QVERSION",
+            "AT+QSUB",
+            "AT+QBLEADDR?",
+            "AT+QBLEINIT=1",
+            "AT+QBLESCAN=1",
+            "AT+QBLESCAN=0",
+            "AT+QWSCAN",
+            "AT+RESTORE",
+            "AT+QWSCAN",
+        ]
+        for i in range(1, len(self.input_fields) + 1):
+            if i <= len(input_fields_values):
+                self.input_fields[i - 1].setText(input_fields_values[i - 1])
+            else:
+                break
+        
         self.layout_config_dialog = LayoutConfigDialog(self)
 
         if not os.path.exists("config.ini"):
@@ -285,12 +309,6 @@ class MyWidget(QWidget):
         self.send_button.setEnabled(False)
         self.send_button.clicked.connect(self.send_command)
 
-        self.hotkeys_buttons = []
-        for i in range(1, 9):
-            button = QPushButton(f"Hotkey {i}")
-            button.clicked.connect(self.handle_hotkey_click(i))
-            self.hotkeys_buttons.append(button)
-
         self.received_data_textarea = QTextEdit()
         self.received_data_textarea.setAcceptRichText(False)
         self.received_data_textarea.setDocument(QTextDocument(None))
@@ -393,11 +411,8 @@ class MyWidget(QWidget):
 
         # Create a group box for the Hotkeys section
         self.hotkeys_groupbox = QGroupBox("Hotkeys")
-        hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
-        for i, button in enumerate(self.hotkeys_buttons):
-            row = i // 4
-            col = i % 4
-            hotkeys_layout.addWidget(button, row, col)
+        self.hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
+        self.update_hotkeys_groupbox()
 
         # Create a group box for the received data section
         self.received_data_groupbox = QGroupBox("Received Data")
@@ -689,24 +704,6 @@ class MyWidget(QWidget):
         main_layout.addLayout(button_switch_layout)
         main_layout.addWidget(self.stacked_widget)
 
-        input_fields_values = [
-            "AT+QECHO=1",
-            "AT+QVERSION",
-            "AT+QSUB",
-            "AT+QBLEADDR?",
-            "AT+QBLEINIT=1",
-            "AT+QBLESCAN=1",
-            "AT+QBLESCAN=0",
-            "AT+QWSCAN",
-            "AT+RESTORE",
-            "AT+QWSCAN",
-        ]
-        for i in range(1, len(self.input_fields) + 1):
-            if i <= len(input_fields_values):
-                self.input_fields[i - 1].setText(input_fields_values[i - 1])
-            else:
-                break
-
     """
     ⚙⚙⚙
     Summary:
@@ -738,9 +735,9 @@ class MyWidget(QWidget):
         # Hotkeys
         for i in range(1, 9):
             hotkey_text = config.get("Hotkeys", f"Hotkey_{i}", fallback="")
-            self.hotkeys_buttons[i - 1].setText(hotkey_text)
+            self.hotkey_buttons[i - 1].setText(hotkey_text)
             hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
-            self.hotkeys_buttons[i - 1].clicked.connect(
+            self.hotkey_buttons[i - 1].clicked.connect(
                 self.handle_hotkey_click(i, hotkey_value)
             )
 
@@ -764,7 +761,7 @@ class MyWidget(QWidget):
 
             # Hotkeys
             # for i in range(1, 9):
-            #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkeys_buttons[i - 1].text())
+            #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkey_buttons[i - 1].text())
             #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
 
             common.write_config(config)
@@ -819,13 +816,36 @@ class MyWidget(QWidget):
 
         self.received_data_textarea.setDocument(doc)
 
-    def update_hotkeys(self):
-        for i in range(1, 9):
+    def update_hotkeys_groupbox(self):
+        # upate self.hotkey_buttons
+        self.hotkey_buttons = []
+        for i in range(1, len(self.config.items("Hotkeys")) + 1):
+            button = QPushButton(f"Hotkey {i}")
+            button.clicked.connect(self.handle_hotkey_click(i))
+            self.hotkey_buttons.append(button)
+        
+        for i, button in enumerate(self.hotkey_buttons):
+            row = i // 4
+            col = i % 4
+            self.hotkeys_layout.addWidget(button, row, col)
+        
+        for i in range(1, len(self.config.items("Hotkeys")) + 1):
             hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
             hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
-            hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
-            hotkey_shortcut.activated.connect(self.handle_hotkey_click(i), hotkey_value, hotkey_shortcut)
-            self.hotkeys_buttons[i - 1].setText(hotkey_name)
+            hotkey_shorcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
+            self.hotkey_buttons[i - 1].setText(hotkey_name)
+            self.hotkey_buttons[i - 1].setToolTip(hotkey_shorcut)
+            self.hotkey_buttons[i - 1].setShortcut(hotkey_shorcut)
+
+            
+    # Update hotkey_buttons
+    # def update_hotkeys(self):
+    #     for i in range(1, len(self.config.items("Hotkeys")) + 1):
+    #         hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
+    #         hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
+    #         hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
+    #         hotkey_shortcut.activated.connect(self.handle_hotkey_click(i), hotkey_value, hotkey_shortcut)
+    #         self.hotkey_buttons[i - 1].setText(hotkey_name)
 
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
@@ -1094,7 +1114,8 @@ class MyWidget(QWidget):
         self.received_data_textarea_scrollBottom = (
             scrollbar.value() == scrollbar.maximum()
         )
-        self.received_data_textarea.insertPlainText(data+"\n")
+        self.received_data_textarea.moveCursor(QTextCursor.End)
+        self.received_data_textarea.insertPlainText(data + "\n")
         if self.received_data_textarea_scrollBottom:
             scrollbar.setValue(scrollbar.maximum())
         file_path = self.input_path_data_received.text()

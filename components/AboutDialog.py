@@ -30,12 +30,12 @@ class AboutDialog(QDialog):
         text_font.setPointSize(14)
         text_label.setFont(text_font)
         text_label.setText("Version: 1.0\nDescription: Serial Communication Tool")
-        text_label.setAlignment(Qt.AlignCenter)
+        text_label.setAlignment(Qt.AlignLeft)
         layout.addWidget(text_label)
 
         repo_label = QLabel()
         repo_label.setText('<a href="https://github.com/ifishin/SCOM">Repository</a>')
-        repo_label.setAlignment(Qt.AlignCenter)
+        repo_label.setAlignment(Qt.AlignLeft)
         repo_label.setOpenExternalLinks(True)
         layout.addWidget(repo_label)
 

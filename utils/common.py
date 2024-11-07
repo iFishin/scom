@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import json
 import serial
 import configparser
@@ -261,11 +262,12 @@ def port_read(port_serial: serial.Serial, size: int = 1) -> str:
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
     else:
-        reply = ""
         try:
-            while port_serial.inWaiting() > 0:
-                reply += port_serial.read(size=size).decode("UTF-8", errors="ignore")
-            return reply
+            data = bytearray()
+            while port_serial.in_waiting > 0:
+                data.extend(port_serial.read(size=port_serial.in_waiting or size))
+                time.sleep(0.01)
+            return data.decode("UTF-8", errors="ignore")
         except Exception as e:
             print(f"Error reading from serial port: {e}")
             raise e

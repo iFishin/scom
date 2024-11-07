@@ -2,7 +2,13 @@
     "commands": [
         {
             "selected": false,
-            "command": "1、开启主从一体模式",
+            "command": "1、B模块开启广播，进入透传模式",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLENAME=\"HF-41D\"",
             "withEnter": true,
             "interval": ""
         },
@@ -14,37 +20,43 @@
         },
         {
             "selected": false,
-            "command": "",
+            "command": "AT+QBLEGATTSSRV=\"FEE1\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "2、设置广播参数，开启广播",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRV=FF03",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSCHAR=36f5",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
+            "command": "AT+QBLEGATTSCHAR=\"36f3\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
             "command": "AT+QBLEADVSTART",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "2、指定相同的UUID进入透传模式，打开透传功能后，发送数据",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLETRANMODE=\"36f3\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "发送数据：12345678900，对端不会接收",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "3、手机扫描广播后连接，互发数据能够成功接收。",
             "withEnter": true,
             "interval": ""
         }

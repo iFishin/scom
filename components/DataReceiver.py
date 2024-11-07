@@ -45,15 +45,18 @@ class DataReceiver(QThread):
                     if self.is_show_symbol:
                         response = common.port_read(self.serial_port)
                         if response == "":
+                            QThread.msleep(10)
                             continue
                         response = repr(response)[1:-1].replace("\\r\\n", "\\r\\n\r\n")
                     elif self.is_show_hex:
                         response = common.port_read_hex(self.serial_port)
                         if response == "":
+                            QThread.msleep(10)
                             continue
                     else:
                         response = common.port_read(self.serial_port)
                         if response == "":
+                            QThread.msleep(10)
                             continue
                         response = (
                             repr(response)[1:-1].replace("\\r", "").replace("\\n", "\n")
@@ -71,10 +74,10 @@ class DataReceiver(QThread):
                         formatted_lines = [item for item in response.split("\n")]
                     combined_data = "\n".join(formatted_lines)
                     self.dataReceived.emit(combined_data)
-                    QThread.sleep(0.1)
+                    QThread.msleep(100)
             except UnicodeDecodeError as e:
                 print(f"Error decoding serial data: {e}")
                 self.dataReceived.emit("⚙ Error decoding serial data")
             except Exception as e:
                 print(f"Error occurred: {e}")
-                self.exceptionOccurred.emit(e)
+                self.exceptionOccurred.emit(str(e))
