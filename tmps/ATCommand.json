@@ -2,18 +2,6 @@
     "commands": [
         {
             "selected": false,
-            "command": "1、B模块开启广播，进入透传模式",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLENAME=\"HF-41D\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
             "command": "AT+QBLEINIT=2",
             "withEnter": true,
             "interval": ""
@@ -32,31 +20,79 @@
         },
         {
             "selected": false,
+            "command": "AT+QBLEGATTSSRVDONE",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
             "command": "AT+QBLEADVSTART",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "2、指定相同的UUID进入透传模式，打开透传功能后，发送数据",
+            "command": "AT+QBLEADDR?",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLETRANMODE=\"36f3\"",
+            "command": "AT+QBLETRANMODE=\"36f3\",0",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "发送数据：12345678900，对端不会接收",
+            "command": "AT+QBLEINIT=1",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "3、手机扫描广播后连接，互发数据能够成功接收。",
+            "command": "AT+QBLESCAN=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=0",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLECONN=0,\"dcbdcc45f762\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLECFGMTU=512",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTCNTFCFG=0,\"36f3\",1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTCWRCMD=0,\"36f3\",\"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890qwer@@@@@\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QRST",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QRST",
             "withEnter": true,
             "interval": ""
         }

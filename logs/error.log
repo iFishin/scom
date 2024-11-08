@@ -1,0 +1,13 @@
+2024-11-08 17:04:27,607 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:04:29,119 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 28
+2024-11-08 17:05:37,151 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:06:03,948 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:06:05,218 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 28
+2024-11-08 17:06:46,412 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:06:47,675 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 28
+2024-11-08 17:11:04,778 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:11:06,354 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 None
+2024-11-08 17:26:14,042 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:26:15,663 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 None
+2024-11-08 17:27:12,322 - DEBUG - Starting new HTTPS connection (1): ifishin.xyz:443
+2024-11-08 17:27:13,681 - DEBUG - https://ifishin.xyz:443 "GET /UpdateInfo.txt HTTP/11" 200 None

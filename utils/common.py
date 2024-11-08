@@ -520,7 +520,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
 
 
 def strip_AT_command(
-    text: str, regex: str = r"(?i)(AT\+[^（）\n\t\\\r\u4e00-\u9fa5]+)"
+    text: str, regex: str = r"(?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)"
 ) -> list:
     """
     提取 AT 命令

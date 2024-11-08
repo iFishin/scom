@@ -55,6 +55,7 @@ from components.HotkeysConfigDialog import HotkeysConfigDialog
 from components.LayoutConifgDialog import LayoutConfigDialog
 from components.AboutDialog import AboutDialog
 from components.HelpDialog import HelpDialog
+from components.UpdateInfoDialog import UpdateInfoDialog
 
 
 class MyWidget(QWidget):
@@ -1561,6 +1562,9 @@ def main():
         # widget.showMaximized()
         widget.resize(1000, 900)
         widget.show()
+        
+        update_info_dialog = UpdateInfoDialog(widget)
+        update_info_dialog.show()
 
         sys.exit(app.exec())
     except Exception as e:
