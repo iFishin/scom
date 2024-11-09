@@ -1565,7 +1565,7 @@ def main():
         widget.show()
         
         update_info_dialog = UpdateInfoDialog(widget)
-        # update_info_dialog.show()
+        update_info_dialog.show()
 
         sys.exit(app.exec())
     except Exception as e:
