@@ -235,14 +235,13 @@ def port_write(
     else:
         try:
             if sendWithEnter:
-                command = command.rstrip()
                 port_serial.write((command + "\r\n").encode("UTF-8"))
             else:
                 if sendWithOther:
-                    command = command.rstrip()
                     port_serial.write((command + sendWithOther).encode("UTF-8"))
                 else:
                     port_serial.write(command.encode("UTF-8"))
+            print(f"$$$$Command sent: {command}")
         except Exception as e:
             print(f"Error writing to serial port: {e}")
             raise e

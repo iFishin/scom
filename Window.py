@@ -1044,7 +1044,7 @@ class MyWidget(QWidget):
 
     def set_default_received_file(self, event):
         self.input_path_data_received.setText(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log")
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps\\temp.log")
         )
 
     def select_received_file(self):
@@ -1088,8 +1088,9 @@ class MyWidget(QWidget):
         except PermissionError:
             QMessageBox.warning(self, "Warning", "Permission denied to open the file.")
 
-    def update_progress_bar(self, progress):
-        self.progress_bar.setValue(progress)
+    def update_progress_bar(self, sent_bytes, total_bytes):
+        self.progress_bar.setMaximum(total_bytes)
+        self.progress_bar.setValue(sent_bytes)
 
     def handle_key_press(self, event):
         if event.key() == Qt.Key_Return and event.modifiers() == Qt.ShiftModifier:
@@ -1564,7 +1565,7 @@ def main():
         widget.show()
         
         update_info_dialog = UpdateInfoDialog(widget)
-        update_info_dialog.show()
+        # update_info_dialog.show()
 
         sys.exit(app.exec())
     except Exception as e:

@@ -2,99 +2,603 @@
     "commands": [
         {
             "selected": false,
-            "command": "AT+QBLEINIT=2",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QSTAAPINFO=\"NewMar\",\"12345678\"",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRV=\"FEE1\"",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QSOFTAP=\"FGM842D\",\"12345678\"",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSCHAR=\"36f3\"",
-            "withEnter": true,
-            "interval": ""
+            "command": "",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
-            "withEnter": true,
-            "interval": ""
+            "command": "",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEADVSTART",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QMTCFG=\"version\",1,4",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEADDR?",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QMTCFG=\"session\",1,1",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLETRANMODE=\"36f3\",0",
-            "withEnter": true,
-            "interval": ""
+            "command": "",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEINIT=1",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QSSLCFG=\"seclevel\",1,1",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLESCAN=1",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QSSLCFG=\"seclevel\",1",
+            "interval": "1",
+            "withEnter": true
+        },
+        {
+            "selected": true,
+            "command": "AT+QFOPEN=\"ca.pem\",1",
+            "interval": "1",
+            "withEnter": true
+        },
+        {
+            "selected": true,
+            "command": "AT+QFWRITE=1,1500",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLESCAN=0",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QFCLOSE=1",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLECONN=0,\"dcbdcc45f762\"",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QFLST",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLECFGMTU=512",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QSSLCFG=\"cacert\",1,\"ca.pem\"",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTCNTFCFG=0,\"36f3\",1",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QMTCFG=\"SSL\",1,1,1",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTCWRCMD=0,\"36f3\",\"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890qwer@@@@@\"",
-            "withEnter": true,
-            "interval": ""
+            "command": "",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QRST",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QMTOPEN=1,\"mqtts.heclouds.com\",8883",
+            "interval": "",
+            "withEnter": true
         },
         {
             "selected": false,
-            "command": "AT+QRST",
-            "withEnter": true,
-            "interval": ""
+            "command": "AT+QMTCONN=1,\"my_dev\",\"S1jFZ62g70\",\"version=2018-10-31&res=products%2FS1jFZ62g70%2Fdevices%2Fmy_dev&et=1733551918&method=md5&sign=RJ%2BmCmiVNDz5ema5UbBtIg%3D%3D\"",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QMTSUB=1,1,\"$sys/S1jFZ62g70/my_dev/thing/service/#\",1",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "",
+            "withEnter": true
         }
     ]
 }
