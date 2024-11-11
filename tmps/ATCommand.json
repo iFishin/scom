@@ -2,603 +2,123 @@
     "commands": [
         {
             "selected": false,
-            "command": "AT+QSTAAPINFO=\"NewMar\",\"12345678\"",
-            "interval": "",
-            "withEnter": true
+            "command": "1、B模块开启广播，进入透传模式",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QSOFTAP=\"FGM842D\",\"12345678\"",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLENAME=\"HF-41D\"",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEINIT=2",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QMTCFG=\"version\",1,4",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QMTCFG=\"session\",1,1",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEGATTSSRV=\"FEE1\"",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QSSLCFG=\"seclevel\",1,1",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEGATTSCHAR=\"36f3\"",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QSSLCFG=\"seclevel\",1",
-            "interval": "1",
-            "withEnter": true
+            "command": "AT+QBLEGATTSSRVDONE",
+            "withEnter": true,
+            "interval": ""
         },
         {
-            "selected": true,
-            "command": "AT+QFOPEN=\"ca.pem\",1",
-            "interval": "1",
-            "withEnter": true
-        },
-        {
-            "selected": true,
-            "command": "AT+QFWRITE=1,1500",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QFCLOSE=1",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QFLST",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QSSLCFG=\"cacert\",1,\"ca.pem\"",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QMTCFG=\"SSL\",1,1,1",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QMTOPEN=1,\"mqtts.heclouds.com\",8883",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QMTCONN=1,\"my_dev\",\"S1jFZ62g70\",\"version=2018-10-31&res=products%2FS1jFZ62g70%2Fdevices%2Fmy_dev&et=1733551918&method=md5&sign=RJ%2BmCmiVNDz5ema5UbBtIg%3D%3D\"",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "AT+QMTSUB=1,1,\"$sys/S1jFZ62g70/my_dev/thing/service/#\",1",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
-            "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
-        },
-        {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEADVSTART",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "2、指定相同的UUID进入透传模式，打开透传功能后，发送数据",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLETRANMODE=\"36f3\"",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "OK",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "发送数据：12345678900，对端不会接收",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "3、手机扫描广播后连接，互发数据能够成功接收。",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "+QBLESTAT:CONNECTED",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "接收数据：11445",
+            "withEnter": true,
+            "interval": ""
         },
         {
             "selected": false,
-            "command": "",
-            "interval": "",
-            "withEnter": true
+            "command": "发送数据：12345678",
+            "withEnter": true,
+            "interval": ""
         }
     ]
 }

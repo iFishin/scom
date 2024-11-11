@@ -2,7 +2,6 @@ import os
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import QMessageBox
 from utils import common
-import time
 
 class FileSender(QThread):
     # 定义一个进度信号
@@ -15,23 +14,31 @@ class FileSender(QThread):
 
     def run(self):
         try:
-            with open(self.file_path, "r", encoding='utf-8') as f:
-                file_size = os.path.getsize(self.file_path)
-                print(file_size)
+            with open(self.file_path, "rb") as f:
+                file_content = f.read()
+                # 判断文件编码类型
+                is_crlf = b'\r\n' in file_content
+                is_lf = b'\n' in file_content and not is_crlf
+                file_size = len(file_content)
                 sent_bytes = 0
-                chunk_size = 1024
+                chunk_size = 16
+
                 while sent_bytes < file_size:
-                    chunk = f.read(chunk_size)
-                    chunk = repr(chunk).strip("'").replace("\\n", "\r\n")
-                    print(chunk)
+                    chunk = file_content[sent_bytes:sent_bytes + chunk_size]
                     if not chunk:
                         break
-                    common.port_write(chunk, self.serial_port, sendWithEnter=False)
-                    print(f"####Command sent: {chunk}")
+                    if is_crlf:
+                        formatted_chunk = chunk.replace(b'\r\n', b'\n').decode('utf-8')
+                        formatted_chunk = formatted_chunk.replace('\n', '\r\n')
+                        print(formatted_chunk)
+                    elif is_lf:
+                        formatted_chunk = chunk.decode('utf-8')
+                    else:
+                        formatted_chunk = chunk.decode('utf-8')
+                    common.port_write(formatted_chunk, self.serial_port, sendWithEnter=False)
                     sent_bytes += len(chunk)
                     # 发送进度信号
                     self.progressUpdated.emit(int(sent_bytes / file_size * 100))
-                    time.sleep(3)
         except FileNotFoundError:
             QMessageBox.warning(self, "Warning", "File not found.")
         except PermissionError:
