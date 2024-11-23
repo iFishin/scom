@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QKeySequenceEdit,
     QScrollArea,
     QWidget,
+    QHBoxLayout,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
@@ -19,8 +20,8 @@ class HotkeysConfigDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Hotkeys Configuration")
-        self.setFixedWidth(550)
-        self.setFixedHeight(400)
+        self.setFixedWidth(650)
+        self.setFixedHeight(450)
 
         self.parent = parent
         self.layout = QVBoxLayout()
@@ -40,8 +41,8 @@ class HotkeysConfigDialog(QDialog):
         hotkey_shortcuts_section = dict(self.config.items("HotkeyShortcuts"))
         self.hotkeys = {
             hotkeys_section.get(f"hotkey_{i + 1}", ""): [
-                hotkey_values_section.get(f"hotkeyvalue_{i + 1}", ""),
-                hotkey_shortcuts_section.get(f"hotkeyshortcut_{i + 1}", ""),
+                hotkey_values_section.get(f"hotkey_value_{i + 1}", ""),
+                hotkey_shortcuts_section.get(f"hotkey_shortcut_{i + 1}", ""),
             ]
             for i in range(len(hotkeys_section))
         }
@@ -52,12 +53,22 @@ class HotkeysConfigDialog(QDialog):
         self.scroll_layout.addLayout(self.grid_layout)
         self.scroll_area.setWidget(self.scroll_content)
 
-        add_button = QPushButton("Add")
+        add_button = QPushButton("+")
         add_button.clicked.connect(self.add_row)
 
         self.layout.addWidget(self.scroll_area)
         self.layout.addWidget(add_button)
 
+        # Add Save and Cancel buttons
+        button_layout = QHBoxLayout()
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.save_hotkeys)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(cancel_button)
+
+        self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
 
     def populate_grid(self):
@@ -65,11 +76,12 @@ class HotkeysConfigDialog(QDialog):
             self.add_row_to_grid(row, name, value, shortcut)
 
     def add_row_to_grid(self, row, name, value, shortcut):
-        delete_button = QPushButton("Delete")
+        delete_button = QPushButton("-")
         delete_button.clicked.connect(partial(self.delete_row, row))
         index_label = QLabel(str(row + 1))
         input_hotkey_name = QLineEdit(name)
         input_hotkey_value = QLineEdit(value)
+        input_hotkey_value.setMinimumWidth(200)
         input_hotkey_shortcut = QKeySequenceEdit()
         input_hotkey_shortcut.setKeySequence(QKeySequence(shortcut))
 
@@ -108,9 +120,15 @@ class HotkeysConfigDialog(QDialog):
         self.add_row_to_grid(next_index, new_action, "", "")
 
     def delete_row(self, row):
+        if row >= len(self.hotkeys):
+            return
+
         hotkey_name = list(self.hotkeys.keys())[row]
         self.hotkeys.pop(hotkey_name)
-        self.hotkey_inputs.pop(hotkey_name)
+        hotkey_input_keys = list(self.hotkey_inputs.keys())
+        hotkey_input = self.hotkey_inputs.pop(hotkey_input_keys[row])
+        for widget in hotkey_input:
+            widget.setParent(None)
 
         for i in range(self.grid_layout.columnCount()):
             item = self.grid_layout.itemAtPosition(row, i)
@@ -119,8 +137,16 @@ class HotkeysConfigDialog(QDialog):
                 if widget:
                     self.grid_layout.removeWidget(widget)
                     widget.deleteLater()
-
+        self.reindex_rows()
         self.update_grid()
+
+    def reindex_rows(self):
+        for row in range(self.grid_layout.rowCount()):
+            index_label_item = self.grid_layout.itemAtPosition(row, 1)
+            if index_label_item is not None:
+                index_label = index_label_item.widget()
+                if index_label:
+                    index_label.setText(str(row + 1))
 
     def update_grid(self):
         for row in range(self.grid_layout.rowCount()):
@@ -131,24 +157,33 @@ class HotkeysConfigDialog(QDialog):
                     if widget:
                         self.grid_layout.removeWidget(widget)
                         widget.deleteLater()
-
         self.populate_grid()
+        
+    def update_hotkeys(self):
+        new_hotkeys = {}
+        for name_input, (value_input, shortcut_input) in self.hotkey_inputs.items():
+            if name_input is not None and name_input.isVisible():
+                name = name_input.text()
+                value = value_input.text() if value_input is not None and value_input.isVisible() else ""
+                shortcut = shortcut_input.keySequence().toString() if shortcut_input is not None and shortcut_input.isVisible() else ""
+                new_hotkeys[name] = [value, shortcut]
+        self.hotkeys = new_hotkeys
+        
+    def update_config(self):
+        self.update_hotkeys()
+        for index, (name, (value, shortcut)) in enumerate(self.hotkeys.items()):
+            self.config.set("Hotkeys", f"hotkey_{index + 1}", name)
+            self.config.set("HotkeyValues", f"hotkey_value_{index + 1}", value)
+            self.config.set("HotkeyShortcuts", f"hotkey_shortcut_{index + 1}", shortcut)
+        write_config(self.config, "config.ini")
 
     def update_parent_hotkeys(self):
         self.parent.config = self.config
         self.parent.update_hotkeys_groupbox()
 
     def save_hotkeys(self):
-        for index, (name, [value, shortcut]) in enumerate(self.hotkey_inputs.items()):
-            self.config.set("Hotkeys", f"hotkey_{index + 1}", name.text())
-            self.config.set("HotkeyValues", f"hotkeyvalue_{index + 1}", value.text())
-            self.config.set(
-                "HotkeyShortcuts",
-                f"hotkeyshortcut_{index + 1}",
-                shortcut.keySequence().toString(),
-            )
-        write_config(self.config)
-        self.accept()
+        self.update_config()
+        self.update_parent_hotkeys()
 
     def closeEvent(self, event):
         self.save_hotkeys()

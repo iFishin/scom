@@ -30,17 +30,16 @@ from PySide6.QtWidgets import (
     QDialog,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread, QPropertyAnimation
+from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread
 from PySide6.QtGui import (
     QTextDocument,
     QTextCursor,
     QIcon,
     QIntValidator,
     QBrush,
-    QPen,
     QColor,
-    QPixmap,
     QShortcut,
+    QKeySequence,
     QTextCharFormat,
     QFont,
 )
@@ -66,6 +65,7 @@ class MyWidget(QWidget):
         # Init constants for the widget
         self.main_Serial = None
         self.hotkey_buttons = []
+        self.shortcuts = []
         self.prompt_index = 0
         self.total_times = 0
         self.is_stop_batch = False
@@ -142,6 +142,10 @@ class MyWidget(QWidget):
         self.help_menu_action = self.about_menu.addAction("Help")
         self.help_menu_action.setShortcut("Ctrl+/")
         self.help_menu_action.triggered.connect(self.show_help_info)
+        
+        self.update_info_action = self.about_menu.addAction("Update Info")
+        self.update_info_action.setShortcut("Ctrl+U")
+        self.update_info_action.triggered.connect(self.show_update_info)
         
         self.about_menu_action = self.about_menu.addAction("About")
         self.about_menu_action.setShortcut("Ctrl+I")
@@ -820,36 +824,37 @@ class MyWidget(QWidget):
         self.received_data_textarea.setDocument(doc)
 
     def update_hotkeys_groupbox(self):
-        # upate self.hotkey_buttons
+        # Clear existing buttons
+        for i in reversed(range(self.hotkeys_layout.count())):
+            widget = self.hotkeys_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+
+        # Update self.hotkey_buttons
         self.hotkey_buttons = []
         for i in range(1, len(self.config.items("Hotkeys")) + 1):
             button = QPushButton(f"Hotkey {i}")
-            button.clicked.connect(self.handle_hotkey_click(i))
+            hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
+            button.clicked.connect(self.handle_hotkey_click(i, hotkey_value))
             self.hotkey_buttons.append(button)
-        
+
         for i, button in enumerate(self.hotkey_buttons):
             row = i // 4
             col = i % 4
             self.hotkeys_layout.addWidget(button, row, col)
-        
+
         for i in range(1, len(self.config.items("Hotkeys")) + 1):
             hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
-            hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
-            hotkey_shorcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
-            self.hotkey_buttons[i - 1].setText(hotkey_name)
-            self.hotkey_buttons[i - 1].setToolTip(hotkey_shorcut)
-            self.hotkey_buttons[i - 1].setShortcut(hotkey_shorcut)
-
+            hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
+            button = self.hotkey_buttons[i - 1]
+            button.setText(hotkey_name)
+            button.setToolTip(hotkey_shortcut)
+            try:
+                shortcut = QKeySequence(hotkey_shortcut)
+                button.setShortcut(shortcut)
+            except ValueError:
+                print(f"Invalid shortcut: {hotkey_shortcut}")
             
-    # Update hotkey_buttons
-    # def update_hotkeys(self):
-    #     for i in range(1, len(self.config.items("Hotkeys")) + 1):
-    #         hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
-    #         hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
-    #         hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
-    #         hotkey_shortcut.activated.connect(self.handle_hotkey_click(i), hotkey_value, hotkey_shortcut)
-    #         self.hotkey_buttons[i - 1].setText(hotkey_name)
-
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
             if self.text_input_layout_2.toPlainText() == "":
@@ -923,6 +928,10 @@ class MyWidget(QWidget):
     def show_help_info(self):
         help_dialog = HelpDialog()
         help_dialog.exec()
+
+    def show_update_info(self):
+        update_dialog = UpdateInfoDialog(self)
+        update_dialog.exec()
 
     def show_about_info(self):
         about_dialog = AboutDialog(self)
