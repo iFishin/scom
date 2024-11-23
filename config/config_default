@@ -3,11 +3,11 @@ baudrate = 115200
 stopbits = 1
 parity = None
 bytesize = 8
-flowcontrol = 
+flowcontrol = None
 dtr = False
 rts = False
 sendwithenter = True
-showsymbol = False
+showsymbol = True
 timestamp = True
 receivedhex = False
 pathdatareceived = 
@@ -29,20 +29,20 @@ hotkeyvalue_1 =
 hotkeyvalue_2 = 
 hotkeyvalue_3 = 
 hotkeyvalue_4 = 
-hotkeyvalue_5 = AT+QSTAAPINFO="NewMar","12345678"
+hotkeyvalue_5 = AT+QSTAAPINFO=NewMar,12345678
 hotkeyvalue_6 = AT+QRST
 hotkeyvalue_7 = AT+QECHO=1
 hotkeyvalue_8 = AT+QVERSION
 
 [HotkeyShortcuts]
-hotkeyshortcut_1 = 
-hotkeyshortcut_2 =
-hotkeyshortcut_3 =
-hotkeyshortcut_4 =
-hotkeyshortcut_5 =
-hotkeyshortcut_6 =
-hotkeyshortcut_7 =
-hotkeyshortcut_8 =
+hotkeyshortcut_1 = Alt+1
+hotkeyshortcut_2 = Alt+2
+hotkeyshortcut_3 = Alt+3
+hotkeyshortcut_4 = Alt+4
+hotkeyshortcut_5 = Alt+Z
+hotkeyshortcut_6 = Alt+X
+hotkeyshortcut_7 = Alt+C
+hotkeyshortcut_8 = Alt+V
 
 [LayoutConfig]
 settings = True
@@ -51,4 +51,3 @@ file = True
 hotkeys = True
 data_received = True
 button_group = True
-

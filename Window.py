@@ -56,6 +56,7 @@ from components.LayoutConifgDialog import LayoutConfigDialog
 from components.AboutDialog import AboutDialog
 from components.HelpDialog import HelpDialog
 from components.UpdateInfoDialog import UpdateInfoDialog
+from components.ConfirmExitDialog import ConfirmExitDialog
 
 
 class MyWidget(QWidget):
@@ -546,6 +547,7 @@ class MyWidget(QWidget):
         for i in range(1, 101):
             # Create a combobox for selecting the function
             checkbox = QCheckBox()
+            checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
             label = f"Func {i}"
             button = QPushButton(label)
             input_field = QLineEdit()
@@ -1414,6 +1416,10 @@ class MyWidget(QWidget):
         for i in range(len(self.input_fields)):
             self.input_fields[i].setText("")
 
+    def set_checkbox_none(self):
+        for i in range(len(self.checkbox)):
+            self.checkbox[i].setChecked(False)
+
     def set_enter_none(self):
         status = self.checkbox_send_with_enters[0].isChecked()
         for i in range(len(self.checkbox_send_with_enters)):
@@ -1534,19 +1540,22 @@ class MyWidget(QWidget):
     """
 
     def closeEvent(self, event):
-        # Save configuration settings
-        self.save_config(self.config)
-        
-        # Close serial port
-        if self.main_Serial:
-            self.port_off()
-
-        # Signal all running threads to stop
-        active_threads = self.thread_pool.activeThreadCount()
-        while active_threads > 0:
-            self.thread_pool.waitForDone(100)
+        # Confirm exit dialog
+        confirm_exit_dialog = ConfirmExitDialog(self)
+        if confirm_exit_dialog.exec() == QDialog.Accepted:
+            # Save configuration settings
+            self.save_config(self.config)
+            # Close serial port
+            if self.main_Serial:
+                self.port_off()
+            # Signal all running threads to stop
             active_threads = self.thread_pool.activeThreadCount()
-        event.accept()
+            while active_threads > 0:
+                self.thread_pool.waitForDone(100)
+                active_threads = self.thread_pool.activeThreadCount()
+            event.accept()
+        else:
+            event.ignore()
 
 
 # Create a logger for the application
@@ -1564,8 +1573,7 @@ def main():
         widget.resize(1000, 900)
         widget.show()
         
-        update_info_dialog = UpdateInfoDialog(widget)
-        update_info_dialog.show()
+        UpdateInfoDialog(widget)
 
         sys.exit(app.exec())
     except Exception as e:

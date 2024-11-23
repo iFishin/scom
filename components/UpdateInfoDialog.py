@@ -1,3 +1,4 @@
+import os
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import requests
@@ -15,6 +16,8 @@ from PySide6.QtWidgets import (
 class UpdateInfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.url_update_info = "https:1//ifishin.xyz/UpdateInfo.txt"
+        
         self.setWindowTitle("Update Information")
         self.setFixedSize(600, 400)
         self.setWindowFlag(Qt.FramelessWindowHint)
@@ -80,12 +83,25 @@ class UpdateInfoDialog(QDialog):
             }
         """
         )
-        url = "https://ifishin.xyz/UpdateInfo.txt"
         try:
-            response = requests.get(url)
+            response = requests.get(self.url_update_info)
             response.raise_for_status()
             response.encoding = 'utf-8'
             content = response.text
-            self.text_edit.setPlainText(content)
         except requests.RequestException as e:
             self.text_edit.setPlainText(f"Failed to retrieve update information: {e}")
+            return
+
+        self.text_edit.setPlainText(content)
+
+        if not os.path.exists("CHANGELOG.md"):
+            with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                f.write(content)
+                self.show()
+        else:
+            with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+                old_content = f.read()
+                if content != old_content:
+                    with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                        f.write(content)
+                        self.show()
