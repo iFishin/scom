@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 class UpdateInfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.url_update_info = "https:1//ifishin.xyz/UpdateInfo.txt"
+        self.url_update_info = "https://ifishin.xyz/UpdateInfo.txt"
         
         self.setWindowTitle("Update Information")
         self.setFixedSize(600, 400)
@@ -90,6 +90,7 @@ class UpdateInfoDialog(QDialog):
             content = response.text
         except requests.RequestException as e:
             self.text_edit.setPlainText(f"Failed to retrieve update information: {e}")
+            print(f"Failed to retrieve update information: {e}")
             return
 
         self.text_edit.setPlainText(content)
