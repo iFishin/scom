@@ -22,7 +22,6 @@ class FileSender(QThread):
                 file_size = len(file_content)
                 sent_bytes = 0
                 chunk_size = 16
-
                 while sent_bytes < file_size:
                     chunk = file_content[sent_bytes:sent_bytes + chunk_size]
                     if not chunk:

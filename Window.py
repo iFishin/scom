@@ -265,6 +265,8 @@ class MyWidget(QWidget):
 
         self.port_button = QPushButton("Open Port")
         self.port_button.clicked.connect(self.port_on)
+        self.port_button.setShortcut("Ctrl+O")
+        self.port_button.setToolTip("Shortcut: Ctrl+O")
 
         self.toggle_button = QPushButton()
         self.toggle_button.setToolTip("Show More Options")
@@ -324,18 +326,20 @@ class MyWidget(QWidget):
 
         # Create a group box for the settings section
         self.settings_groupbox = QGroupBox("Settings")
-        settings_layout = QGridLayout(self.settings_groupbox)
-        settings_layout.addWidget(
+        self.settings_groupbox.mouseDoubleClickEvent = lambda event: self.set_settings_groupbox_visible()
+        self.settings_groupbox.setToolTip("Double click to Show/Hide")
+        self.settings_layout = QGridLayout(self.settings_groupbox)
+        self.settings_layout.addWidget(
             self.serial_port_label, 0, 0, 1, 1, alignment=Qt.AlignRight
         )
-        settings_layout.addWidget(self.serial_port_combo, 0, 1, 1, 1)
-        settings_layout.addWidget(
+        self.settings_layout.addWidget(self.serial_port_combo, 0, 1, 1, 1)
+        self.settings_layout.addWidget(
             self.baud_rate_label, 1, 0, 1, 1, alignment=Qt.AlignRight
         )
-        settings_layout.addWidget(self.baud_rate_combo, 1, 1, 1, 1)
-        settings_layout.addWidget(self.port_button, 0, 2, 1, 2)
-        settings_layout.addWidget(self.status_label, 1, 2, 1, 1)
-        settings_layout.addWidget(self.toggle_button, 1, 3, 1, 1)
+        self.settings_layout.addWidget(self.baud_rate_combo, 1, 1, 1, 1)
+        self.settings_layout.addWidget(self.port_button, 0, 2, 1, 2)
+        self.settings_layout.addWidget(self.status_label, 1, 2, 1, 1)
+        self.settings_layout.addWidget(self.toggle_button, 1, 3, 1, 1)
 
         self.settings_more_layout = QGridLayout()
 
@@ -389,7 +393,7 @@ class MyWidget(QWidget):
         )
         self.settings_more_layout.addWidget(self.button_data_received_save, 6, 2, 1, 2)
 
-        settings_layout.addLayout(self.settings_more_layout, 2, 0, 1, 4)
+        self.settings_layout.addLayout(self.settings_more_layout, 2, 0, 1, 4)
 
         # Set the button to be invisible
         for i in range(self.settings_more_layout.count()):
@@ -397,14 +401,18 @@ class MyWidget(QWidget):
 
         # Create a group box for the command section
         self.command_groupbox = QGroupBox("Command")
-        command_layout = QHBoxLayout(self.command_groupbox)
-        command_layout.addWidget(self.command_input)
-        command_layout.addWidget(self.expand_button)
-        command_layout.addWidget(self.send_button)
+        self.command_groupbox.mouseDoubleClickEvent = lambda event: self.set_command_groupbox_visible()
+        self.command_groupbox.setToolTip("Double click to Show/Hide")
+        self.command_layout = QHBoxLayout(self.command_groupbox)
+        self.command_layout.addWidget(self.command_input)
+        self.command_layout.addWidget(self.expand_button)
+        self.command_layout.addWidget(self.send_button)
 
         # Create a group box for the file section
         self.file_groupbox = QGroupBox("File")
-        file_layout = QVBoxLayout(self.file_groupbox)
+        self.file_groupbox.mouseDoubleClickEvent = lambda event: self.set_file_groupbox_visible()
+        self.file_groupbox.setToolTip("Double click to Show/Hide")
+        self.file_layout = QVBoxLayout(self.file_groupbox)
         file_row_layout = QHBoxLayout()
         file_row_layout.addWidget(self.file_label)
         file_row_layout.addWidget(self.file_input)
@@ -412,11 +420,13 @@ class MyWidget(QWidget):
         file_row_layout.addWidget(self.file_button_send)
         file_progress_layout = QHBoxLayout()
         file_progress_layout.addWidget(self.progress_bar)
-        file_layout.addLayout(file_row_layout)
-        file_layout.addLayout(file_progress_layout)
+        self.file_layout.addLayout(file_row_layout)
+        self.file_layout.addLayout(file_progress_layout)
 
         # Create a group box for the Hotkeys section
         self.hotkeys_groupbox = QGroupBox("Hotkeys")
+        self.hotkeys_groupbox.mouseDoubleClickEvent = lambda event: self.set_hotkeys_groupbox_visible()
+        self.hotkeys_groupbox.setToolTip("Double click to Show/Hide")
         self.hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
         self.update_hotkeys_groupbox()
 
@@ -720,6 +730,7 @@ class MyWidget(QWidget):
     def apply_config(self, config):
         # Set
         try:
+            self.serial_port_combo.setCurrentText(config.get("Set", "Port"))
             self.baud_rate_combo.setCurrentText(config.get("Set", "BaudRate"))
             self.stopbits_combo.setCurrentText(config.get("Set", "StopBits"))
             self.parity_combo.setCurrentText(config.get("Set", "Parity"))
@@ -751,6 +762,7 @@ class MyWidget(QWidget):
     def save_config(self, config):
         try:
             # Set
+            config.set("Set", "Port", self.serial_port_combo.currentText())
             config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
             config.set("Set", "StopBits", self.stopbits_combo.currentText())
             config.set("Set", "Parity", self.parity_combo.currentText())
@@ -854,6 +866,11 @@ class MyWidget(QWidget):
                 button.setShortcut(shortcut)
             except ValueError:
                 print(f"Invalid shortcut: {hotkey_shortcut}")
+
+        # Ensure each button is only connected once
+        for button in self.hotkey_buttons:
+            button.clicked.disconnect()
+            button.clicked.connect(self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1))
             
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
@@ -1075,6 +1092,10 @@ class MyWidget(QWidget):
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
                 self.file_input.setText(file_path)
+                file_size = os.path.getsize(file_path)
+                self.progress_bar.setMaximum(file_size)
+                self.progress_bar.setValue(0)
+                self.progress_bar.setFormat(f"File size: {file_size} bytes")
 
     def send_file(self):
         file_path = self.file_input.text()
@@ -1179,6 +1200,8 @@ class MyWidget(QWidget):
             )
             if self.main_Serial:
                 self.port_button.setText("Close Port")
+                self.port_button.setShortcut("Ctrl+O")
+                self.port_button.setToolTip("Shortcut: Ctrl+O")
                 self.set_status_label("Open", "#198754")
                 self.port_button.clicked.disconnect(self.port_on)
                 self.port_button.clicked.connect(self.port_off)
@@ -1225,6 +1248,8 @@ class MyWidget(QWidget):
             self.main_Serial = common.port_off(self.main_Serial)
             if self.main_Serial is None:
                 self.port_button.setText("Open Port")
+                self.port_button.setShortcut("Ctrl+O")
+                self.port_button.setToolTip("Shortcut: Ctrl+O")
                 self.set_status_label("Closed", "#198754")
                 self.port_button.clicked.disconnect(self.port_off)
                 self.port_button.clicked.connect(self.port_on)
@@ -1438,6 +1463,37 @@ class MyWidget(QWidget):
         interVal = self.interVal[0].text()
         for i in range(len(self.interVal)):
             self.interVal[i].setText(interVal)
+    
+    def set_settings_groupbox_visible(self):
+        for i in range(self.settings_layout.count()):
+            widget = self.settings_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(not widget.isVisible())
+
+    def set_command_groupbox_visible(self):
+        for i in range(self.command_layout.count()):
+            widget = self.command_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(not widget.isVisible())
+                
+    def set_file_groupbox_visible(self):
+        for i in range(self.file_layout.count()):
+            item = self.file_layout.itemAt(i)
+            if isinstance(item, QHBoxLayout) or isinstance(item, QVBoxLayout):
+                for j in range(item.count()):
+                    widget = item.itemAt(j).widget()
+                    if widget:
+                        widget.setVisible(not widget.isVisible())
+            else:
+                widget = item.widget()
+                if widget:
+                    widget.setVisible(not widget.isVisible())
+    
+    def set_hotkeys_groupbox_visible(self):
+        for i in range(self.hotkeys_layout.count()):
+            widget = self.hotkeys_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(not widget.isVisible())
 
     # Filter selected commands
     def filter_selected_command(self):
@@ -1464,10 +1520,17 @@ class MyWidget(QWidget):
 
     def handle_prompt_batch_start(self):
         if not self.command_executor:
+            try:
+                self.total_times = int(self.input_prompt_batch_times.text())
+            except ValueError:
+                self.total_times = 1
+            # If total times is 0, set it to 1
+            if self.total_times == 0:
+                self.total_times = 1
             self.command_executor = CommandExecutor(
                 self.filter_selected_command(),
                 self.main_Serial,
-                int(self.input_prompt_batch_times.text()),
+                self.total_times,
             )
             self.command_executor.commandExecuted.connect(self.handle_command_executed)
             self.command_executor.totalTimes.connect(

@@ -41,8 +41,8 @@ class HotkeysConfigDialog(QDialog):
         hotkey_shortcuts_section = dict(self.config.items("HotkeyShortcuts"))
         self.hotkeys = {
             hotkeys_section.get(f"hotkey_{i + 1}", ""): [
-                hotkey_values_section.get(f"hotkey_value_{i + 1}", ""),
-                hotkey_shortcuts_section.get(f"hotkey_shortcut_{i + 1}", ""),
+                hotkey_values_section.get(f"hotkeyvalue_{i + 1}", ""),
+                hotkey_shortcuts_section.get(f"hotkeyshortcut_{i + 1}", ""),
             ]
             for i in range(len(hotkeys_section))
         }
@@ -128,7 +128,8 @@ class HotkeysConfigDialog(QDialog):
         hotkey_input_keys = list(self.hotkey_inputs.keys())
         hotkey_input = self.hotkey_inputs.pop(hotkey_input_keys[row])
         for widget in hotkey_input:
-            widget.setParent(None)
+            if widget is not None:
+                widget.setParent(None)
 
         for i in range(self.grid_layout.columnCount()):
             item = self.grid_layout.itemAtPosition(row, i)
@@ -137,8 +138,13 @@ class HotkeysConfigDialog(QDialog):
                 if widget:
                     self.grid_layout.removeWidget(widget)
                     widget.deleteLater()
+
+        # Remove references from hotkey_inputs
+        del hotkey_input_keys[row]
+
         self.reindex_rows()
         self.update_grid()
+        self.update_config()
 
     def reindex_rows(self):
         for row in range(self.grid_layout.rowCount()):
@@ -161,20 +167,36 @@ class HotkeysConfigDialog(QDialog):
         
     def update_hotkeys(self):
         new_hotkeys = {}
-        for name_input, (value_input, shortcut_input) in self.hotkey_inputs.items():
-            if name_input is not None and name_input.isVisible():
-                name = name_input.text()
-                value = value_input.text() if value_input is not None and value_input.isVisible() else ""
-                shortcut = shortcut_input.keySequence().toString() if shortcut_input is not None and shortcut_input.isVisible() else ""
-                new_hotkeys[name] = [value, shortcut]
+        for name_input, (value_input, shortcut_input) in list(self.hotkey_inputs.items()):
+            if name_input is not None:
+                try:
+                    if name_input.isVisible():
+                        name = name_input.text()
+                        value = value_input.text() if value_input is not None and value_input.isVisible() else ""
+                        shortcut = shortcut_input.keySequence().toString() if shortcut_input is not None and shortcut_input.isVisible() else ""
+                        new_hotkeys[name] = [value, shortcut]
+                except RuntimeError:
+                    # Handle the case where the widget has been deleted
+                    continue
         self.hotkeys = new_hotkeys
         
     def update_config(self):
         self.update_hotkeys()
+        # Clear existing config sections
+        self.config.remove_section("Hotkeys")
+        self.config.remove_section("HotkeyValues")
+        self.config.remove_section("HotkeyShortcuts")
+        
+        # Recreate sections
+        self.config.add_section("Hotkeys")
+        self.config.add_section("HotkeyValues")
+        self.config.add_section("HotkeyShortcuts")
+        
         for index, (name, (value, shortcut)) in enumerate(self.hotkeys.items()):
             self.config.set("Hotkeys", f"hotkey_{index + 1}", name)
-            self.config.set("HotkeyValues", f"hotkey_value_{index + 1}", value)
-            self.config.set("HotkeyShortcuts", f"hotkey_shortcut_{index + 1}", shortcut)
+            self.config.set("HotkeyValues", f"hotkeyvalue_{index + 1}", value)
+            self.config.set("HotkeyShortcuts", f"hotkeyshortcut_{index + 1}", shortcut)
+        
         write_config(self.config, "config.ini")
 
     def update_parent_hotkeys(self):

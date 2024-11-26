@@ -34,6 +34,8 @@ class CommandExecutor(QThread):
                     self.commandExecuted.emit(index, command)
                     if interval:
                         QThread.sleep(int(interval))
+                    else:
+                        QThread.sleep(3)
                 except Exception as e:
                     self.error_occurred = True
                 # QThread.sleep(2)
