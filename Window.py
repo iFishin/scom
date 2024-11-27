@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QTextEdit,
     QLineEdit,
     QComboBox,
+    QRadioButton,
     QCheckBox,
     QPushButton,
     QLabel,
@@ -69,6 +70,9 @@ class MyWidget(QWidget):
         self.prompt_index = 0
         self.total_times = 0
         self.is_stop_batch = False
+        self.path_ATCommand = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "tmps", "ATCommand.json"
+        )
         self.received_data_textarea_scrollBottom = True
         self.thread_pool = QThreadPool()
         self.data_receiver = None
@@ -84,7 +88,7 @@ class MyWidget(QWidget):
         self.init_UI()
 
         # After init the UI, set the layout of the widget
-        
+
         input_fields_values = [
             "AT+QECHO=1",
             "AT+QVERSION",
@@ -102,7 +106,7 @@ class MyWidget(QWidget):
                 self.input_fields[i - 1].setText(input_fields_values[i - 1])
             else:
                 break
-        
+
         self.layout_config_dialog = LayoutConfigDialog(self)
 
         if not os.path.exists("config.ini"):
@@ -119,6 +123,7 @@ class MyWidget(QWidget):
          Initialize the UI of the widget.
          
     """
+
     def init_UI(self):
         # Create menu bar
         self.menu_bar = QMenuBar()
@@ -142,15 +147,14 @@ class MyWidget(QWidget):
         self.help_menu_action = self.about_menu.addAction("Help")
         self.help_menu_action.setShortcut("Ctrl+/")
         self.help_menu_action.triggered.connect(self.show_help_info)
-        
+
         self.update_info_action = self.about_menu.addAction("Update Info")
         self.update_info_action.setShortcut("Ctrl+U")
         self.update_info_action.triggered.connect(self.show_update_info)
-        
+
         self.about_menu_action = self.about_menu.addAction("About")
         self.about_menu_action.setShortcut("Ctrl+I")
         self.about_menu_action.triggered.connect(self.show_about_info)
-
 
         # Create a flag to indicate whether the thread should stop
         self.stop_ports_update_thread = False
@@ -326,7 +330,9 @@ class MyWidget(QWidget):
 
         # Create a group box for the settings section
         self.settings_groupbox = QGroupBox("Settings")
-        self.settings_groupbox.mouseDoubleClickEvent = lambda event: self.set_settings_groupbox_visible()
+        self.settings_groupbox.mouseDoubleClickEvent = (
+            lambda event: self.set_settings_groupbox_visible()
+        )
         self.settings_groupbox.setToolTip("Double click to Show/Hide")
         self.settings_layout = QGridLayout(self.settings_groupbox)
         self.settings_layout.addWidget(
@@ -401,7 +407,9 @@ class MyWidget(QWidget):
 
         # Create a group box for the command section
         self.command_groupbox = QGroupBox("Command")
-        self.command_groupbox.mouseDoubleClickEvent = lambda event: self.set_command_groupbox_visible()
+        self.command_groupbox.mouseDoubleClickEvent = (
+            lambda event: self.set_command_groupbox_visible()
+        )
         self.command_groupbox.setToolTip("Double click to Show/Hide")
         self.command_layout = QHBoxLayout(self.command_groupbox)
         self.command_layout.addWidget(self.command_input)
@@ -410,7 +418,9 @@ class MyWidget(QWidget):
 
         # Create a group box for the file section
         self.file_groupbox = QGroupBox("File")
-        self.file_groupbox.mouseDoubleClickEvent = lambda event: self.set_file_groupbox_visible()
+        self.file_groupbox.mouseDoubleClickEvent = (
+            lambda event: self.set_file_groupbox_visible()
+        )
         self.file_groupbox.setToolTip("Double click to Show/Hide")
         self.file_layout = QVBoxLayout(self.file_groupbox)
         file_row_layout = QHBoxLayout()
@@ -425,7 +435,9 @@ class MyWidget(QWidget):
 
         # Create a group box for the Hotkeys section
         self.hotkeys_groupbox = QGroupBox("Hotkeys")
-        self.hotkeys_groupbox.mouseDoubleClickEvent = lambda event: self.set_hotkeys_groupbox_visible()
+        self.hotkeys_groupbox.mouseDoubleClickEvent = (
+            lambda event: self.set_hotkeys_groupbox_visible()
+        )
         self.hotkeys_groupbox.setToolTip("Double click to Show/Hide")
         self.hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
         self.update_hotkeys_groupbox()
@@ -507,7 +519,6 @@ class MyWidget(QWidget):
         self.prompt_batch_stop_button.setEnabled(False)
 
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
-        
 
         self.input_prompt_batch_times = QLineEdit()
         self.input_prompt_batch_times.setPlaceholderText("Total Times")
@@ -626,11 +637,49 @@ class MyWidget(QWidget):
         self.text_input_layout_2.setDocument(QTextDocument(None))
         self.text_input_layout_2.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_2.addWidget(self.label_layout_2)
-        layout_2.addWidget(self.text_input_layout_2)
+        layout_2_main = QHBoxLayout()
+        layout_2_main.addWidget(self.text_input_layout_2)
         self.text_input_layout_2.setStyleSheet(
             "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: 600; }"
         )
         self.text_input_layout_2.setAcceptRichText(False)
+        self.radio_groupbox = QGroupBox()
+        self.radio_layout = QGridLayout(self.radio_groupbox)
+        self.expand_left_button = QPushButton()
+        self.expand_left_button.setStyleSheet(
+            "QPushButton { background-color: transparent; color: #00A86B; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
+            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
+        )
+        self.expand_left_button.setIcon(QIcon("./res/direction_left.png"))
+        self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
+        self.radio_layout.addWidget(self.expand_left_button, 0, 0, 1, 2)
+
+        self.radio_path_command_buttons = []
+        self.path_command_inputs = []
+
+        for i in range(15):
+            radio_button = QRadioButton(f"Path {i + 1}")
+            radio_button.toggled.connect(
+                lambda state, x=i: self.handle_radio_button_click(x)
+            )
+            path_input = QLineEdit()
+            path_input.mouseDoubleClickEvent = lambda event, pi=path_input: (
+                self.select_json_file(pi) if event else None
+            )
+            path_input.setPlaceholderText("Path, double click to select")
+            path_input.setVisible(False)
+            self.radio_layout.addWidget(radio_button, i + 1, 0)
+            self.radio_layout.addWidget(path_input, i + 1, 1)
+            self.radio_path_command_buttons.append(radio_button)
+            self.path_command_inputs.append(path_input)
+
+        self.radio_path_command_buttons[0].setChecked(True)
+        self.path_command_inputs[0].setText(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps", "ATCommand.json")
+        )
+        layout_2_main.addWidget(self.radio_groupbox)
+        layout_2.addLayout(layout_2_main)
 
         layout_3 = QVBoxLayout()
         self.label_layout_3 = QLabel("temp.log")
@@ -727,6 +776,7 @@ class MyWidget(QWidget):
         The FUNCTION to handle the window event.
     
     """
+
     def apply_config(self, config):
         # Set
         try:
@@ -738,12 +788,18 @@ class MyWidget(QWidget):
             self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
             self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
             self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
-            self.checkbox_send_with_enter.setChecked(config.getboolean("Set", "SendWithEnter"))
+            self.checkbox_send_with_enter.setChecked(
+                config.getboolean("Set", "SendWithEnter")
+            )
             self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
             self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
-            self.received_hex_data_checkbox.setChecked(config.getboolean("Set", "ReceivedHex"))
+            self.received_hex_data_checkbox.setChecked(
+                config.getboolean("Set", "ReceivedHex")
+            )
             self.input_path_data_received.setText(config.get("Set", "PathDataReceived"))
-            self.checkbox_data_received.setChecked(config.getboolean("Set", "IsSaveDataReceived"))
+            self.checkbox_data_received.setChecked(
+                config.getboolean("Set", "IsSaveDataReceived")
+            )
             self.file_input.setText(config.get("Set", "PathFileSend"))
         except configparser.NoSectionError as e:
             logging.error(f"Error applying config: {e}")
@@ -770,12 +826,20 @@ class MyWidget(QWidget):
             config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
             config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
             config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
-            config.set("Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked()))
+            config.set(
+                "Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked())
+            )
             config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
             config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
-            config.set("Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked()))
+            config.set(
+                "Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked())
+            )
             config.set("Set", "PathDataReceived", self.input_path_data_received.text())
-            config.set("Set", "IsSaveDataReceived", str(self.checkbox_data_received.isChecked()))
+            config.set(
+                "Set",
+                "IsSaveDataReceived",
+                str(self.checkbox_data_received.isChecked()),
+            )
             config.set("Set", "PathFileSend", self.file_input.text())
 
             # Hotkeys
@@ -846,7 +910,9 @@ class MyWidget(QWidget):
         self.hotkey_buttons = []
         for i in range(1, len(self.config.items("Hotkeys")) + 1):
             button = QPushButton(f"Hotkey {i}")
-            hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
+            hotkey_value = self.config.get(
+                "HotkeyValues", f"HotkeyValue_{i}", fallback=""
+            )
             button.clicked.connect(self.handle_hotkey_click(i, hotkey_value))
             self.hotkey_buttons.append(button)
 
@@ -857,7 +923,9 @@ class MyWidget(QWidget):
 
         for i in range(1, len(self.config.items("Hotkeys")) + 1):
             hotkey_name = self.config.get("Hotkeys", f"Hotkey_{i}", fallback="")
-            hotkey_shortcut = self.config.get("HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback="")
+            hotkey_shortcut = self.config.get(
+                "HotkeyShortcuts", f"HotkeyShortcut_{i}", fallback=""
+            )
             button = self.hotkey_buttons[i - 1]
             button.setText(hotkey_name)
             button.setToolTip(hotkey_shortcut)
@@ -870,27 +938,19 @@ class MyWidget(QWidget):
         # Ensure each button is only connected once
         for button in self.hotkey_buttons:
             button.clicked.disconnect()
-            button.clicked.connect(self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1))
-            
+            button.clicked.connect(
+                self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1)
+            )
+
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
             if self.text_input_layout_2.toPlainText() == "":
                 self.text_input_layout_2.setPlainText(
-                    common.join_text(
-                        common.read_ATCommand(
-                            os.path.join(
-                                os.path.dirname(os.path.abspath(__file__)),
-                                "tmps/ATCommand.json",
-                            )
-                        )
-                    )
+                    common.join_text(common.read_ATCommand(self.path_ATCommand))
                 )
             else:
                 common.write_ATCommand(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "tmps/ATCommand.json",
-                    ),
+                    self.path_ATCommand,
                     common.split_text(self.text_input_layout_2.toPlainText()),
                 )
         elif index == 2 or self.stacked_widget.currentIndex() == 2:
@@ -929,7 +989,7 @@ class MyWidget(QWidget):
             self.show_page(2)
         elif event.key() == Qt.Key_F4:
             self.show_page(3)
-            
+
     def config_save(self):
         self.save_config(self.config)
         QMessageBox.information(self, "Save", "Save successfully")
@@ -1029,8 +1089,8 @@ class MyWidget(QWidget):
     def set_status_label(self, text, color):
         self.status_label.setText(text)
         self.status_label.setStyleSheet(
-                f"QLabel {{ color: {color}; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }}"
-            )
+            f"QLabel {{ color: {color}; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }}"
+        )
 
     def port_write(self, command, serial_port, send_with_enter):
         try:
@@ -1096,6 +1156,15 @@ class MyWidget(QWidget):
                 self.progress_bar.setMaximum(file_size)
                 self.progress_bar.setValue(0)
                 self.progress_bar.setFormat(f"File size: {file_size} bytes")
+
+    def select_json_file(self, path_input):
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFile)
+        file_dialog.setNameFilter("Files (*.json)")
+        if file_dialog.exec():
+            file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
+            if file_path:
+                path_input.setText(file_path)
 
     def send_file(self):
         file_path = self.file_input.text()
@@ -1221,7 +1290,7 @@ class MyWidget(QWidget):
                     button.setEnabled(True)
                 for input in self.input_fields:
                     input.setEnabled(True)
-            
+
             self.data_receiver = DataReceiver(self.main_Serial)
             self.data_receiver.dataReceived.connect(self.update_main_textarea)
             self.data_receive_thread = QThread()
@@ -1237,13 +1306,12 @@ class MyWidget(QWidget):
             print(f"Error opening serial port: {e}")
             self.set_status_label("Failed", "#dc3545")
 
-
     def port_off(self):
         self.data_receiver.stop_thread()
         self.data_receive_thread.quit()
         # No wait for the thread to finish, it will finish itself
         # self.data_receive_thread.wait()
-        
+
         try:
             self.main_Serial = common.port_off(self.main_Serial)
             if self.main_Serial is None:
@@ -1299,9 +1367,7 @@ class MyWidget(QWidget):
 
     def read_ATCommand(self):
         with open(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"
-            ),
+            self.path_ATCommand,
             "r",
             encoding="utf-8",
         ) as f:
@@ -1325,21 +1391,21 @@ class MyWidget(QWidget):
                     self.input_fields[i - 1].setText("")
 
     def update_ATCommand(self):
-        result = common.update_AT_command(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"
-            )
-        )
+        result = common.update_AT_command(self.path_ATCommand)
         self.text_input_layout_2.setPlainText(result)
 
     def restore_ATCommand(self):
+        # 根据self.radio_path_command_buttons的选中状态，选择不同的文件路径
+        for i in range(len(self.radio_path_command_buttons)):
+            if self.radio_path_command_buttons[i].isChecked():
+                path_ATCommand = self.path_command_inputs[i].text()
+                break
+
         self.text_input_layout_2.setPlainText(
             "\n".join([item.text() for item in self.input_fields])
         )
         with open(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "tmps/ATCommand.json"
-            ),
+            path_ATCommand,
             "w",
             encoding="utf-8",
         ) as f:
@@ -1355,6 +1421,25 @@ class MyWidget(QWidget):
                 }
                 command_list.append(command_info)
             json.dump({"commands": command_list}, f, ensure_ascii=False, indent=4)
+
+    def handle_radio_button_click(self, index):
+        if self.radio_path_command_buttons[index].isChecked():
+            if self.path_command_inputs[index].text():
+                self.path_ATCommand = self.path_command_inputs[index].text()
+                self.text_input_layout_2.setPlainText(
+                    common.join_text(common.read_ATCommand(self.path_ATCommand))
+                )
+            else:
+                self.path_ATCommand = os.path.join(
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "tmps",
+                        "ATCommand.json",
+                    )
+                )
+        else:
+            # print(f"Radio button {index + 1} is unchecked.")
+            pass
 
     def handle_hotkey_click(self, index: int, value: str = "", shortcut: str = ""):
         def hotkey_clicked():
@@ -1463,7 +1548,7 @@ class MyWidget(QWidget):
         interVal = self.interVal[0].text()
         for i in range(len(self.interVal)):
             self.interVal[i].setText(interVal)
-    
+
     def set_settings_groupbox_visible(self):
         for i in range(self.settings_layout.count()):
             widget = self.settings_layout.itemAt(i).widget()
@@ -1475,7 +1560,7 @@ class MyWidget(QWidget):
             widget = self.command_layout.itemAt(i).widget()
             if widget:
                 widget.setVisible(not widget.isVisible())
-                
+
     def set_file_groupbox_visible(self):
         for i in range(self.file_layout.count()):
             item = self.file_layout.itemAt(i)
@@ -1488,12 +1573,22 @@ class MyWidget(QWidget):
                 widget = item.widget()
                 if widget:
                     widget.setVisible(not widget.isVisible())
-    
+
     def set_hotkeys_groupbox_visible(self):
         for i in range(self.hotkeys_layout.count()):
             widget = self.hotkeys_layout.itemAt(i).widget()
             if widget:
                 widget.setVisible(not widget.isVisible())
+
+    def set_radio_groupbox_visible(self):
+        if self.path_command_inputs[0].isVisible():
+            self.expand_left_button.setIcon(QIcon("./res/direction_left.png"))
+        else:
+            self.expand_left_button.setIcon(QIcon("./res/direction_right.png"))
+        for i in range(len(self.path_command_inputs)):
+            self.path_command_inputs[i].setVisible(
+                not self.path_command_inputs[i].isVisible()
+            )
 
     # Filter selected commands
     def filter_selected_command(self):
@@ -1633,6 +1728,7 @@ class MyWidget(QWidget):
 # Create a logger for the application
 logger = logging.getLogger(__name__)
 
+
 def main():
     try:
         app = QApplication([])
@@ -1644,12 +1740,13 @@ def main():
         # widget.showMaximized()
         widget.resize(1000, 900)
         widget.show()
-        
+
         UpdateInfoDialog(widget)
 
         sys.exit(app.exec())
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+
 
 if __name__ == "__main__":
     logging.basicConfig(
