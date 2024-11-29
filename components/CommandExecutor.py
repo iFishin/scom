@@ -31,7 +31,7 @@ class CommandExecutor(QThread):
                 try:
                     # Use common.port_write to execute the command
                     common.port_write(command, self.serial_port, with_enter)
-                    self.commandExecuted.emit(index, command)
+                    self.commandExecuted.emit(index+1, command)
                     if interval:
                         QThread.sleep(int(interval))
                     else:

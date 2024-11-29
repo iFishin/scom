@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QGridLayout, QLabel, QCheckBox, QPushButton
 from PySide6.QtCore import Qt, Signal
-import configparser
+from utils.common import read_config, write_config
 
 
 class LayoutConfigDialog(QDialog):
@@ -10,7 +10,9 @@ class LayoutConfigDialog(QDialog):
         self.parent = parent
 
         # Create Signal
-        signal_config = Signal(configparser.ConfigParser)
+        # signal_config = Signal(configparser.ConfigParser)
+        
+        self.config = read_config("config.ini")
         
         # Create layout
         layout = QGridLayout()
@@ -98,38 +100,31 @@ class LayoutConfigDialog(QDialog):
                 widget.setVisible(state)
 
     def accept(self):
-        config = configparser.ConfigParser()
-        config.read("config.ini", encoding="utf-8")
-        config["LayoutConfig"]["settings"] = str(self.checkbox_settings_box.isChecked())
-        config["LayoutConfig"]["command"] = str(self.checkbox_command_box.isChecked())
-        config["LayoutConfig"]["file"] = str(self.checkbox_file_box.isChecked())
-        config["LayoutConfig"]["hotkeys"] = str(self.checkbox_hotkeys_box.isChecked())
-        config["LayoutConfig"]["data_received"] = str(self.checkbox_data_received_box.isChecked())
-        config["LayoutConfig"]["button_group"] = str(self.checkbox_button_group_box.isChecked())
-        with open("config.ini", "w") as configfile:
-            config.write(configfile)
+        self.config["LayoutConfig"]["Settings"] = str(self.checkbox_settings_box.isChecked())
+        self.config["LayoutConfig"]["Command"] = str(self.checkbox_command_box.isChecked())
+        self.config["LayoutConfig"]["File"] = str(self.checkbox_file_box.isChecked())
+        self.config["LayoutConfig"]["Hotkeys"] = str(self.checkbox_hotkeys_box.isChecked())
+        self.config["LayoutConfig"]["Data_received"] = str(self.checkbox_data_received_box.isChecked())
+        self.config["LayoutConfig"]["Button_group"] = str(self.checkbox_button_group_box.isChecked())
+        write_config(self.config, "config.ini")
         super().accept()
         
     def apply(self):
-        config = configparser.ConfigParser()
-        config.read("config.ini", encoding="utf-8")
-        self.checkbox_settings_box.setChecked(config.getboolean("LayoutConfig", "settings"))
-        self.checkbox_command_box.setChecked(config.getboolean("LayoutConfig", "command"))
-        self.checkbox_file_box.setChecked(config.getboolean("LayoutConfig", "file"))
-        self.checkbox_hotkeys_box.setChecked(config.getboolean("LayoutConfig", "hotkeys"))
-        self.checkbox_data_received_box.setChecked(config.getboolean("LayoutConfig", "data_received"))
-        self.checkbox_button_group_box.setChecked(config.getboolean("LayoutConfig", "button_group"))
+        self.checkbox_settings_box.setChecked(self.config.getboolean("LayoutConfig", "Settings"))
+        self.checkbox_command_box.setChecked(self.config.getboolean("LayoutConfig", "Command"))
+        self.checkbox_file_box.setChecked(self.config.getboolean("LayoutConfig", "File"))
+        self.checkbox_hotkeys_box.setChecked(self.config.getboolean("LayoutConfig", "Hotkeys"))
+        self.checkbox_data_received_box.setChecked(self.config.getboolean("LayoutConfig", "Data_received"))
+        self.checkbox_button_group_box.setChecked(self.config.getboolean("LayoutConfig", "Button_group"))
         self.accept()
         
     def cancel(self):
-        config = configparser.ConfigParser()
-        config.read("config.ini", encoding="utf-8")
-        self.checkbox_settings_box.setChecked(config.getboolean("LayoutConfig", "settings"))
-        self.checkbox_command_box.setChecked(config.getboolean("LayoutConfig", "command"))
-        self.checkbox_file_box.setChecked(config.getboolean("LayoutConfig", "file"))
-        self.checkbox_hotkeys_box.setChecked(config.getboolean("LayoutConfig", "hotkeys"))
-        self.checkbox_data_received_box.setChecked(config.getboolean("LayoutConfig", "data_received"))
-        self.checkbox_button_group_box.setChecked(config.getboolean("LayoutConfig", "button_group"))
+        self.checkbox_settings_box.setChecked(self.config.getboolean("LayoutConfig", "Settings"))
+        self.checkbox_command_box.setChecked(self.config.getboolean("LayoutConfig", "Command"))
+        self.checkbox_file_box.setChecked(self.config.getboolean("LayoutConfig", "File"))
+        self.checkbox_hotkeys_box.setChecked(self.config.getboolean("LayoutConfig", "Hotkeys"))
+        self.checkbox_data_received_box.setChecked(self.config.getboolean("LayoutConfig", "Data_received"))
+        self.checkbox_button_group_box.setChecked(self.config.getboolean("LayoutConfig", "Button_group"))
         self.accept()
         
     def closeEvent(self, event):

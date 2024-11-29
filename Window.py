@@ -67,9 +67,10 @@ class MyWidget(QWidget):
         self.main_Serial = None
         self.hotkey_buttons = []
         self.shortcuts = []
-        self.prompt_index = 0
+        self.prompt_index = -1
         self.total_times = 0
         self.is_stop_batch = False
+        self.last_one_click_time = None
         self.path_ATCommand = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "tmps", "ATCommand.json"
         )
@@ -709,7 +710,7 @@ class MyWidget(QWidget):
         self.button1 = QPushButton("Main")
         self.button1.setToolTip("Shortcut: F1")
         self.button1.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; border-bottom: 2px solid #00A86B; }"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #00A86B; border-top: 2px solid transparent; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -719,7 +720,7 @@ class MyWidget(QWidget):
         self.button2 = QPushButton("ATCommand")
         self.button2.setToolTip("Shortcut: F2")
         self.button2.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -728,7 +729,7 @@ class MyWidget(QWidget):
         self.button3 = QPushButton("Log")
         self.button3.setToolTip("Shortcut: F3")
         self.button3.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -737,7 +738,7 @@ class MyWidget(QWidget):
         self.button4 = QPushButton("NoTimeStamp")
         self.button4.setToolTip("Shortcut: F4")
         self.button4.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0;}"
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
@@ -913,7 +914,6 @@ class MyWidget(QWidget):
             hotkey_value = self.config.get(
                 "HotkeyValues", f"HotkeyValue_{i}", fallback=""
             )
-            button.clicked.connect(self.handle_hotkey_click(i, hotkey_value))
             self.hotkey_buttons.append(button)
 
         for i, button in enumerate(self.hotkey_buttons):
@@ -937,10 +937,9 @@ class MyWidget(QWidget):
 
         # Ensure each button is only connected once
         for button in self.hotkey_buttons:
-            button.clicked.disconnect()
-            button.clicked.connect(
-                self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1)
-            )
+            hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{self.hotkey_buttons.index(button) + 1}", fallback="")
+            button.clicked.connect(self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1, hotkey_value))
+
 
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
@@ -969,13 +968,13 @@ class MyWidget(QWidget):
         for i, button in enumerate(buttons):
             if i == index:
                 button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; border-bottom: 2px solid #00A86B;; }"
+                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; border-bottom: 2px solid #00A86B; }"
                     "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
                     "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
                 )
             else:
                 button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 0; }"
+                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
                     "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
                     "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
                 )
@@ -1395,31 +1394,34 @@ class MyWidget(QWidget):
         self.text_input_layout_2.setPlainText(result)
 
     def restore_ATCommand(self):
-        # 根据self.radio_path_command_buttons的选中状态，选择不同的文件路径
-        for i in range(len(self.radio_path_command_buttons)):
-            if self.radio_path_command_buttons[i].isChecked():
-                path_ATCommand = self.path_command_inputs[i].text()
+        last_non_empty_index = None
+        for i in range(len(self.input_fields) - 1, -1, -1):
+            if self.input_fields[i].text():
+                last_non_empty_index = i
                 break
-
+        if last_non_empty_index is None:
+            last_non_empty_index = 0
+        
         self.text_input_layout_2.setPlainText(
-            "\n".join([item.text() for item in self.input_fields])
+            "\n".join([item.text() for item in self.input_fields[:last_non_empty_index + 1]])
         )
+        
+        command_list = []
+        for i in range(last_non_empty_index + 1):
+            command_info = {
+                "selected": self.checkbox[i].isChecked(),
+                "command": self.input_fields[i].text(),
+                "interval": (
+                    self.interVal[i].text() if self.interVal[i].text() else ""
+                ),
+                "withEnter": self.checkbox_send_with_enters[i].isChecked(),
+            }
+            command_list.append(command_info)
         with open(
-            path_ATCommand,
+            self.path_ATCommand,
             "w",
             encoding="utf-8",
         ) as f:
-            command_list = []
-            for i in range(len(self.input_fields)):
-                command_info = {
-                    "selected": self.checkbox[i].isChecked(),
-                    "command": self.input_fields[i].text(),
-                    "interval": (
-                        self.interVal[i].text() if self.interVal[i].text() else ""
-                    ),
-                    "withEnter": self.checkbox_send_with_enters[i].isChecked(),
-                }
-                command_list.append(command_info)
             json.dump({"commands": command_list}, f, ensure_ascii=False, indent=4)
 
     def handle_radio_button_click(self, index):
@@ -1484,49 +1486,55 @@ class MyWidget(QWidget):
         return super().eventFilter(watched, event)
 
     def handle_left_click(self):
-        # Left button click to SEND
-        self.port_write(
-            self.input_prompt.text(),
-            self.main_Serial,
-            self.checkbox_send_with_enters[self.prompt_index].isChecked(),
-        )
-        self.checkbox[self.prompt_index - 1].setChecked(True)
-        if self.prompt_index < len(self.input_fields) - 1:
+        if self.prompt_index >= 0 and self.prompt_index < len(self.input_fields) - 1:
+            # Left button click to SEND
+            self.port_write(
+                self.input_prompt.text(),
+                self.main_Serial,
+                self.checkbox_send_with_enters[self.prompt_index].isChecked(),
+            )
+            self.checkbox[self.prompt_index].setChecked(True)
+            self.prompt_index += 1
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.input_prompt.setCursorPosition(0)
-            self.prompt_index += 1
-            self.input_prompt_index.setText(str(self.prompt_index))
-        # Set Input Prompt Index read-only
-        self.input_prompt_index.setReadOnly(True)
+            self.input_prompt_index.setText(str(self.prompt_index + 1))
+            # Set Input Prompt Index read-only
+            self.input_prompt_index.setReadOnly(True)
+        else:
+            self.prompt_index = 0
+            self.input_prompt_index.setText("1")
+            self.input_prompt.setText(self.input_fields[0].text())
+            self.input_prompt.setCursorPosition(0)
+            self.input_prompt_index.setReadOnly(True)
 
     def handle_right_click(self):
+        self.prompt_index += 1
         # Right button click to SKIP
         if self.prompt_index < len(self.input_fields) - 1:
             self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.input_prompt.setCursorPosition(0)
-            self.prompt_index += 1
-            self.input_prompt_index.setText(str(self.prompt_index))
+            self.input_prompt_index.setText(str(self.prompt_index + 1))
 
     def handle_right_double_click(self):
         pass
 
     def handle_right_control_click(self):
         if self.prompt_index >= 0:
-            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.prompt_index -= 1
-            self.input_prompt_index.setText(str(self.prompt_index))
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+            self.input_prompt_index.setText(str(self.prompt_index + 1))
 
     def handle_right_shift_click(self):
         print("Right button click with Shift modifier")
 
     def handle_middle_click(self):
         if self.prompt_index >= 0:
-            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
             self.prompt_index -= 1
-            self.input_prompt_index.setText(str(self.prompt_index))
+            self.input_prompt.setText(self.input_fields[self.prompt_index].text())
+            self.input_prompt_index.setText(str(self.prompt_index + 1))
 
     def set_prompt_index(self):
-        self.prompt_index = int(self.input_prompt_index.text())
+        self.prompt_index = int(self.input_prompt_index.text()) - 1
         self.input_prompt.setText(self.input_fields[self.prompt_index].text())
         self.input_prompt.setCursorPosition(0)
         self.input_prompt_index.setReadOnly(True)
@@ -1671,18 +1679,12 @@ class MyWidget(QWidget):
             checkbox.setChecked(state == 2)
 
     # Button Click Handler
-    global last_one_click_time
-
     def handle_button_click(
         self, index, input_field, checkbox, checkbox_send_with_enter, interVal
     ):
-        global last_one_click_time
-        last_one_click_time = None
-
         def button_clicked():
-            global last_one_click_time
-            if not last_one_click_time:
-                last_one_click_time = time.time()
+            if not self.last_one_click_time:
+                self.last_one_click_time = time.time()
             self.port_write(
                 input_field.text(),
                 self.main_Serial,
@@ -1690,13 +1692,13 @@ class MyWidget(QWidget):
             )
             checkbox.setChecked(True)
             self.prompt_index = index
-            self.input_prompt_index.setText(str(index - 1))
+            self.input_prompt_index.setText(str(index))
             self.input_prompt.setText(input_field.text())
             now_click_time = time.time()
             self.interVal[index - 2].setText(
-                str(min(99, int(now_click_time - last_one_click_time) + 1))
+                str(min(99, int(now_click_time - self.last_one_click_time) + 1))
             )
-            last_one_click_time = now_click_time
+            self.last_one_click_time = now_click_time
 
         return button_clicked
 

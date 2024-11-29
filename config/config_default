@@ -1,54 +1,55 @@
 [Set]
-port = COM1
-baudrate = 115200
-stopbits = 1
-parity = None
-bytesize = 8
-flowcontrol = None
-dtr = False
-rts = False
-sendwithenter = True
-showsymbol = True
-timestamp = True
-receivedhex = False
-pathdatareceived = 
-issavedatareceived = True
-pathfilesend = 
+Port = COM65
+BaudRate = 115200
+StopBits = 1
+Parity = None
+ByteSize = 8
+FlowControl = None
+DTR = False
+RTS = False
+SendWithEnter = True
+ShowSymbol = False
+TimeStamp = False
+ReceivedHex = False
+PathDataReceived = C:\Users\fishley.gong\SCOM\tmps\temp.log
+IsSaveDataReceived = False
+PathFileSend = 
 
 [Hotkeys]
-hotkey_1 = Clear-Log
-hotkey_2 = Read-ATC
-hotkey_3 = Update-ATC
-hotkey_4 = Restore-ATC
-hotkey_5 = Internet
-hotkey_6 = RST
-hotkey_7 = ECHO
-hotkey_8 = Version
+Hotkey_1 = Clear-Log
+Hotkey_2 = Read-ATC
+Hotkey_3 = Update-ATC
+Hotkey_4 = Restore-ATC
+Hotkey_5 = Internet
+Hotkey_6 = RST
+Hotkey_7 = ECHO
+Hotkey_8 = Version
 
 [HotkeyValues]
-hotkeyvalue_1 = 
-hotkeyvalue_2 = 
-hotkeyvalue_3 = 
-hotkeyvalue_4 = 
-hotkeyvalue_5 = AT+QSTAAPINFO=NewMar,12345678
-hotkeyvalue_6 = AT+QRST
-hotkeyvalue_7 = AT+QECHO=1
-hotkeyvalue_8 = AT+QVERSION
+HotkeyValue_1 = 
+HotkeyValue_2 = 
+HotkeyValue_3 = 
+HotkeyValue_4 = 
+HotkeyValue_5 = AT+QSTAAPINFO=NewMar,12345678
+HotkeyValue_6 = AT+QRST
+HotkeyValue_7 = AT+QECHO=1
+HotkeyValue_8 = AT+QVERSION
 
 [HotkeyShortcuts]
-hotkeyshortcut_1 = Alt+1
-hotkeyshortcut_2 = Alt+2
-hotkeyshortcut_3 = Alt+3
-hotkeyshortcut_4 = Alt+4
-hotkeyshortcut_5 = Alt+Z
-hotkeyshortcut_6 = Alt+X
-hotkeyshortcut_7 = Alt+C
-hotkeyshortcut_8 = Alt+V
+HotkeyShortcut_1 = Alt+1
+HotkeyShortcut_2 = Alt+2
+HotkeyShortcut_3 = Alt+3
+HotkeyShortcut_4 = Alt+4
+HotkeyShortcut_5 = Alt+Z
+HotkeyShortcut_6 = Alt+X
+HotkeyShortcut_7 = Alt+C
+HotkeyShortcut_8 = Alt+V
 
 [LayoutConfig]
-settings = True
-command = True
-file = True
-hotkeys = True
-data_received = True
-button_group = True
+Settings = True
+Command = True
+File = True
+Hotkeys = True
+Data_received = True
+Button_group = True
+

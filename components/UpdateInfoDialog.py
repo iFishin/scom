@@ -83,15 +83,21 @@ class UpdateInfoDialog(QDialog):
             }
         """
         )
-        try:
-            response = requests.get(self.url_update_info)
-            response.raise_for_status()
-            response.encoding = 'utf-8'
-            content = response.text
-        except requests.RequestException as e:
-            self.text_edit.setPlainText(f"Failed to retrieve update information: {e}")
-            print(f"Failed to retrieve update information: {e}")
-            return
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(self.url_update_info, timeout=5)
+                response.raise_for_status()
+                response.encoding = 'utf-8'
+                content = response.text
+                break
+            except requests.RequestException as e:
+                if attempt == max_retries - 1:
+                    self.text_edit.setPlainText(f"Failed to retrieve update information after {max_retries} attempts: {e}")
+                    print(f"Failed to retrieve update information after {max_retries} attempts: {e}")
+                    return
+                else:
+                    print(f"Attempt {attempt + 1} failed: {e}")
 
         self.text_edit.setPlainText(content)
 

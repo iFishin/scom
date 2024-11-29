@@ -71,6 +71,7 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     else:
         config_path = os.path.abspath(config_path)
     config = configparser.ConfigParser()
+    config.optionxform = str
 
     if not os.path.exists(config_path):
         create_default_config()
