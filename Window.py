@@ -117,6 +117,8 @@ class MyWidget(QWidget):
         self.layout_config_dialog.apply()
 
         self.save_settings_action.triggered.connect(self.save_config(self.config))
+        
+        self.update_hotkeys_groupbox()
 
     """
     ✨✨✨
@@ -441,7 +443,6 @@ class MyWidget(QWidget):
         )
         self.hotkeys_groupbox.setToolTip("Double click to Show/Hide")
         self.hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
-        self.update_hotkeys_groupbox()
 
         # Create a group box for the received data section
         self.received_data_groupbox = QGroupBox("Received Data")
@@ -940,7 +941,6 @@ class MyWidget(QWidget):
             hotkey_value = self.config.get("HotkeyValues", f"HotkeyValue_{self.hotkey_buttons.index(button) + 1}", fallback="")
             button.clicked.connect(self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1, hotkey_value))
 
-
     def show_page(self, index):
         if index == 1 or self.stacked_widget.currentIndex() == 1:
             if self.text_input_layout_2.toPlainText() == "":
@@ -1362,7 +1362,6 @@ class MyWidget(QWidget):
                 encoding="utf-8",
             ) as f:
                 f.write("")
-        common.clear_terminal()
 
     def read_ATCommand(self):
         with open(
