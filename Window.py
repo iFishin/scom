@@ -1152,7 +1152,7 @@ class MyWidget(QWidget):
             if file_path:
                 self.file_input.setText(file_path)
                 file_size = os.path.getsize(file_path)
-                self.progress_bar.setMaximum(file_size)
+                self.progress_bar.setMaximum(100)
                 self.progress_bar.setValue(0)
                 self.progress_bar.setFormat(f"File size: {file_size} bytes")
 
@@ -1164,24 +1164,18 @@ class MyWidget(QWidget):
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
                 path_input.setText(file_path)
-
+                
     def send_file(self):
         file_path = self.file_input.text()
         if not file_path:
             QMessageBox.warning(self, "Warning", "No file selected.")
             return
         try:
-            # chunk_size = 4096  # 可以根据实际情况调整块大小
-            # with open(file_path, "r", encoding="utf-8") as f:
-            #     while True:
-            #         chunk = f.read(chunk_size)
-            #         if not chunk:
-            #             break
-            #         print(f"Read chunk of size: {len(chunk)}")
-            #         common.port_write(chunk, self.main_Serial, False)
             self.file_sender = FileSender(file_path, self.main_Serial)
-            self.file_sender.progressUpdated.connect(self.progress_bar.setValue)
+            self.file_sender.progressUpdated.connect(lambda percentage: self.update_progress_bar(percentage, 100))
+            self.progress_bar.setFormat("%p%")
             self.progress_bar.setValue(0)
+            self.progress_bar.setMaximum(100)
             self.file_sender.start()
         except FileNotFoundError:
             QMessageBox.warning(self, "Warning", "File not found.")
@@ -1189,8 +1183,8 @@ class MyWidget(QWidget):
             QMessageBox.warning(self, "Warning", "Permission denied to open the file.")
 
     def update_progress_bar(self, sent_bytes, total_bytes):
-        self.progress_bar.setMaximum(total_bytes)
-        self.progress_bar.setValue(sent_bytes)
+        progress = int((sent_bytes / total_bytes) * 100)
+        self.progress_bar.setValue(progress)
 
     def handle_key_press(self, event):
         if event.key() == Qt.Key_Return and event.modifiers() == Qt.ShiftModifier:
