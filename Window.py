@@ -1,6 +1,5 @@
 import os
 import sys
-import io
 import re
 import time
 import json
@@ -57,6 +56,8 @@ from components.AboutDialog import AboutDialog
 from components.HelpDialog import HelpDialog
 from components.UpdateInfoDialog import UpdateInfoDialog
 from components.ConfirmExitDialog import ConfirmExitDialog
+from components.LengthCalculateDialog import LengthCalculateDialog
+from components.StringGenerateDialog import StringGenerateDialog
 
 
 class MyWidget(QWidget):
@@ -71,9 +72,7 @@ class MyWidget(QWidget):
         self.total_times = 0
         self.is_stop_batch = False
         self.last_one_click_time = None
-        self.path_ATCommand = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "tmps", "ATCommand.json"
-        )
+        self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
         self.received_data_textarea_scrollBottom = True
         self.thread_pool = QThreadPool()
         self.data_receiver = None
@@ -143,6 +142,14 @@ class MyWidget(QWidget):
         self.hotkeys_config_action = self.settings_menu.addAction("Hotkeys Config")
         self.hotkeys_config_action.setShortcut("Ctrl+H")
         self.hotkeys_config_action.triggered.connect(self.hotkeys_config)
+        
+        # Crete Tools menu
+        self.tools_menu = self.menu_bar.addMenu("Tools")
+        
+        self.calculate_length_action = self.tools_menu.addAction("Calculate Length")
+        self.calculate_length_action.triggered.connect(self.calculate_length)
+        self.generate_string_action = self.tools_menu.addAction("Generate String")
+        self.generate_string_action.triggered.connect(self.generate_string)
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
@@ -255,7 +262,7 @@ class MyWidget(QWidget):
         self.label_data_received = QLabel("Data Received:", Alignment=Qt.AlignRight)
         self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps\\temp.log")
+            common.get_absolute_path("tmps/temp.log")
         )
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = (
@@ -325,8 +332,8 @@ class MyWidget(QWidget):
         self.send_button.clicked.connect(self.send_command)
 
         self.received_data_textarea = QTextEdit()
-        self.received_data_textarea.setAcceptRichText(False)
-        self.received_data_textarea.setDocument(QTextDocument(None))
+        self.received_data_textarea.setAcceptRichText(True)
+        # self.received_data_textarea.setDocument(QTextDocument(None))
         shortcut = QShortcut(Qt.ControlModifier | Qt.Key_F, self)
         shortcut.activated.connect(self.show_search_dialog)
         # self.received_data_textarea.setReadOnly(True)
@@ -678,7 +685,7 @@ class MyWidget(QWidget):
 
         self.radio_path_command_buttons[0].setChecked(True)
         self.path_command_inputs[0].setText(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps", "ATCommand.json")
+            common.get_absolute_path("tmps/ATCommand.json")
         )
         layout_2_main.addWidget(self.radio_groupbox)
         layout_2.addLayout(layout_2_main)
@@ -1000,6 +1007,14 @@ class MyWidget(QWidget):
     def hotkeys_config(self):
         self.hotkeys_config_dialog = HotkeysConfigDialog(self)
         self.hotkeys_config_dialog.show()
+        
+    def calculate_length(self):
+        self.length_caculate_dialog = LengthCalculateDialog(self)
+        self.length_caculate_dialog.show()
+        
+    def generate_string(self):
+        self.string_generate_dialog = StringGenerateDialog(self)
+        self.string_generate_dialog.show()
 
     def show_help_info(self):
         help_dialog = HelpDialog()
@@ -1131,7 +1146,7 @@ class MyWidget(QWidget):
 
     def set_default_received_file(self, event):
         self.input_path_data_received.setText(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmps\\temp.log")
+            common.get_absolute_path("tmps/temp.log")
         )
 
     def select_received_file(self):
@@ -1212,6 +1227,20 @@ class MyWidget(QWidget):
         )
         self.received_data_textarea.moveCursor(QTextCursor.End)
         self.received_data_textarea.insertPlainText(data + "\n")
+        
+        if self.received_hex_data_checkbox.isChecked():
+            try:
+                hex_bytes = bytes.fromhex(data.replace(' ', ''))
+                decoded_str = hex_bytes.decode('ascii', errors='replace')
+                decoded_str = decoded_str.replace('\n', '\\n').replace('\r', '\\r')
+                self.received_data_textarea.insertHtml(
+                    f'<span style="color: #198754;">{decoded_str}</span><br>'
+                )
+            except Exception as e:
+                self.received_data_textarea.insertHtml(
+                    f'<span style="color: #dc3545;">Invalid hex data {e} </span><br>'
+                )
+        
         if self.received_data_textarea_scrollBottom:
             scrollbar.setValue(scrollbar.maximum())
         file_path = self.input_path_data_received.text()
@@ -1349,9 +1378,7 @@ class MyWidget(QWidget):
                 f.write("")
         else:
             with open(
-                os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "tmps/temp.log"
-                ),
+                common.get_absolute_path("tmps/temp.log"),
                 "w",
                 encoding="utf-8",
             ) as f:
@@ -1425,13 +1452,7 @@ class MyWidget(QWidget):
                     common.join_text(common.read_ATCommand(self.path_ATCommand))
                 )
             else:
-                self.path_ATCommand = os.path.join(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "tmps",
-                        "ATCommand.json",
-                    )
-                )
+                self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
         else:
             # print(f"Radio button {index + 1} is unchecked.")
             pass
