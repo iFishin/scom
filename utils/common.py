@@ -10,6 +10,28 @@ import configparser
 class SerialPortNotInitializedError(Exception):
     pass
 
+def get_absolute_path(file_name):
+    """
+    获取文件的绝对路径
+
+    参数：
+    file_name (str): 文件名
+    
+    返回：
+    str: 文件的绝对路径
+    """
+    abs_path = None
+    if hasattr(sys, "_MEIPASS"):
+        base_path = os.path.join(sys._MEIPASS)
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    base_path = os.path.abspath(os.path.join(base_path, ".."))
+    abs_path = os.path.join(base_path, file_name)
+    if os.path.exists(abs_path):
+        return abs_path
+    else:
+        raise FileNotFoundError(f"File not found at path: {abs_path}")
+
 
 def force_decode(text: bytes) -> str:
     """
