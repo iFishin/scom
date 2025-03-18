@@ -1,0 +1,35 @@
+name: scom_bundle
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 设置 Python 环境
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install -r requirements.txt
+
+      # 执行打包
+      - name: Build package
+        run: python setup.py build
+
+      # 上传打包内容到 GitHub Release
+      - name: Upload to GitHub Release
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: SCOM.build/
