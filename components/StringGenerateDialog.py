@@ -15,9 +15,9 @@ class StringGenerateDialog(QDialog):
         button_layout = QHBoxLayout()
         
         # Create widgets
-        self.length_label = QLabel("String Length:")
+        self.length_label = QLabel("String Length(1~100000):")
         self.length_spinbox = QSpinBox()
-        self.length_spinbox.setRange(1, 1000)
+        self.length_spinbox.setRange(1, 100000)
         self.length_spinbox.setValue(10)
         
         self.include_lowercase = QCheckBox("Include Lowercase Letters")

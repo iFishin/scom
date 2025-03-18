@@ -2,7 +2,7 @@ import os
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import requests
-
+from utils.common import custom_print
 from PySide6.QtWidgets import (
     QTextEdit,
     QDialog,
@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 class UpdateInfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.url_update_info = "https://ifishin.xyz/UpdateInfo.txt"
+        self.url_update_info = "https://raw.githubusercontent.com/iFishin/scom/refs/heads/main/CHANGELOG.md"
         
         self.setWindowTitle("Update Information")
         self.setFixedSize(600, 400)
@@ -94,10 +94,10 @@ class UpdateInfoDialog(QDialog):
             except requests.RequestException as e:
                 if attempt == max_retries - 1:
                     self.text_edit.setPlainText(f"Failed to retrieve update information after {max_retries} attempts: {e}")
-                    print(f"Failed to retrieve update information after {max_retries} attempts: {e}")
+                    custom_print(f"Failed to retrieve update information after {max_retries} attempts: {e}")
                     return
                 else:
-                    print(f"Attempt {attempt + 1} failed: {e}")
+                    custom_print(f"Attempt {attempt + 1} failed: {e}")
 
         self.text_edit.setPlainText(content)
 

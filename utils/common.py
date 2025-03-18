@@ -5,6 +5,7 @@ import time
 import json
 import serial
 import configparser
+from datetime import datetime
 
 
 class SerialPortNotInitializedError(Exception):
@@ -72,7 +73,7 @@ def create_default_config() -> None:
                 with open(default_config_path, 'r', encoding='utf-8') as src, open(config_path, 'w', encoding='utf-8') as dst:
                     dst.write(src.read())
             except IOError as e:
-                print(f"Error creating default config file: {e}")
+                custom_print(f"Error creating default config file: {e}")
                 raise e
         else:
             raise FileNotFoundError(f"Default config file not found at {default_config_path}")
@@ -100,18 +101,18 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
         try:
             config.read(config_path, encoding="utf-8")
         except configparser.Error as e:
-            print(f"Error reading config file: {e}")
+            custom_print(f"Error reading config file: {e}")
             raise e
     else:
         try:
             config.read(config_path, encoding="utf-8")
         except configparser.MissingSectionHeaderError as e:
-            print("Configuration file is corrupted or missing section headers.")
+            custom_print("Configuration file is corrupted or missing section headers.")
             create_default_config()
             try:
                 config.read(config_path, encoding="utf-8")
             except configparser.Error as e:
-                print(f"Error reading config file: {e}")
+                custom_print(f"Error reading config file: {e}")
                 raise e
     
     return config
@@ -133,11 +134,11 @@ def write_config(config: configparser.ConfigParser, config_path: str = None) -> 
     else:
         config_path = os.path.abspath(config_path)
     try:
-        print(f"Writing config file to {config_path}")
+        custom_print(f"Writing config file to {config_path}")
         with open(config_path, "w", encoding="utf-8") as configfile:
             config.write(configfile)
     except IOError as e:
-        print(f"Error writing config file: {e}")
+        custom_print(f"Error writing config file: {e}")
         raise e
 
 
@@ -159,7 +160,7 @@ def log_write(res: str, log_file: str = None) -> bool:
             log_file_object.write("{}\n".format(res.strip()))
         return True
     except IOError as e:
-        print(f"Error writing to log file: {e}")
+        custom_print(f"Error writing to log file: {e}")
         raise e
 
 
@@ -217,7 +218,7 @@ def port_on(
         ser.open()
         return ser
     except Exception as e:
-        print(f"Error opening serial port: {e}")
+        custom_print(f"Error opening serial port: {e}")
         raise e
 
 
@@ -235,7 +236,7 @@ def port_off(port_serial: serial.Serial) -> None:
         try:
             port_serial.close()
         except Exception as e:
-            print(f"Error closing serial port: {e}")
+            custom_print(f"Error closing serial port: {e}")
             raise e
 
 
@@ -265,7 +266,7 @@ def port_write(
                 else:
                     port_serial.write(command.encode("UTF-8"))
         except Exception as e:
-            print(f"Error writing to serial port: {e}")
+            custom_print(f"Error writing to serial port: {e}")
             raise e
 
 
@@ -290,7 +291,7 @@ def port_read(port_serial: serial.Serial, size: int = 1) -> str:
                 time.sleep(0.01)
             return data.decode("UTF-8", errors="ignore")
         except Exception as e:
-            print(f"Error reading from serial port: {e}")
+            custom_print(f"Error reading from serial port: {e}")
             raise e
 
 
@@ -318,7 +319,7 @@ def port_read_hex(port_serial: serial.Serial, size: int = 1) -> str:
             else:
                 return ""
         except Exception as e:
-            print(f"Error reading from serial port as hex: {e}")
+            custom_print(f"Error reading from serial port as hex: {e}")
             raise e
 
 
@@ -356,7 +357,7 @@ def port_read_until(
                         "UTF-8", errors="ignore"
                     )
         except Exception as e:
-            print(f"Error reading from serial port: {e}")
+            custom_print(f"Error reading from serial port: {e}")
             raise e
 
 
@@ -380,7 +381,7 @@ def port_readline(port_serial: serial.Serial) -> str:
             else:
                 return ""
         except Exception as e:
-            print(f"Error reading a line from serial port: {e}")
+            custom_print(f"Error reading a line from serial port: {e}")
             raise e
 
 
@@ -405,7 +406,7 @@ def port_readline_hex(port_serial: serial.Serial) -> str:
             else:
                 return ""
         except Exception as e:
-            print(f"Error reading a line from serial port as hex: {e}")
+            custom_print(f"Error reading a line from serial port as hex: {e}")
             raise e
 
 
@@ -449,7 +450,29 @@ def print_write(text: str, log_file=None, isPrint=False) -> None:
         if line.strip():
             log_write(f"{line}", log_file=log_file)
             if isPrint:
-                print(f"{line}")
+                custom_print(f"{line}")
+
+
+def custom_print(text: str, log_file: str = None, isPrint: bool = False) -> None:
+    """
+    自定义打印文本，带时间戳
+
+    参数：
+    text (str): 要打印的文本
+    log_file (str): 日志文件路径，默认为 None
+    isPrint (bool): 是否打印文本，默认为 False
+
+    返回：
+    None
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
+    formatted_text = f"{timestamp} - {text}"
+    if log_file is None:
+        log_file = "logs/error.log"
+    if isPrint:
+        print_write(formatted_text, log_file=log_file, isPrint=isPrint)
+    else:
+        log_write(formatted_text, log_file=log_file)
 
 
 def clear_terminal() -> None:
@@ -504,7 +527,7 @@ def read_ATCommand(path_command_json: str) -> list:
             commands = [item["command"] for item in data.get("commands", [])]
             return commands
     except IOError as e:
-        print(f"Error reading AT command file: {e}")
+        custom_print(f"Error reading AT command file: {e}")
 
 
 def write_ATCommand(path_command_json: str, commands: list) -> None:
@@ -537,7 +560,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
                 indent=4,
             )
     except IOError as e:
-        print(f"Error writing AT command file: {e}")
+        custom_print(f"Error writing AT command file: {e}")
 
 
 def strip_AT_command(
@@ -569,7 +592,7 @@ def update_AT_command(path_command_json: str) -> str:
     try:
         text = "\n".join(read_ATCommand(path_command_json))
         if not text:
-            print("ATCommand.txt is empty. Exiting...")
+            custom_print("ATCommand.txt is empty. Exiting...")
             return ""
         else:
             with open(path_command_json, "w", encoding="utf-8") as f:
@@ -577,7 +600,7 @@ def update_AT_command(path_command_json: str) -> str:
                 result = "\n".join(strip_AT_command(text))
                 return result
     except IOError as e:
-        print(f"Error updating AT command file: {e}")
+        custom_print(f"Error updating AT command file: {e}")
 
 
 def remove_TimeStamp(text: str, regex: str = r"\[20(.*?)\]") -> str:

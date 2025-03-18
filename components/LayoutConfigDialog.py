@@ -107,6 +107,7 @@ class LayoutConfigDialog(QDialog):
         self.config["LayoutConfig"]["Data_received"] = str(self.checkbox_data_received_box.isChecked())
         self.config["LayoutConfig"]["Button_group"] = str(self.checkbox_button_group_box.isChecked())
         write_config(self.config, "config.ini")
+        self.parent.config = self.config
         super().accept()
         
     def apply(self):

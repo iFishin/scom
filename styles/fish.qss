@@ -378,15 +378,84 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     border: none;
 }
 
-QTableWidget {
+QListWidget {
     border: 1px solid #ccc;
-    gridline-color: #e5e5e5;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+}
+
+QListWidget::item {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #555;
+}
+
+QListWidget::item:selected {
+    background-color: #0078d7;
+    color: white;
+}
+
+QListWidget::item:hover {
+    background-color: #b3b3b3;
+}
+
+QTableWidget {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    gridline-color: #e0e0e0;
+    selection-background-color: #e5f1fb;
+}
+
+QTableWidget::item {
+    padding: 6px;
+    border-bottom: 1px solid #eee;
+}
+
+QTableWidget::item:selected {
+    background-color: #e5f1fb;
+    color: #333;
+}
+
+QTableWidget::item:hover {
+    background-color: #f5f5f5;
+}
+
+QTableWidget QLineEdit {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    min-height: 24px;
+}
+
+QTableWidget QComboBox {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    min-height: 24px;
 }
 
 QHeaderView::section {
-    background-color: #f5f5f5;
+    background-color: #f8f8f8;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: none;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
+    color: #666;
+}
+
+QHeaderView::section:first {
+    border-top-left-radius: 8px;
+}
+
+QHeaderView::section:last {
+    border-top-right-radius: 8px;
+    border-right: none;
 }
 
 QTabWidget::pane {

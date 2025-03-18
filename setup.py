@@ -26,7 +26,6 @@ def create_setup():
 def run_nuitka():
     nuitka_build_dir = f"{APP_NAME}.build"
     try:
-        # 添加调试输出，确认路径是否正确
         print(f"Checking build directory: {nuitka_build_dir}")
         if os.path.exists(nuitka_build_dir):
             shutil.rmtree(nuitka_build_dir)

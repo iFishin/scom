@@ -51,13 +51,16 @@ from components.FileSender import FileSender
 from components.CommandExecutor import CommandExecutor
 from components.SearchReplaceDialog import SearchReplaceDialog
 from components.HotkeysConfigDialog import HotkeysConfigDialog
-from components.LayoutConifgDialog import LayoutConfigDialog
+from components.LayoutConfigDialog import LayoutConfigDialog
 from components.AboutDialog import AboutDialog
 from components.HelpDialog import HelpDialog
 from components.UpdateInfoDialog import UpdateInfoDialog
 from components.ConfirmExitDialog import ConfirmExitDialog
 from components.LengthCalculateDialog import LengthCalculateDialog
+from components.StringAsciiConvertDialog import StringAsciiConvertDialog
 from components.StringGenerateDialog import StringGenerateDialog
+from components.CustomToggleSwitchDialog import CustomToggleSwitchDialog
+from components.DictRecorder import DictRecorderWindow
 
 
 class MyWidget(QWidget):
@@ -150,6 +153,11 @@ class MyWidget(QWidget):
         self.calculate_length_action.triggered.connect(self.calculate_length)
         self.generate_string_action = self.tools_menu.addAction("Generate String")
         self.generate_string_action.triggered.connect(self.generate_string)
+        self.string_ascii_convert_action = self.tools_menu.addAction("String - ASCII Converter")
+        self.string_ascii_convert_action.triggered.connect(self.string_ascii_convert)
+        self.custom_toggle_switch_action = self.tools_menu.addAction("Custom Toggle Switch")
+        self.custom_toggle_switch_action.triggered.connect(self.custom_toggle_switch)
+        
 
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
@@ -713,6 +721,10 @@ class MyWidget(QWidget):
             "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: bold; }"
         )
         self.text_input_layout_4.setAcceptRichText(False)
+        
+        layout_5 = QVBoxLayout()
+        self.dict_recorder_window = DictRecorderWindow()
+        layout_5.addWidget(self.dict_recorder_window)
 
         # Create a button section for switching other layouts
         self.button1 = QPushButton("Main")
@@ -751,25 +763,46 @@ class MyWidget(QWidget):
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
         self.button4.clicked.connect(lambda: self.show_page(3))
-
+        
+        self.button5 = QPushButton("DictRecorder")
+        self.button5.setToolTip("Shortcut: F5")
+        self.button5.setStyleSheet(
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
+        )
+        self.button5.clicked.connect(lambda: self.show_page(4))
+        
+        self.button6 = QPushButton("DictExecuter")
+        self.button6.setToolTip("Shortcut: F6")
+        self.button6.setStyleSheet(
+            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
+        )
+        self.button6.clicked.connect(lambda: self.show_page(5))
+              
         button_switch_layout = QHBoxLayout()
         button_switch_layout.setSpacing(0)
         button_switch_layout.addWidget(self.button1)
         button_switch_layout.addWidget(self.button2)
         button_switch_layout.addWidget(self.button3)
         button_switch_layout.addWidget(self.button4)
+        # button_switch_layout.addWidget(self.button5)
+        # button_switch_layout.addWidget(self.button6)
+        
         # Create a stacked widget to switch between layouts
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.addWidget(QWidget())
         self.stacked_widget.addWidget(QWidget())
         self.stacked_widget.addWidget(QWidget())
         self.stacked_widget.addWidget(QWidget())
+        # self.stacked_widget.addWidget(QWidget())
+        # self.stacked_widget.addWidget(QWidget())
 
         # Set the layouts for the stacked widget
         self.stacked_widget.widget(0).setLayout(layout_1)
         self.stacked_widget.widget(1).setLayout(layout_2)
         self.stacked_widget.widget(2).setLayout(layout_3)
         self.stacked_widget.widget(3).setLayout(layout_4)
+        # self.stacked_widget.widget(4).setLayout(layout_5)
+        # self.stacked_widget.widget(5).setLayout(layout_6)
         self.stacked_widget.setCurrentIndex(0)
 
         # Create a main layout for the widget
@@ -941,7 +974,7 @@ class MyWidget(QWidget):
                 shortcut = QKeySequence(hotkey_shortcut)
                 button.setShortcut(shortcut)
             except ValueError:
-                print(f"Invalid shortcut: {hotkey_shortcut}")
+                common.custom_print(f"Invalid shortcut: {hotkey_shortcut}")
 
         # Ensure each button is only connected once
         for button in self.hotkey_buttons:
@@ -967,11 +1000,13 @@ class MyWidget(QWidget):
             self.text_input_layout_4.setPlainText(
                 common.remove_TimeStamp(self.received_data_textarea.toPlainText())
             )
+        elif index == 4 or self.stacked_widget.currentIndex() == 4:
+            pass
         self.stacked_widget.setCurrentIndex(index)
         self.update_button_style(index)
 
     def update_button_style(self, index):
-        buttons = [self.button1, self.button2, self.button3, self.button4]
+        buttons = [self.button1, self.button2, self.button3, self.button4, self.button5, self.button6]
         for i, button in enumerate(buttons):
             if i == index:
                 button.setStyleSheet(
@@ -1015,6 +1050,14 @@ class MyWidget(QWidget):
     def generate_string(self):
         self.string_generate_dialog = StringGenerateDialog(self)
         self.string_generate_dialog.show()
+    
+    def string_ascii_convert(self):
+        self.string_ascii_convert_dialog = StringAsciiConvertDialog(self)
+        self.string_ascii_convert_dialog.show()
+
+    def custom_toggle_switch(self):
+        self.custom_toggle_switch_dialog = CustomToggleSwitchDialog()
+        self.custom_toggle_switch_dialog.show()
 
     def show_help_info(self):
         help_dialog = HelpDialog()
@@ -1113,7 +1156,7 @@ class MyWidget(QWidget):
             else:
                 common.port_write(command, serial_port, False)
         except Exception as e:
-            print(f"Error sending command: {e}")
+            common.custom_print(f"Error sending command: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     def send_command(self):
@@ -1230,7 +1273,10 @@ class MyWidget(QWidget):
         
         if self.received_hex_data_checkbox.isChecked():
             try:
-                hex_bytes = bytes.fromhex(data.replace(' ', ''))
+                if self.timeStamp_checkbox.isChecked():
+                    hex_bytes = bytes.fromhex(data[25:].replace(' ', ''))
+                else:
+                    hex_bytes = bytes.fromhex(data.replace(' ', ''))
                 decoded_str = hex_bytes.decode('ascii', errors='replace')
                 decoded_str = decoded_str.replace('\n', '\\n').replace('\r', '\\r')
                 self.received_data_textarea.insertHtml(
@@ -1290,6 +1336,8 @@ class MyWidget(QWidget):
                 flowcontrol=flow_control,
             )
             if self.main_Serial:
+                # Clear old connection
+                self.port_button.clicked.connect(self.port_off)
                 self.port_button.setText("Close Port")
                 self.port_button.setShortcut("Ctrl+O")
                 self.port_button.setToolTip("Shortcut: Ctrl+O")
@@ -1325,7 +1373,7 @@ class MyWidget(QWidget):
             self.data_receiver.is_show_hex = self.received_hex_data_checkbox.isChecked()
             self.data_receive_thread.start()
         except Exception as e:
-            print(f"Error opening serial port: {e}")
+            common.custom_print(f"Error opening serial port: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     def port_off(self):
@@ -1341,7 +1389,7 @@ class MyWidget(QWidget):
                 self.port_button.setShortcut("Ctrl+O")
                 self.port_button.setToolTip("Shortcut: Ctrl+O")
                 self.set_status_label("Closed", "#198754")
-                self.port_button.clicked.disconnect(self.port_off)
+                self.port_button.clicked.disconnect()
                 self.port_button.clicked.connect(self.port_on)
 
                 self.serial_port_combo.setEnabled(True)
@@ -1360,10 +1408,10 @@ class MyWidget(QWidget):
                 for input in self.input_fields:
                     input.setEnabled(False)
             else:
-                print("⚙ Port Close Failed")
+                common.custom_print("⚙ Port Close Failed")
                 self.port_button.setEnabled(True)
         except Exception as e:
-            print(f"Error closing serial port: {e}")
+            common.custom_print(f"Error closing serial port: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     """
@@ -1454,7 +1502,7 @@ class MyWidget(QWidget):
             else:
                 self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
         else:
-            # print(f"Radio button {index + 1} is unchecked.")
+            # common.custom_print(f"Radio button {index + 1} is unchecked.")
             pass
 
     def handle_hotkey_click(self, index: int, value: str = "", shortcut: str = ""):
@@ -1539,7 +1587,7 @@ class MyWidget(QWidget):
             self.input_prompt_index.setText(str(self.prompt_index + 1))
 
     def handle_right_shift_click(self):
-        print("Right button click with Shift modifier")
+        common.custom_print("Right button click with Shift modifier")
 
     def handle_middle_click(self):
         if self.prompt_index >= 0:

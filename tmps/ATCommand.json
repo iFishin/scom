@@ -2,43 +2,109 @@
     "commands": [
         {
             "selected": false,
-            "command": "AT+QBLEINIT=2",
+            "command": "1、查询mac地址",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRV=\"FFF7\"",
+            "command": "AT+EBTADDR?",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSCHAR=\"FFF8\"",
+            "command": "",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
+            "command": "2、进入可生产模式，写入mac地址并查询",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEADVPARAM=1600,1600",
+            "command": "AT+QPROD=1",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEADVCHL=3",
+            "command": "AT+EBTADDR=\"BC026E5D499C\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEADVSTART",
+            "command": "AT+EBTADDR?",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "3、退出可生产模式",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QPROD=0",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "4、写入默认mac地址并查询",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QPROD=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+EBTADDR=\"BC026E5D498C\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+EBTADDR?",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QPROD=0",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "5.模块断电上电后查询mac地址",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+EBTADDR?",
             "withEnter": true,
             "interval": ""
         },
@@ -56,43 +122,19 @@
         },
         {
             "selected": false,
-            "command": "AT+QBLEINIT=2",
+            "command": "",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRV=\"FFF7\"",
+            "command": "1、读取SN",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSCHAR=\"FFF8\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEADVPARAM=1600,1600",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEADVSTART",
+            "command": "AT+EGMR=0,5",
             "withEnter": true,
             "interval": ""
         },
@@ -104,7 +146,25 @@
         },
         {
             "selected": false,
-            "command": "",
+            "command": "2、进入可生产模式，写SN号并查询",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QPROD=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+EGMR=1,5,<sn>",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+EGMR=0,5",
             "withEnter": true,
             "interval": ""
         },
@@ -116,127 +176,25 @@
         },
         {
             "selected": false,
-            "command": "",
+            "command": "3、退出可生产模式",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEINIT=2",
+            "command": "AT+QPROD=0",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSSRV=\"fff1\"",
+            "command": "4、模块断电上电后查询SN号",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLEGATTSCHAR=\"fff3\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSSRVDONE",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEADVSTART",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSNTFY=0,\"FFF3\",\"????\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSNTFY=0,\"FFF3\",\"???Hello\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSNTFY=0,\"FFF3\",\"?\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSNTFY=0,\"FFF3\",\"?HELLO\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTSNTFY=0,\"FFF3\",\"HELLO\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QVERSION",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+CSUB",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEINIT=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESCAN=1",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLESCAN=0",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLECONN=1,\"58433271367E\"",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLEGATTCNTFCFG=0,\"FF01\",1",
+            "command": "AT+EGMR=0,5",
             "withEnter": true,
             "interval": ""
         }
