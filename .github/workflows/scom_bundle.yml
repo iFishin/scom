@@ -35,22 +35,17 @@ jobs:
 
       - name: Find generated package
         id: find_package
-        shell: bash 
-        shell: bash 
+        shell: bash
         run: |
           echo "Step: Find generated package"
-          if [ ! -f SCOM-*.zip ]; then
+          if ls SCOM-*.zip 1> /dev/null 2>&1; then
+            PACKAGE=$(ls SCOM-*.zip)
+            echo "package_name=$PACKAGE" >> $GITHUB_ENV
+            echo "Found package: $PACKAGE"
+          else
             echo "Error: Package file not found!"
             exit 1
           fi
-          if [ ! -f SCOM-*.zip ]; then
-            echo "Error: Package file not found!"
-            exit 1
-          fi
-          PACKAGE=$(ls SCOM-*.zip)
-          echo "package_name=$PACKAGE" >> $GITHUB_ENV
-          echo "Found package: $PACKAGE"
-          echo "PACKAGE_NAME=$PACKAGE" >> $GITHUB_ENV
       
       - name: Debug package name
         run: echo "Package name: ${{ env.package_name }}"
