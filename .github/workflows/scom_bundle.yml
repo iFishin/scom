@@ -7,29 +7,39 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      # 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
+        run: echo "Step: Checkout code"
 
-      # 设置 Python 环境
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
+        run: echo "Step: Setup Python"
 
-      # 安装依赖
       - name: Install dependencies
         run: |
+          echo "Step: Install dependencies"
           python -m pip install --upgrade pip setuptools
           python -m pip install -r requirements.txt
 
-      # 执行打包
       - name: Build package
-        run: python setup.py build
+        run: |
+          echo "Step: Build package"
+          python setup.py build
 
-      # 上传打包内容到 GitHub Release
+      - name: Find generated package
+        id: find_package
+        run: |
+          echo "Step: Find generated package"
+          PACKAGE=$(ls SCOM_*.zip)
+          echo "package_name=$PACKAGE" >> $GITHUB_ENV
+
       - name: Upload to GitHub Release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-release-asset@v1
         with:
-          name: build-output
-          path: SCOM.build/
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.package_name }}
+          asset_name: ${{ env.package_name }}
+          content_type: application/zip
+        run: echo "Step: Upload to GitHub Release"
