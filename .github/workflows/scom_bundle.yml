@@ -9,18 +9,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        run: echo "Step: Checkout code"
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
-        run: echo "Step: Setup Python"
 
       - name: Install dependencies
         run: |
           echo "Step: Install dependencies"
-          python -m pip install --upgrade pip setuptools
+          python -m pip install --upgrade pip
+          python -m pip install setuptools python-dotenv nuitka
           python -m pip install -r requirements.txt
 
       - name: Build package
@@ -32,8 +31,10 @@ jobs:
         id: find_package
         run: |
           echo "Step: Find generated package"
-          PACKAGE=$(ls SCOM_*.zip)
-          echo "package_name=$PACKAGE" >> $GITHUB_ENV
+          PACKAGE=$(ls SCOM-*.zip)
+          echo "Step: Find generated package"
+          ls SCOM_*.zip > package_name.txt
+          echo "package_name=$(cat package_name.txt)" >> $GITHUB_ENV
 
       - name: Upload to GitHub Release
         uses: actions/upload-release-asset@v1
@@ -42,4 +43,3 @@ jobs:
           asset_path: ${{ env.package_name }}
           asset_name: ${{ env.package_name }}
           content_type: application/zip
-        run: echo "Step: Upload to GitHub Release"

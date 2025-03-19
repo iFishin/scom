@@ -58,6 +58,7 @@ def run_nuitka(version):
         f"--include-data-file={ICON_PATH}={ICON_PATH} "
         f"--windows-icon-from-ico={ICON_PATH} "
         f"--mingw64 --standalone --windows-disable-console "
+        f"--assume-yes-for-downloads "
         f"--output-dir={NUITKA_BUILD_DIR} "
         f"--output-filename={APP_NAME}.exe {MAIN_SCRIPT}"
     )
