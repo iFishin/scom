@@ -50,6 +50,7 @@ jobs:
           PACKAGE=$(ls SCOM-*.zip)
           echo "package_name=$PACKAGE" >> $GITHUB_ENV
           echo "Found package: $PACKAGE"
+          echo "PACKAGE_NAME=$PACKAGE" >> $GITHUB_ENV
       
       - name: Debug package name
         run: echo "Package name: ${{ env.package_name }}"
