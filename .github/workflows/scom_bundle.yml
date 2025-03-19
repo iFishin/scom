@@ -36,8 +36,13 @@ jobs:
       - name: Find generated package
         id: find_package
         shell: bash 
+        shell: bash 
         run: |
           echo "Step: Find generated package"
+          if [ ! -f SCOM-*.zip ]; then
+            echo "Error: Package file not found!"
+            exit 1
+          fi
           if [ ! -f SCOM-*.zip ]; then
             echo "Error: Package file not found!"
             exit 1
