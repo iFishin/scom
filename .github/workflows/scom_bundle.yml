@@ -22,6 +22,12 @@ jobs:
           python -m pip install setuptools python-dotenv nuitka
           python -m pip install -r requirements.txt
 
+      - name: Get version from .env
+        id: version
+        run: |
+          VERSION=$(grep 'VERSION=' .env | cut -d '=' -f2)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Build package
         run: |
           echo "Step: Build package"
@@ -29,17 +35,37 @@ jobs:
 
       - name: Find generated package
         id: find_package
+        shell: bash 
         run: |
           echo "Step: Find generated package"
+          if [ ! -f SCOM-*.zip ]; then
+            echo "Error: Package file not found!"
+            exit 1
+          fi
           PACKAGE=$(ls SCOM-*.zip)
-          echo "Step: Find generated package"
-          ls SCOM_*.zip > package_name.txt
-          echo "package_name=$(cat package_name.txt)" >> $GITHUB_ENV
+          echo "package_name=$PACKAGE" >> $GITHUB_ENV
+          echo "Found package: $PACKAGE"
+      
+      - name: Debug package name
+        run: echo "Package name: ${{ env.package_name }}"
 
-      - name: Upload to GitHub Release
-        uses: actions/upload-release-asset@v1
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.package_name }}
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ env.package_name }}
           asset_name: ${{ env.package_name }}
-          content_type: application/zip
+          asset_content_type: application/zip

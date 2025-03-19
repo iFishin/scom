@@ -17,6 +17,7 @@ REQUIRED_PACKAGES = [
 # Load .env file
 env_file = ".env"
 load_dotenv(env_file)
+CURRENT_VERSION = os.getenv("VERSION", "1.0.0")
 
 def increment_version():
     current_version = os.getenv("VERSION", "1.0.0")
@@ -106,7 +107,7 @@ def compress_and_cleanup(version):
 if __name__ == "__main__":
     try:
         setup(**create_setup())
-        version = increment_version()
-        run_nuitka(version)
+        run_nuitka(CURRENT_VERSION)
+        increment_version()
     except Exception as e:
         print(f"Error during setup or Nuitka run: {e}")
