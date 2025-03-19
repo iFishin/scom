@@ -29,12 +29,16 @@ jobs:
 
       - name: Find generated package
         id: find_package
+        shell: bash 
         run: |
           echo "Step: Find generated package"
+          if [ ! -f SCOM-*.zip ]; then
+            echo "Error: Package file not found!"
+            exit 1
+          fi
           PACKAGE=$(ls SCOM-*.zip)
-          echo "Step: Find generated package"
-          ls SCOM_*.zip > package_name.txt
-          echo "package_name=$(cat package_name.txt)" >> $GITHUB_ENV
+          echo "package_name=$PACKAGE" >> $GITHUB_ENV
+          echo "Found package: $PACKAGE"
 
       - name: Upload to GitHub Release
         uses: actions/upload-release-asset@v1
