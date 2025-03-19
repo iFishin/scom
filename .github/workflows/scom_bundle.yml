@@ -46,9 +46,6 @@ jobs:
             echo "Error: Package file not found!"
             exit 1
           fi
-      
-      - name: Debug package name
-        run: echo "Package name: ${{ env.package_name }}"
 
       - name: Create GitHub Release
         id: create_release
