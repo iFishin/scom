@@ -25,7 +25,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          VERSION=$(grep 'VERSION=' .env | cut -d '=' -f2 | sed "s/['\"]//g")
+          VERSION=$(grep 'VERSION=' .env | cut -d '=' -f2 | tr -d "'\"")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build package
@@ -45,7 +45,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: actions/create-release@v2
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
