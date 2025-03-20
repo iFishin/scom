@@ -24,6 +24,7 @@ jobs:
 
       - name: Get version from .env
         id: version
+        shell: bash
         run: |
           VERSION=$(grep 'VERSION=' .env | cut -d '=' -f2)
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
