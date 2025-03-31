@@ -1,0 +1,279 @@
+2025-03-31 09:29:57,648 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'prompt_button'
+2025-03-31 09:30:09,301 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'prompt_button'
+2025-03-31 09:31:51,244 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'prompt_button'
+2025-03-31 09:32:40,617 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:32:40,621 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:32:40,826 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:32:41,227 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:36:34,847 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:36:37,191 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:36:37,191 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:36:37,344 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:36:38,119 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:36:40,637 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:37:02,599 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:37:02,599 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:37:02,764 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:37:03,157 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:38:29,996 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:39:08,623 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:39:08,623 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:39:08,793 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:39:09,178 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:42:25,329 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:42:27,750 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:42:27,754 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:42:27,911 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:42:28,590 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:47:17,457 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:47:19,780 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:47:19,780 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:47:19,933 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:47:20,341 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:50:30,561 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:50:33,355 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:50:33,355 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:50:33,579 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:50:34,246 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:53:24,645 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:53:27,365 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:53:27,365 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:53:27,564 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:53:27,985 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 09:56:37,277 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:56:40,029 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:56:40,033 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 09:56:40,270 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 09:56:40,931 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:00:36,550 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:00:39,295 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:00:39,295 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:00:39,482 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:00:39,893 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:03:25,626 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:03:27,834 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:03:27,838 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:03:28,001 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:03:28,665 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:04:53,413 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:04:55,981 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:04:55,981 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:04:56,170 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:04:56,579 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:05:41,728 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:06:12,925 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:06:12,925 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:06:13,107 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:06:13,510 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:07:17,615 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:09:12,846 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:09:12,850 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:09:13,144 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:09:13,855 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:09:17,737 - Error reading from serial port: ClearCommError failed (OSError(9, '句柄无效。', None, 6))
+2025-03-31 10:14:44,225 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:14:46,628 - ERROR - An unexpected error occurred: 'MyWidget' object has no attribute 'port_on'
+2025-03-31 10:15:26,704 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:15:26,708 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:15:26,919 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:15:27,587 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:15:31,245 - Error reading from serial port: ClearCommError failed (OSError(9, '句柄无效。', None, 6))
+2025-03-31 10:15:52,569 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:15:55,121 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:15:55,125 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:15:55,328 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:15:55,747 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:16:18,518 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:16:18,526 - Error reading from serial port: ClearCommError failed (OSError(9, '句柄无效。', None, 6))
+2025-03-31 10:18:11,283 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:18:11,287 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:18:11,495 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:18:11,904 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:21:41,694 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:21:44,260 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:21:44,264 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:21:44,456 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:21:45,151 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:23:14,003 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:23:16,319 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:23:16,319 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:23:16,485 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:23:16,897 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:23:18,295 - Error sending command: Serial port is not initialized.
+2025-03-31 10:25:55,935 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:25:59,059 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:25:59,059 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:25:59,269 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:25:59,656 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:26:08,804 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:27:49,837 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:27:49,837 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:27:49,993 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:27:50,647 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:28:57,089 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:28:59,301 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:28:59,301 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:28:59,474 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:28:59,861 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:29:55,354 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:29:57,769 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:29:57,769 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:29:57,929 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:29:58,307 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:30:03,115 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:30:08,354 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:30:08,358 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:30:08,518 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:30:08,931 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:30:15,371 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:17,305 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:17,309 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:17,465 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:32:17,869 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:32:47,765 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:49,990 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:49,990 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:32:50,150 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:32:50,553 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:33:14,628 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:16,812 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:16,812 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:16,979 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:33:17,641 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:33:54,274 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:56,769 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:56,772 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:33:56,935 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:33:57,343 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:34:36,222 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:34:38,446 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:34:38,446 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:34:38,606 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:34:39,010 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:35:04,354 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:35:06,485 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:35:06,485 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:35:06,645 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:35:07,041 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:36:19,551 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:24,434 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:24,434 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:24,617 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:36:25,017 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:36:54,353 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:56,504 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:56,504 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:36:56,676 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:36:57,075 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:37:44,720 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:37:46,847 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:37:46,847 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:37:47,002 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:37:47,405 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:40:36,752 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:40:39,436 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:40:39,436 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:40:39,634 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:40:40,309 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:41:12,900 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:15,446 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:15,446 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:15,642 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:41:16,033 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:41:27,037 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:51,131 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:51,135 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:41:51,293 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:41:51,708 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:41:59,604 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:42:38,592 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:42:38,592 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:42:38,755 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:42:39,143 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:42:47,311 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:20,640 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:20,644 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:20,881 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:45:21,283 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:45:28,514 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:45,906 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:45,910 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:45:46,120 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:45:46,843 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:47:16,611 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:47:16,619 - Error reading from serial port: ClearCommError failed (OSError(9, '句柄无效。', None, 6))
+2025-03-31 10:47:18,767 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:47:18,767 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:47:18,957 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:47:19,347 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:47:26,351 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:49:20,233 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:49:20,237 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:49:20,420 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:49:20,828 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:49:27,147 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:50:23,580 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:50:23,580 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:50:23,751 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:50:24,134 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:50:29,291 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:51:18,122 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:51:18,122 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:51:18,359 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:51:19,035 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:51:43,716 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:52:03,739 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:52:03,739 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:52:03,888 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:52:04,271 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:52:13,491 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:55:28,390 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:55:28,394 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:55:28,639 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:55:29,067 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:56:21,592 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:56:52,431 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:56:52,435 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:56:52,607 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:56:53,284 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:57:46,655 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:57:49,378 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:57:49,382 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 10:57:49,590 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 10:57:49,989 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 10:57:54,150 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:00:54,622 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:00:54,622 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:00:54,832 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:00:55,270 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:01:58,388 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:02:00,634 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:02:00,634 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:02:00,797 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:02:01,476 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:02:17,215 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:03:23,582 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:03:23,582 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:03:23,746 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:03:24,185 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:06:00,847 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:03,536 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:03,536 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:03,730 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:06:04,137 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:06:37,583 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:39,901 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:39,901 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:06:40,070 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:06:40,488 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:06:58,912 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:07:31,742 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:07:31,742 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:07:31,900 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:07:32,551 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:11:58,288 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:12:23,775 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:12:23,775 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-03-31 11:12:23,965 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-03-31 11:12:24,353 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-03-31 11:12:38,569 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini

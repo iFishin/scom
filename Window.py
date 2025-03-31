@@ -51,6 +51,7 @@ from components.FileSender import FileSender
 from components.CommandExecutor import CommandExecutor
 from components.SearchReplaceDialog import SearchReplaceDialog
 from components.HotkeysConfigDialog import HotkeysConfigDialog
+from components.MoreSettingsDialog import MoreSettingsDialog
 from components.LayoutConfigDialog import LayoutConfigDialog
 from components.AboutDialog import AboutDialog
 from components.HelpDialog import HelpDialog
@@ -75,61 +76,215 @@ class MyWidget(QWidget):
         self.total_times = 0
         self.is_stop_batch = False
         self.last_one_click_time = None
-        self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
+        self.path_ATCommand = common.get_absolute_path("tmps\\ATCommand.json")
         self.received_data_textarea_scrollBottom = True
         self.thread_pool = QThreadPool()
         self.data_receiver = None
         self.command_executor = None
+        ## Update main text area
+        self.hex_buffer = []
+        self.buffer_size = 1000     # Maximum stored lines
+        self.visible_lines = 100
+        self.current_offset = 0    # Scroll position tracker
+        self.full_data_store = [] # Complete history
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
-        for i in range(1, 9):
-            button = QPushButton(f"Hotkey {i}")
-            button.clicked.connect(self.handle_hotkey_click(i))
-            self.hotkey_buttons.append(button)
-
-        self.init_UI()
-
-        # After init the UI, set the layout of the widget
-
-        input_fields_values = [
-            "AT+QECHO=1",
-            "AT+QVERSION",
-            "AT+QSUB",
-            "AT+QBLEADDR?",
-            "AT+QBLEINIT=1",
-            "AT+QBLESCAN=1",
-            "AT+QBLESCAN=0",
-            "AT+QWSCAN",
-            "AT+RESTORE",
-            "AT+QWSCAN",
-        ]
-        for i in range(1, len(self.input_fields) + 1):
-            if i <= len(input_fields_values):
-                self.input_fields[i - 1].setText(input_fields_values[i - 1])
-            else:
-                break
-
-        self.layout_config_dialog = LayoutConfigDialog(self)
-
-        if not os.path.exists("config.ini"):
-            self.create_default_config()
-
-        self.apply_config(self.config)
-        self.layout_config_dialog.apply()
-
-        self.save_settings_action.triggered.connect(self.save_config(self.config))
         
-        self.update_hotkeys_groupbox()
-
+        # Init the UI of the widget
+        self.init_UI()    
+    
     """
-    ✨✨✨
+    🎨🎨🎨
+    Summary:
+        Pre actions before the initialization of the UI.
+    
+    """
+    def pre_init_UI(self):
+        # Remove the existing layout if it exists
+        if self.layout():
+            QWidget().setLayout(self.layout())  # Detach the existing layout
+    
+       
+    """
+    🎨🎨🎨
     Summary:
          Initialize the UI of the widget.
          
     """
+    
+    def modify_max_rows_of_button_group(self, max_rows):
+        # Clear the existing button group
+        if hasattr(self, "settings_button_group"):
+            self.settings_button_group.deleteLater()
 
+        # Add setting area for the button group
+        self.settings_button_group = QGroupBox()
+        settings_button_layout = QGridLayout(self.settings_button_group)
+        settings_button_layout.setColumnStretch(1, 3)
+
+        self.prompt_button = QPushButton("Prompt")
+        self.prompt_button.setObjectName("prompt_button")  # Add an object name for debugging
+        self.prompt_button.setToolTip(
+            "Left button clicked to Execute; Right button clicked to Switch Next"
+        )
+        self.prompt_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #0d6e3f; }"
+            "QPushButton:pressed { background-color: #0a4c2b; }"
+        )
+        self.prompt_button.installEventFilter(self)
+        self.prompt_button.setEnabled(False)
+
+        self.input_prompt = QLineEdit()
+        self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
+        self.input_prompt.setStyleSheet(
+            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+        )
+
+        self.input_prompt_index = QLineEdit()
+        self.input_prompt_index.setPlaceholderText("Idx")
+        self.input_prompt_index.setToolTip("Double click to edit")
+        self.input_prompt_index.setStyleSheet(
+            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+        )
+        self.input_prompt_index.setReadOnly(True)
+        self.input_prompt_index.setMaximumWidth(self.width() * 0.1)
+        self.input_prompt_index.mouseDoubleClickEvent = (
+            lambda event=None: self.input_prompt_index.setReadOnly(False)
+        )
+        self.input_prompt_index.editingFinished.connect(self.set_prompt_index)
+
+        self.prompt_batch_start_button = QPushButton("Start")
+        self.prompt_batch_start_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #0d6e3f; }"
+            "QPushButton:pressed { background-color: #0a4c2b; }"
+        )
+        self.prompt_batch_start_button.setEnabled(False)
+
+        self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
+
+        self.prompt_batch_stop_button = QPushButton("Stop")
+        self.prompt_batch_stop_button.setStyleSheet(
+            "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #a71d2a; }"
+            "QPushButton:pressed { background-color: #7b1520; }"
+        )
+        self.prompt_batch_stop_button.setEnabled(False)
+
+        self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
+
+        self.input_prompt_batch_times = QLineEdit()
+        self.input_prompt_batch_times.setPlaceholderText("Total Times")
+        self.input_prompt_batch_times.setStyleSheet(
+            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
+        )
+
+        settings_button_layout.addWidget(self.prompt_button, 0, 0, 1, 1)
+        settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
+        settings_button_layout.addWidget(self.input_prompt_index, 0, 5, 1, 1)
+        settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
+        settings_button_layout.addWidget(
+            self.input_prompt_batch_times,
+            1,
+            1,
+            1,
+            3,
+        )
+        
+        # Clear the existing layout if it exists
+        if self.button_groupbox.layout():
+            QWidget().setLayout(self.button_groupbox.layout())
+        button_layout = QGridLayout(self.button_groupbox)
+        button_layout.setColumnStretch(2, 2)
+        settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 4, 1, 2)
+        button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
+
+        # Set the input field to expand horizontally
+        self.input_prompt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+
+        # Store the screen width
+        self.screen_width = QApplication.primaryScreen().size().width()
+        
+        # Add column titles
+        self.total_checkbox = QCheckBox()
+        button_layout.addWidget(self.total_checkbox, 1, 0)
+        self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
+        label_function = QLabel("Function")
+        label_function.setToolTip("nothing")
+        label_input_field = QLabel("Input Field")
+        label_input_field.setToolTip("Double click to Clear")
+        label_input_field.mouseDoubleClickEvent = lambda event: self.set_input_none()
+        label_enter = QLabel("Enter")
+        label_enter.setToolTip("Double click to Clear")
+        label_enter.mouseDoubleClickEvent = lambda event: self.set_enter_none()
+        label_sec = QLabel("Sec")
+        label_sec.setToolTip("Double click to Clear")
+        label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
+        button_layout.addWidget(label_function, 1, 1, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_enter, 1, 3, alignment=Qt.AlignCenter)
+        button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
+
+        # Add new components
+        self.checkbox = []
+        self.buttons = []
+        self.input_fields = []
+        self.checkbox_send_with_enters = []
+        self.interVal = []
+        isEnable = self.main_Serial is not None
+        for i in range(1, max_rows + 1):
+            checkbox = QCheckBox()
+            checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
+            button = QPushButton(f"Func {i}")
+            input_field = QLineEdit()
+            input_field.setMinimumWidth(self.screen_width * 0.08)
+            checkbox_send_with_enter = QCheckBox()
+            checkbox_send_with_enter.setChecked(True)
+            input_interval = QLineEdit()
+            input_interval.setMaximumWidth(self.screen_width * 0.025)
+            input_interval.setValidator(QIntValidator(0, 1000))
+            input_interval.setPlaceholderText("sec")
+            input_interval.setAlignment(Qt.AlignCenter)
+
+            button_layout.addWidget(checkbox, i+1, 0)
+            button_layout.addWidget(button, i+1, 1)
+            button_layout.addWidget(input_field, i+1, 2)
+            button_layout.addWidget(checkbox_send_with_enter, i+1, 3)
+            button_layout.addWidget(input_interval, i+1, 4)
+
+            self.checkbox.append(checkbox)
+            self.buttons.append(button)
+            self.input_fields.append(input_field)
+            self.checkbox_send_with_enters.append(checkbox_send_with_enter)
+            self.interVal.append(input_interval)
+
+            button.setEnabled(isEnable)
+            input_field.setEnabled(isEnable)
+            input_field.returnPressed.connect(
+                self.handle_button_click(
+                    i,
+                    input_field,
+                    checkbox,
+                    checkbox_send_with_enter,
+                    input_interval,
+                )
+            )
+            button.clicked.connect(
+                self.handle_button_click(
+                    i,
+                    input_field,
+                    checkbox,
+                    checkbox_send_with_enter,
+                    input_interval,
+                )
+            )
+        
     def init_UI(self):
+        # Pre actions before the initialization of the UI.
+        self.pre_init_UI()
+        
         # Create menu bar
         self.menu_bar = QMenuBar()
 
@@ -145,6 +300,9 @@ class MyWidget(QWidget):
         self.hotkeys_config_action = self.settings_menu.addAction("Hotkeys Config")
         self.hotkeys_config_action.setShortcut("Ctrl+H")
         self.hotkeys_config_action.triggered.connect(self.hotkeys_config)
+        self.more_settings_action = self.settings_menu.addAction("More Settings")
+        self.more_settings_action.setShortcut("Ctrl+M")
+        self.more_settings_action.triggered.connect(self.more_settings)
         
         # Crete Tools menu
         self.tools_menu = self.menu_bar.addMenu("Tools")
@@ -280,9 +438,9 @@ class MyWidget(QWidget):
         self.checkbox_data_received.stateChanged.connect(
             self.handle_data_received_checkbox
         )
-        self.button_data_received_select = QPushButton("Select")
+        self.button_data_received_select = QPushButton("Select Log File")
         self.button_data_received_select.clicked.connect(self.select_received_file)
-        self.button_data_received_save = QPushButton("Save")
+        self.button_data_received_save = QPushButton("Save Log File")
         self.button_data_received_save.clicked.connect(self.save_received_file)
 
         self.port_button = QPushButton("Open Port")
@@ -292,7 +450,7 @@ class MyWidget(QWidget):
 
         self.toggle_button = QPushButton()
         self.toggle_button.setToolTip("Show More Options")
-        self.toggle_button.setIcon(QIcon("./res/expander-down.png"))
+        self.toggle_button.setIcon(QIcon("res/expander-down.png"))
         self.toggle_button_is_expanded = False
         self.toggle_button.clicked.connect(self.show_more_options)
 
@@ -329,7 +487,7 @@ class MyWidget(QWidget):
         # Create a button for expanding/collapsing the input field
         self.expand_button = QPushButton()
         self.expand_button.setIcon(
-            QIcon("./res/expand.png")
+            QIcon("res/expand.png")
         )  # You need to have an icon for this
         self.expand_button.setCheckable(True)
         self.expand_button.setChecked(False)
@@ -341,6 +499,7 @@ class MyWidget(QWidget):
 
         self.received_data_textarea = QTextEdit()
         self.received_data_textarea.setAcceptRichText(True)
+        self.received_data_textarea.installEventFilter(self)  # Install event filter
         # self.received_data_textarea.setDocument(QTextDocument(None))
         shortcut = QShortcut(Qt.ControlModifier | Qt.Key_F, self)
         shortcut.activated.connect(self.show_search_dialog)
@@ -463,175 +622,25 @@ class MyWidget(QWidget):
         self.received_data_groupbox = QGroupBox("Received Data")
         received_data_layout = QVBoxLayout(self.received_data_groupbox)
         received_data_layout.addWidget(self.received_data_textarea)
-
+        
         # Create a group box for the button group section
         self.button_groupbox = QGroupBox("Button Group")
-        button_layout = QGridLayout(self.button_groupbox)
-        # button_layout.setColumnStretch(2, 2)
 
         # Create a scroll area for the button group
-        button_scroll_area = QScrollArea()
-        button_scroll_area.setWidget(self.button_groupbox)
-        button_scroll_area.setWidgetResizable(True)
-        button_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.button_scroll_area = QScrollArea()
+        self.button_scroll_area.setWidget(self.button_groupbox)
+        self.button_scroll_area.setWidgetResizable(True)
+        self.button_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         QTimer.singleShot(
             0,
-            lambda: button_scroll_area.verticalScrollBar().setValue(
+            lambda: self.button_scroll_area.verticalScrollBar().setValue(
                 self.settings_button_group.height()
             ),
         )
-
-        # Add setting area for the button group
-        self.settings_button_group = QGroupBox()
-        settings_button_layout = QGridLayout(self.settings_button_group)
-        settings_button_layout.setColumnStretch(1, 3)
-
-        self.prompt_button = QPushButton("Prompt")
-        self.prompt_button.setToolTip(
-            "Left button clicked to Execute; Right button clicked to Switch Next"
-        )
-        self.prompt_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #0d6e3f; }"
-            "QPushButton:pressed { background-color: #0a4c2b; }"
-        )
-        self.prompt_button.installEventFilter(self)
-        self.prompt_button.setEnabled(False)
-
-        self.input_prompt = QLineEdit()
-        self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
-        self.input_prompt.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
-
-        self.input_prompt_index = QLineEdit()
-        self.input_prompt_index.setPlaceholderText("Idx")
-        self.input_prompt_index.setToolTip("Double click to edit")
-        self.input_prompt_index.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
-        self.input_prompt_index.setReadOnly(True)
-        self.input_prompt_index.setMaximumWidth(self.width() * 0.1)
-        self.input_prompt_index.mouseDoubleClickEvent = (
-            lambda event: self.input_prompt_index.setReadOnly(False)
-        )
-        self.input_prompt_index.editingFinished.connect(self.set_prompt_index)
-
-        self.prompt_batch_start_button = QPushButton("Start")
-        self.prompt_batch_start_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #0d6e3f; }"
-            "QPushButton:pressed { background-color: #0a4c2b; }"
-        )
-        self.prompt_batch_start_button.setEnabled(False)
-
-        self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
-
-        self.prompt_batch_stop_button = QPushButton("Stop")
-        self.prompt_batch_stop_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #a71d2a; }"
-            "QPushButton:pressed { background-color: #7b1520; }"
-        )
-        self.prompt_batch_stop_button.setEnabled(False)
-
-        self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
-
-        self.input_prompt_batch_times = QLineEdit()
-        self.input_prompt_batch_times.setPlaceholderText("Total Times")
-        self.input_prompt_batch_times.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
-
-        settings_button_layout.addWidget(self.prompt_button, 0, 0, 1, 1)
-        settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
-        settings_button_layout.addWidget(self.input_prompt_index, 0, 5, 1, 1)
-        settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
-        settings_button_layout.addWidget(
-            self.input_prompt_batch_times,
-            1,
-            1,
-            1,
-            3,
-        )
-        settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 4, 1, 2)
-        button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
-
-        # Set the input field to expand horizontally
-        self.input_prompt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-
-        # Add column titles
-        self.total_checkbox = QCheckBox()
-        button_layout.addWidget(self.total_checkbox, 1, 0)
-        self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
-        label_function = QLabel("Function")
-        label_function.setToolTip("nothing")
-        label_input_field = QLabel("Input Field")
-        label_input_field.setToolTip("Double click to Clear")
-        label_input_field.mouseDoubleClickEvent = lambda event: self.set_input_none()
-        label_enter = QLabel("Enter")
-        label_enter.setToolTip("Double click to Clear")
-        label_enter.mouseDoubleClickEvent = lambda event: self.set_enter_none()
-        label_sec = QLabel("Sec")
-        label_sec.setToolTip("Double click to Clear")
-        label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
-        button_layout.addWidget(label_function, 1, 1, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_enter, 1, 3, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
-
-        # Add buttons and input fields to the button group
-        self.checkbox = []
-        self.buttons = []
-        self.input_fields = []
-        self.checkbox_send_with_enters = []
-        self.interVal = []
-        for i in range(1, 101):
-            # Create a combobox for selecting the function
-            checkbox = QCheckBox()
-            checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
-            label = f"Func {i}"
-            button = QPushButton(label)
-            input_field = QLineEdit()
-
-            checkbox_send_with_enter = QCheckBox()
-            checkbox_send_with_enter.setChecked(True)
-            input_interval = QLineEdit()
-            input_interval.setMaximumWidth(self.width() * 0.06)
-            input_interval.setValidator(QIntValidator(0, 1000))
-            input_interval.setPlaceholderText("sec")
-            input_interval.setAlignment(Qt.AlignCenter)
-            button_layout.addWidget(checkbox, i + 1, 0)
-            button_layout.addWidget(button, i + 1, 1)
-            button_layout.addWidget(input_field, i + 1, 2)
-            button_layout.addWidget(checkbox_send_with_enter, i + 1, 3)
-            button_layout.addWidget(input_interval, i + 1, 4)
-            self.checkbox.append(checkbox)
-            self.buttons.append(button)
-            self.input_fields.append(input_field)
-            self.checkbox_send_with_enters.append(checkbox_send_with_enter)
-            self.interVal.append(input_interval)
-            button.setEnabled(False)
-            input_field.setEnabled(False)
-            input_field.returnPressed.connect(
-                self.handle_button_click(
-                    i,
-                    self.input_fields[i - 1],
-                    self.checkbox[i - 1],
-                    self.checkbox_send_with_enters[i - 1],
-                    self.interVal[i - 1],
-                )
-            )
-            button.clicked.connect(
-                self.handle_button_click(
-                    i,
-                    self.input_fields[i - 1],
-                    self.checkbox[i - 1],
-                    self.checkbox_send_with_enters[i - 1],
-                    self.interVal[i - 1],
-                )
-            )
-
+        
+        # call the function to modify the max rows of button group
+        self.modify_max_rows_of_button_group(int(self.config["MoreSettings"]["MaxRowsOfButtonGroup"]))
+       
         # Create a layout for the left half
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.settings_groupbox)
@@ -641,7 +650,7 @@ class MyWidget(QWidget):
         self.left_layout.addWidget(self.received_data_groupbox)
 
         self.right_layout = QVBoxLayout()
-        self.right_layout.addWidget(button_scroll_area)
+        self.right_layout.addWidget(self.button_scroll_area)
 
         # Create a layout_1 for the widget
         layout_1 = QHBoxLayout()
@@ -668,7 +677,7 @@ class MyWidget(QWidget):
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
-        self.expand_left_button.setIcon(QIcon("./res/direction_left.png"))
+        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
         self.radio_layout.addWidget(self.expand_left_button, 0, 0, 1, 2)
 
@@ -811,6 +820,48 @@ class MyWidget(QWidget):
         main_layout.addWidget(self.menu_bar)
         main_layout.addLayout(button_switch_layout)
         main_layout.addWidget(self.stacked_widget)
+        
+        # Post actions after the initialization of the UI.
+        self.post_init_UI()
+
+    """
+    🎨🎨🎨
+    Summary:
+        After init the ui, we need to modify the layout of the main window.
+         
+    """ 
+    def post_init_UI(self):
+        self.update_hotkeys_groupbox()
+                             
+        input_fields_values = [
+            "AT+QRST",
+            "AT+QECHO=1",
+            "AT+QVERSION",
+            "AT+CSUB",
+            "AT+QBLEADDR?",
+            "AT+QBLEINIT=1",
+            "AT+QBLESCAN=1",
+            "AT+QBLESCAN=0",
+            "AT+QWLMAC",
+            "AT+QWSCAN",
+            "AT+RESTORE"
+        ]
+        for i in range(1, len(self.input_fields) + 1):
+            if i <= len(input_fields_values):
+                self.input_fields[i - 1].setText(input_fields_values[i - 1])
+            else:
+                break
+
+        self.layout_config_dialog = LayoutConfigDialog(self)
+
+        if not os.path.exists("config.ini"):
+            self.create_default_config()
+
+        self.apply_config(self.config)
+        self.layout_config_dialog.apply()
+
+        self.save_settings_action.triggered.connect(self.save_config(self.config))        
+
 
     """
     ⚙⚙⚙
@@ -849,13 +900,13 @@ class MyWidget(QWidget):
             logging.error(f"Error applying config: {e}")
 
         # Hotkeys
-        for i in range(1, 9):
-            hotkey_text = config.get("Hotkeys", f"Hotkey_{i}", fallback="")
-            self.hotkey_buttons[i - 1].setText(hotkey_text)
-            hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
-            self.hotkey_buttons[i - 1].clicked.connect(
-                self.handle_hotkey_click(i, hotkey_value)
-            )
+        # for i in range(1, 9):
+        #     hotkey_text = config.get("Hotkeys", f"Hotkey_{i}", fallback="")
+        #     self.hotkey_buttons[i - 1].setText(hotkey_text)
+        #     hotkey_value = config.get("HotkeyValues", f"HotkeyValue_{i}", fallback="")
+        #     self.hotkey_buttons[i - 1].clicked.connect(
+        #         self.handle_hotkey_click(i, hotkey_value)
+        #     )
 
     def save_config(self, config):
         try:
@@ -998,7 +1049,10 @@ class MyWidget(QWidget):
             )
         elif index == 3 or self.stacked_widget.currentIndex() == 3:
             self.text_input_layout_4.setPlainText(
-                common.remove_TimeStamp(self.received_data_textarea.toPlainText())
+                common.remove_TimeStamp(
+                    self.received_data_textarea.toPlainText(),
+                    re.escape(self.config["MoreSettings"]["TimeStampRegex"])
+                )
             )
         elif index == 4 or self.stacked_widget.currentIndex() == 4:
             pass
@@ -1042,6 +1096,10 @@ class MyWidget(QWidget):
     def hotkeys_config(self):
         self.hotkeys_config_dialog = HotkeysConfigDialog(self)
         self.hotkeys_config_dialog.show()
+    
+    def more_settings(self):
+        self.more_settings_dialog = MoreSettingsDialog(self)
+        self.more_settings_dialog.show()
         
     def calculate_length(self):
         self.length_caculate_dialog = LengthCalculateDialog(self)
@@ -1124,22 +1182,22 @@ class MyWidget(QWidget):
             if widget:
                 widget.setVisible(not widget.isVisible())
         if self.toggle_button_is_expanded:
-            self.toggle_button.setIcon(QIcon("./res/expander-down.png"))
+            self.toggle_button.setIcon(QIcon("res/expander-down.png"))
         else:
-            self.toggle_button.setIcon(QIcon("./res/fork.png"))
+            self.toggle_button.setIcon(QIcon("res/fork.png"))
         self.toggle_button_is_expanded = not self.toggle_button_is_expanded
 
     def expand_command_input(self):
         self.command_input.setFixedHeight(100)
         self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QIcon("./res/collapse.png"))
+        self.expand_button.setIcon(QIcon("res/collapse.png"))
         self.expand_button.setChecked(True)
         self.expand_button.clicked.connect(self.collapse_command_input)
 
     def collapse_command_input(self):
         self.command_input.setFixedHeight(35)
         self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QIcon("./res/expand.png"))
+        self.expand_button.setIcon(QIcon("res/expand.png"))
         self.expand_button.setChecked(False)
         self.expand_button.clicked.connect(self.expand_command_input)
 
@@ -1155,6 +1213,7 @@ class MyWidget(QWidget):
                 common.port_write(command, serial_port, True)
             else:
                 common.port_write(command, serial_port, False)
+            self.data_receiver.is_new_data_written = True
         except Exception as e:
             common.custom_print(f"Error sending command: {e}")
             self.set_status_label("Failed", "#dc3545")
@@ -1189,7 +1248,7 @@ class MyWidget(QWidget):
 
     def set_default_received_file(self, event):
         self.input_path_data_received.setText(
-            common.get_absolute_path("tmps/temp.log")
+            common.get_absolute_path("tmps\\temp.log")
         )
 
     def select_received_file(self):
@@ -1263,37 +1322,124 @@ class MyWidget(QWidget):
         self.serial_port_combo.addItems(current_ports)
         QComboBox.showPopup(self.serial_port_combo)
 
-    def update_main_textarea(self, data):
-        scrollbar = self.received_data_textarea.verticalScrollBar()
-        self.received_data_textarea_scrollBottom = (
-            scrollbar.value() == scrollbar.maximum()
-        )
-        self.received_data_textarea.moveCursor(QTextCursor.End)
-        self.received_data_textarea.insertPlainText(data + "\n")
+    def _process_hex_data(self, data):
+        """Process hex data and return formatted HTML string"""
+        if not self.received_hex_data_checkbox.isChecked():
+            return ""  # Return empty string if checkbox is unchecked
         
-        if self.received_hex_data_checkbox.isChecked():
-            try:
-                if self.timeStamp_checkbox.isChecked():
-                    hex_bytes = bytes.fromhex(data[25:].replace(' ', ''))
+        try:
+            # Extract hex data based on timestamp checkbox
+            raw_hex = data[25:].replace(' ', '') if self.timeStamp_checkbox.isChecked() else data.replace(' ', '')
+            hex_bytes = bytes.fromhex(raw_hex)
+            
+            # Decode with error handling
+            decoded_str = hex_bytes.decode('ascii', errors='replace')
+            
+            # Add spaces between characters (except escape sequences)
+            spaced = []
+            for char in decoded_str:
+                if char == '\r':
+                    spaced.append('\\r ')
+                elif char == '\n':
+                    spaced.append('\\n ')
+                elif char == '\\':
+                    spaced.append('\\\\ ')
                 else:
-                    hex_bytes = bytes.fromhex(data.replace(' ', ''))
-                decoded_str = hex_bytes.decode('ascii', errors='replace')
-                decoded_str = decoded_str.replace('\n', '\\n').replace('\r', '\\r')
-                self.received_data_textarea.insertHtml(
-                    f'<span style="color: #198754;">{decoded_str}</span><br>'
-                )
-            except Exception as e:
-                self.received_data_textarea.insertHtml(
-                    f'<span style="color: #dc3545;">Invalid hex data {e} </span><br>'
-                )
+                    spaced.append(f'{char} ')
+            
+            return f'<span style="color: #198754;">{"".join(spaced).strip()}</span><br>'
         
-        if self.received_data_textarea_scrollBottom:
-            scrollbar.setValue(scrollbar.maximum())
-        file_path = self.input_path_data_received.text()
-        if file_path and self.checkbox_data_received.isChecked():
-            common.print_write(data, file_path)
-        elif self.checkbox_data_received.isChecked():
-            common.print_write(data)
+        except Exception as e:
+            # Return error message as HTML instead of direct insertion
+            return f'<span style="color: #dc3545;">Invalid hex data: {e}</span><br>'
+
+    def load_older_data(self):
+        """Load previous data chunks when scrolling up"""
+        if self.current_offset + self.visible_lines < len(self.full_data_store):
+            scrollbar = self.received_data_textarea.verticalScrollBar()
+            previous_scroll_value = scrollbar.value()
+            lines_in_view = self.received_data_textarea.height() // self.received_data_textarea.fontMetrics().lineSpacing()
+            top_line_index = self.current_offset + (previous_scroll_value // self.received_data_textarea.fontMetrics().lineSpacing())
+            self.current_offset += lines_in_view // 2  # Overlap half the actual visible lines for better context
+            self.update_display()
+            new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
+            scrollbar.setValue(max(0, new_scroll_value))
+
+    def load_newer_data(self):
+        """Load next data chunks when scrolling down"""
+        if self.current_offset > 0:
+            scrollbar = self.received_data_textarea.verticalScrollBar()
+            previous_scroll_value = scrollbar.value()
+            lines_in_view = self.received_data_textarea.height() // self.received_data_textarea.fontMetrics().lineSpacing()
+            top_line_index = self.current_offset + (previous_scroll_value // self.received_data_textarea.fontMetrics().lineSpacing())
+            self.current_offset -= lines_in_view // 2  # Overlap half the actual visible lines for better context
+            self.current_offset = max(0, self.current_offset)  # Ensure offset doesn't go below 0
+            self.update_display()
+            new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
+            scrollbar.setValue(max(0, new_scroll_value))
+
+    def update_display(self):
+        """Update UI with current data slice"""
+        # Calculate display range
+        end_idx = len(self.full_data_store) - self.current_offset
+        start_idx = max(0, end_idx - self.visible_lines)
+        
+        # Get data slices
+        text_slice = "\n".join(self.full_data_store[start_idx:end_idx])
+        hex_slice = "".join(self.hex_buffer[start_idx:end_idx])
+
+        # Batch update UI
+        self.received_data_textarea.setUpdatesEnabled(False)
+        try:
+            self.received_data_textarea.clear()
+            for i, text_line in enumerate(text_slice.split("\n")):
+                if text_line.strip():  # Ensure non-empty text lines
+                    self.received_data_textarea.append(text_line)
+                if self.received_hex_data_checkbox.isChecked() and i < len(hex_slice.split("<br>")):
+                    self.received_data_textarea.append(text_line)
+                    hex_line = hex_slice.split("<br>")[i]
+                    if hex_line.strip():
+                        self.received_data_textarea.append(hex_line)
+        finally:
+            self.received_data_textarea.setUpdatesEnabled(True)
+
+        # Maintain scroll position
+        scrollbar = self.received_data_textarea.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum() if self.current_offset == 0 else scrollbar.singleStep())
+
+    def update_main_textarea(self, data):
+        """Main update entry point"""
+        
+        # Initialize buffers if not exists (defensive programming)
+        if not hasattr(self, 'full_data_store'):
+            self.full_data_store = []
+            self.hex_buffer = []
+            self.buffer_size = 500
+            self.visible_lines = 200
+            self.current_offset = 0
+            
+        # Store new data
+        self.full_data_store.append(data)
+        self.hex_buffer.append(self._process_hex_data(data))
+        
+        # Maintain buffer size
+        if len(self.full_data_store) > self.buffer_size:
+            del self.full_data_store[0]
+            del self.hex_buffer[0]
+        
+        # Auto-scroll logic
+        scrollbar = self.received_data_textarea.verticalScrollBar()
+        at_bottom = scrollbar.maximum() - scrollbar.value() <= 60  # Allow a range of 60 pixels from the bottom
+        
+        # Only auto-scroll if within the range near the bottom
+        if at_bottom:
+            self.current_offset = 0
+            self.update_display()
+            
+        # File logging (original behavior)
+        if self.checkbox_data_received.isChecked():
+            file_path = self.input_path_data_received.text()
+            common.print_write(data, file_path if file_path else None)
 
     def show_search_dialog(self):
         if self.stacked_widget.currentIndex() == 0:
@@ -1438,7 +1584,7 @@ class MyWidget(QWidget):
             "r",
             encoding="utf-8",
         ) as f:
-            ATCommandFromFile = json.load(f).get("commands")
+            ATCommandFromFile = json.load(f).get("Commands")
             for i in range(1, len(self.input_fields) + 1):
                 if i <= len(ATCommandFromFile):
                     self.checkbox[i - 1].setChecked(
@@ -1458,7 +1604,9 @@ class MyWidget(QWidget):
                     self.input_fields[i - 1].setText("")
 
     def update_ATCommand(self):
-        result = common.update_AT_command(self.path_ATCommand)
+        result = common.update_AT_command(
+            self.path_ATCommand, 
+            self.config["MoreSettings"]["ATCRegex"])
         self.text_input_layout_2.setPlainText(result)
 
     def restore_ATCommand(self):
@@ -1490,7 +1638,7 @@ class MyWidget(QWidget):
             "w",
             encoding="utf-8",
         ) as f:
-            json.dump({"commands": command_list}, f, ensure_ascii=False, indent=4)
+            json.dump({"Commands": command_list}, f, ensure_ascii=False, indent=4)
 
     def handle_radio_button_click(self, index):
         if self.radio_path_command_buttons[index].isChecked():
@@ -1528,24 +1676,54 @@ class MyWidget(QWidget):
     """
 
     def eventFilter(self, watched, event):
-        if watched == self.prompt_button:
-            if event.type() == QEvent.MouseButtonDblClick:
-                if event.button() == Qt.RightButton:
-                    self.handle_right_double_click()
-            elif event.type() == QEvent.MouseButtonPress:
-                if event.button() == Qt.LeftButton:
-                    self.handle_left_click()
-                elif event.button() == Qt.RightButton:
-                    if event.modifiers() & Qt.ControlModifier:
-                        self.handle_right_control_click()
-                    elif event.modifiers() & Qt.ShiftModifier:
-                        self.handle_right_shift_click()
-                    else:
-                        # Single right click
-                        self.handle_right_click()
-                elif event.button() == Qt.MiddleButton:
-                    self.handle_middle_click()
+        # Handle button events
+        if hasattr(self, "prompt_button") and watched == self.prompt_button:
+            if watched == self.prompt_button:
+                if event.type() == QEvent.MouseButtonDblClick:
+                    if event.button() == Qt.RightButton:
+                        self.handle_right_double_click()
+                        return True
+                elif event.type() == QEvent.MouseButtonPress:
+                    if event.button() == Qt.LeftButton:
+                        self.handle_left_click()
+                        return True
+                    elif event.button() == Qt.RightButton:
+                        if event.modifiers() & Qt.ControlModifier:
+                            self.handle_right_control_click()
+                            return True
+                        elif event.modifiers() & Qt.ShiftModifier:
+                            self.handle_right_shift_click()
+                            return True
+                        else:
+                            # Single right click
+                            self.handle_right_click()
+                            return True
+                    elif event.button() == Qt.MiddleButton:
+                        self.handle_middle_click()
+                        return True
+
+        # Handle wheel events for text area scrolling
+        if watched == self.received_data_textarea and event.type() == QEvent.Wheel:
+            self.handle_scroll_event(event)
+            return True
+
+        # Let the parent class handle other events
         return super().eventFilter(watched, event)
+
+    def handle_scroll_event(self, event):
+        """Detect scroll direction and position"""
+        scrollbar = self.received_data_textarea.verticalScrollBar()
+
+        # Scroll up detection
+        if event.angleDelta().y() > 0 and scrollbar.value() <= scrollbar.singleStep():
+            self.load_older_data()
+        
+        # Scroll down detection
+        elif event.angleDelta().y() < 0 and scrollbar.value() >= scrollbar.maximum() - scrollbar.singleStep():
+            self.load_newer_data()
+        # Else, do nothing
+        else:
+            pass
 
     def handle_left_click(self):
         if self.prompt_index >= 0 and self.prompt_index < len(self.input_fields) - 1:
@@ -1610,9 +1788,9 @@ class MyWidget(QWidget):
             self.checkbox[i].setChecked(False)
 
     def set_enter_none(self):
-        status = self.checkbox_send_with_enters[0].isChecked()
-        for i in range(len(self.checkbox_send_with_enters)):
-            self.checkbox_send_with_enters[i].setChecked(status)
+        status = not all(checkbox.isChecked() for checkbox in self.checkbox_send_with_enters)
+        for checkbox in self.checkbox_send_with_enters:
+            checkbox.setChecked(status)
 
     def set_interval_none(self):
         interVal = self.interVal[0].text()
@@ -1652,9 +1830,9 @@ class MyWidget(QWidget):
 
     def set_radio_groupbox_visible(self):
         if self.path_command_inputs[0].isVisible():
-            self.expand_left_button.setIcon(QIcon("./res/direction_left.png"))
+            self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
         else:
-            self.expand_left_button.setIcon(QIcon("./res/direction_right.png"))
+            self.expand_left_button.setIcon(QIcon("res/direction_right.png"))
         for i in range(len(self.path_command_inputs)):
             self.path_command_inputs[i].setVisible(
                 not self.path_command_inputs[i].isVisible()
@@ -1797,9 +1975,9 @@ def main():
     try:
         app = QApplication([])
         widget = MyWidget()
-        widget.setStyleSheet(QSSLoader.load_stylesheet("./styles/fish.qss"))
+        widget.setStyleSheet(QSSLoader.load_stylesheet("styles/fish.qss"))
         widget.setWindowTitle("Serial Communication")
-        app.setWindowIcon(QIcon("./favicon.ico"))
+        app.setWindowIcon(QIcon("favicon.ico"))
 
         # widget.showMaximized()
         widget.resize(1000, 900)

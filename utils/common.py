@@ -33,25 +33,65 @@ def get_absolute_path(file_name):
     else:
         raise FileNotFoundError(f"File not found at path: {abs_path}")
 
-
-def force_decode(text: bytes) -> str:
-    """
-    强制解码文本
+def escape_control_characters(s: str, ignore_crlf: bool = True) -> str:
+    r"""
+    将文本中的控制字符和扩展ASCII字符转义为\x{XX}格式
 
     参数：
-    text (bytes): 要解码的字节文本
+    s (str): 输入字符串（字符的Unicode码位需在0-255范围内）
+    ignore_crlf (bool): 是否忽略 \r 和 \n 的转义（默认 False）
 
     返回：
-    str: 解码后的文本
+    str: 转义后的字符串（如 \x00, \xFF）
+    """
+    return ''.join(
+        f'\\x{ord(c):02X}' 
+        if (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n')) 
+        else c 
+        for c in s
+    )
+    
+def remove_control_characters(s: str, ignore_crlf: bool = True) -> str:
+    r"""
+    将文本中的控制字符和扩展ASCII字符移除
+
+    参数：
+    s (str): 输入字符串（字符的Unicode码位需在0-255范围内）
+    ignore_crlf (bool): 是否忽略 \r 和 \n 的移除（默认 False）
+
+    返回：
+    str: 移除后的字符串
+    """
+    return ''.join(
+        c for c in s 
+        if not (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n'))
+    )
+
+def force_decode(bytes_data: bytes, replace_null: str = 'escape') -> str:
+    r"""
+    强制解码字节数据为字符串，并处理空字符（\x00）
+
+    参数：
+    bytes_data (bytes): 要解码的字节数据
+    replace_null (str): 处理空字符的方式，可选值为 'escape'（转义为\x00）或 'remove'（删除空字符）或 'ignore'（忽略空字符）
+
+    返回：
+    str: 解码后的字符串
     """
     encoding_list = ["utf-8", "gbk", "big5", "latin1"]
+    
     for encoding in encoding_list:
         try:
-            return text.decode(encoding)
+            decoded_str = bytes_data.decode(encoding)
+            if replace_null == 'escape':
+                decoded_str = escape_control_characters(decoded_str)
+            elif replace_null == 'remove':
+                decoded_str = remove_control_characters(decoded_str)
+            elif replace_null == 'ignore':
+                pass
+            return decoded_str
         except UnicodeDecodeError:
             continue
-    return text.decode("utf-8", "ignore")
-
 
 def create_default_config() -> None:
     """
@@ -289,7 +329,7 @@ def port_read(port_serial: serial.Serial, size: int = 1) -> str:
             while port_serial.in_waiting > 0:
                 data.extend(port_serial.read(size=port_serial.in_waiting or size))
                 time.sleep(0.01)
-            return data.decode("UTF-8", errors="ignore")
+            return force_decode(data)
         except Exception as e:
             custom_print(f"Error reading from serial port: {e}")
             raise e
@@ -347,15 +387,13 @@ def port_read_until(
         reply = ""
         try:
             while True:
-                if reply.endswith(expected.decode("UTF-8")):
+                if reply.endswith(force_decode(expected)):
                     if is_show_symbol:
                         return repr(reply)[1:-1]
                     else:
                         return reply
                 else:
-                    reply += port_serial.read_until(expected, size=size).decode(
-                        "UTF-8", errors="ignore"
-                    )
+                    reply += force_decode(port_serial.read_until(expected, size=size))
         except Exception as e:
             custom_print(f"Error reading from serial port: {e}")
             raise e
@@ -377,7 +415,7 @@ def port_readline(port_serial: serial.Serial) -> str:
         try:
             line = port_serial.readline()
             if line:
-                return line.decode("UTF-8", errors="ignore")
+                return force_decode(line)
             else:
                 return ""
         except Exception as e:
@@ -524,7 +562,7 @@ def read_ATCommand(path_command_json: str) -> list:
     try:
         with open(path_command_json, "r", encoding="utf-8") as f:
             data = json.load(f)
-            commands = [item["command"] for item in data.get("commands", [])]
+            commands = [item["command"] for item in data.get("Commands", [])]
             return commands
     except IOError as e:
         custom_print(f"Error reading AT command file: {e}")
@@ -545,7 +583,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
         with open(path_command_json, "w", encoding="utf-8") as f:
             json.dump(
                 {
-                    "commands": [
+                    "Commands": [
                         {
                             "selected": False,
                             "command": command,
@@ -564,7 +602,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
 
 
 def strip_AT_command(
-    text: str, regex: str = r"(?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)"
+    text: str, regex: str
 ) -> list:
     """
     提取 AT 命令
@@ -576,10 +614,13 @@ def strip_AT_command(
     返回：
     list: 提取的 AT 命令列表
     """
-    return re.findall(regex, text)
+    if not regex:
+        return re.findall("", text)
+    else:
+        return re.findall(regex, text)
 
 
-def update_AT_command(path_command_json: str) -> str:
+def update_AT_command(path_command_json: str, regex: str = r"(?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)") -> str:
     """
     更新 AT 命令文件，去除无效内容
 
@@ -596,8 +637,8 @@ def update_AT_command(path_command_json: str) -> str:
             return ""
         else:
             with open(path_command_json, "w", encoding="utf-8") as f:
-                write_ATCommand(path_command_json, strip_AT_command(text))
-                result = "\n".join(strip_AT_command(text))
+                write_ATCommand(path_command_json, strip_AT_command(text, regex))
+                result = "\n".join(strip_AT_command(text, regex))
                 return result
     except IOError as e:
         custom_print(f"Error updating AT command file: {e}")

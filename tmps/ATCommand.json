@@ -1,26 +1,50 @@
 {
-    "commands": [
+    "Commands": [
         {
             "selected": false,
-            "command": "1、升级过程中断电，断电后继续升级",
+            "command": "AT+QTXPOWER=10",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "2、升级后查询版本号",
+            "command": "",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QVERSION",
+            "command": "AT+QBLEINIT=2",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+CSUB",
+            "command": "AT+QBLEGATTSSRV=FEE1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTSCHAR=36F3",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTSSRVDONE",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEADVSTART",
             "withEnter": true,
             "interval": ""
         }
