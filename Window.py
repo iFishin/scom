@@ -1394,12 +1394,12 @@ class MyWidget(QWidget):
             self.received_data_textarea.clear()
             for i, text_line in enumerate(text_slice.split("\n")):
                 if text_line.strip():  # Ensure non-empty text lines
-                    self.received_data_textarea.append(text_line)
+                    self.received_data_textarea.insertPlainText(text_line+'\n')
                 if self.received_hex_data_checkbox.isChecked() and i < len(hex_slice.split("<br>")):
-                    self.received_data_textarea.append(text_line)
+                    self.received_data_textarea.insertPlainText(text_line+'\n')
                     hex_line = hex_slice.split("<br>")[i]
                     if hex_line.strip():
-                        self.received_data_textarea.append(hex_line)
+                        self.received_data_textarea.insertPlainText(hex_line+'\n')
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
 
@@ -1566,6 +1566,10 @@ class MyWidget(QWidget):
     """
 
     def clear_log(self):
+        self.current_offset = 0
+        self.full_data_store = []
+        self.hex_buffer = []
+        
         self.received_data_textarea.clear()
         if self.input_path_data_received.text():
             with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:

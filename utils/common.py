@@ -253,6 +253,7 @@ def port_on(
             ser.rtscts = False
             ser.xonxoff = False
             ser.dsrdtr = False
+        ser.write_byte_size = 1024
         ser.rts = rts
         ser.dtr = dtr
         ser.open()
@@ -310,57 +311,87 @@ def port_write(
             raise e
 
 
-def port_read(port_serial: serial.Serial, size: int = 1) -> str:
-    """
-    从串口读取数据
-
-    参数：
-    port_serial (serial.Serial): 串口对象
-    size (int): 读取的最大字节数（默认 1）
-
-    返回：
-    str: 读取到的数据
-    """
+def port_read(port_serial, size=256, max_data_size=512, timeout=0.1) -> str:
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        try:
-            data = bytearray()
-            while port_serial.in_waiting > 0:
-                data.extend(port_serial.read(size=port_serial.in_waiting or size))
+
+    data = bytearray()
+    start_time = time.monotonic()
+
+    try:
+        while (time.monotonic() - start_time) < timeout:
+            if port_serial.in_waiting > 0:
+                chunk = port_serial.read(min(port_serial.in_waiting, size))
+                data.extend(chunk)
+                if len(data) >= max_data_size:
+                    break
+            else:
+                # Reduce CPU usage by adding a small sleep when no data is available
                 time.sleep(0.01)
-            return force_decode(data)
-        except Exception as e:
-            custom_print(f"Error reading from serial port: {e}")
-            raise e
+        return force_decode(data)
+    except Exception as e:
+        custom_print(f"Error reading from serial port: {e}")
+        raise e
 
 
-def port_read_hex(port_serial: serial.Serial, size: int = 1) -> str:
+def port_read_hex(port_serial: serial.Serial, size: int = 256, max_data_size: int = 512, timeout: float = 0.1) -> str:
     """
-    从串口读取数据并以带空格的大写十六进制形式返回
+    从串口读取数据并以带空格的大写十六进制形式返回，支持动态调整读取块大小和最大数据量
 
     参数：
     port_serial (serial.Serial): 串口对象
-    size (int): 读取的最大字节数（默认 1）
+    size (int): 读取的最大字节数（默认 256）
+    max_data_size (int): 最大分包数据量（默认 512）
+    timeout (float): 读取超时时间（默认 0.1 秒）
 
     返回：
     str: 读取到的数据的十六进制表示，每个字节之间有一个空格且为大写
     """
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        try:
-            reply = bytearray()
-            while port_serial.inWaiting() > 0:
-                reply.extend(port_serial.read(size=size))
-            if reply:
-                hex_reply = " ".join(f"{byte:02X}" for byte in reply)
-                return hex_reply
-            else:
-                return ""
-        except Exception as e:
-            custom_print(f"Error reading from serial port as hex: {e}")
-            raise e
+
+    data = bytearray()
+    total_timeout = 1.0  # 总超时时间（秒）
+    start_time = time.monotonic()
+
+    try:
+        while (time.monotonic() - start_time) < total_timeout:
+            # 动态计算可用数据量
+            in_waiting = port_serial.in_waiting
+            if in_waiting == 0:
+                # 无数据时使用阶梯式休眠
+                time.sleep(timeout)
+                continue
+
+            # 计算本次读取量（智能块大小）
+            chunk_size = min(
+                max(size, in_waiting),  # 至少读取size大小
+                max_data_size - len(data),
+                in_waiting
+            )
+
+            if chunk_size <= 0:
+                break  # 达到最大数据量或超限
+
+            # 批量读取数据
+            chunk = port_serial.read(chunk_size)
+            data.extend(chunk)
+
+            # 动态调整休眠时间（数据量越大，休眠时间越短）
+            sleep_time = max(0.0001, timeout - (len(data) / max_data_size) * 0.09)
+            time.sleep(sleep_time)
+
+            # 达到最大数据量提前退出
+            if len(data) >= max_data_size:
+                break
+
+        if data:
+            return " ".join(f"{byte:02X}" for byte in data)
+        else:
+            return ""
+    except Exception as e:
+        custom_print(f"Error reading from serial port as hex: {e}")
+        raise e
 
 
 def port_read_until(

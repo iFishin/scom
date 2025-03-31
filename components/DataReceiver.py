@@ -70,18 +70,18 @@ class DataReceiver(QThread):
             raise RuntimeError("Serial port is not open")
         
         try:
-            # 强制返回bytes类型数据
+            # Force returning data as bytes
             if self.is_show_hex:
                 raw = common.port_read_hex(self.serial_port)
             else:
-                # 确保port_read返回bytes类型
+                # Ensure port_read returns bytes
                 raw = common.port_read(self.serial_port)
             
-            # 基于硬件缓冲的实时读取
-            if self.serial_port.in_waiting > 32:  # 当缓冲超过32字节立即读取
+            # Perform real-time reading based on hardware buffer
+            if self.serial_port.in_waiting > 32:  # Read immediately if buffer exceeds 32 bytes
                 return self.serial_port.read_all()
 
-            # 类型转换保护
+            # Type conversion protection
             if isinstance(raw, str):
                 return raw.encode('utf-8')
             return raw or b''
