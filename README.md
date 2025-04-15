@@ -59,7 +59,8 @@ SCOM/
 ├── favicon.ico
 ├── requirements.txt
 ├── run as admin.bat
-└── setup.py
+├── setup.py
+└── 一键运行.bat
 ```
 
 - **components**：包含项目的组件模块，用于实现不同的功能。
@@ -72,13 +73,26 @@ SCOM/
 - **Window.py**：主程序文件。
 - **config.ini**：配置文件，存储一些常用的设置。
 - **run as admin.bat**：Windows 下的批处理文件，用于以管理员权限运行程序，可以检查环境并安装所需的组件。
+
+	请注意，需要启用长路径支持，故该脚本有概率会自动重启，若遇到PC重启，请不要惊慌，进入系统后请再次运行该脚本，完成剩余配置项目。
 - **setup.py**：用于项目的安装和打包。
+- **一键运行.bat**：用于在Windows下直接运行SCOM。
 
 ## 五、使用方法
 
+1. 配置运行环境：
+   
+   - 参考安装步骤，安装Python和依赖库：
+   
+   	在Windows环境中，也可以使用管理员权限执行`run as admin.bat`一键配置环境。
+   
 1. 启动 SCOM：
+   
    - 在命令提示符或终端窗口中，导航到 SCOM 的安装目录。
+   
    - 运行以下命令启动 SCOM：`python window.py`
+   
+   	在Windows环境中，也可使用`一键运行.bat`来启动SCOM
 
 - 或者，如果您已经创建了可执行文件，可以直接运行该文件。
 - 首次使用，可以直接以管理员权限点击运行目录下的`run as admin.bat`，一键配置好SCOM所需依赖
