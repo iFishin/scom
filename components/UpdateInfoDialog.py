@@ -1,16 +1,17 @@
 import os
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QFont
 import requests
 from utils.common import custom_print
+import markdown
 from PySide6.QtWidgets import (
-    QTextEdit,
     QDialog,
     QVBoxLayout,
     QLabel,
     QPushButton,
     QHBoxLayout,
 )
+from PySide6.QtWebEngineWidgets import QWebEngineView
 
 
 class UpdateInfoDialog(QDialog):
@@ -32,9 +33,8 @@ class UpdateInfoDialog(QDialog):
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
 
-        self.text_edit = QTextEdit()
-        self.text_edit.setReadOnly(True)
-        layout.addWidget(self.text_edit)
+        self.web_view = QWebEngineView()
+        layout.addWidget(self.web_view)
 
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -51,37 +51,28 @@ class UpdateInfoDialog(QDialog):
         self.setStyleSheet(
             """
             QDialog {
-            border-radius: 10px;
-            border: 2px solid #888;
+                border-radius: 10px;
+                border: 2px solid #888;
             }
             QLabel {
-            color: #444;
-            }
-            QTextEdit {
-            border: 1px dashed #888;
-            background-color: white;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
-            font-weight: bold;
+                color: #444;
             }
             QPushButton {
-            background-color: #6699cc;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            border-radius: 5px;
+                background-color: #6699cc;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                border-radius: 5px;
             }
             QPushButton:hover {
-            background-color: #5588bb;
+                background-color: #5588bb;
             }
-        """
+            """
         )
         max_retries = 3
         for attempt in range(max_retries):
@@ -93,13 +84,89 @@ class UpdateInfoDialog(QDialog):
                 break
             except requests.RequestException as e:
                 if attempt == max_retries - 1:
-                    self.text_edit.setPlainText(f"Failed to retrieve update information after {max_retries} attempts: {e}")
+                    error_html = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            body {{
+                                font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
+                                font-size: 14px;
+                                line-height: 1.6;
+                                padding: 20px;
+                                background-color: white;
+                                color: #ff0000;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Failed to retrieve update information after {max_retries} attempts: {e}</h1>
+                    </body>
+                    </html>
+                    """
+                    self.web_view.setHtml(error_html)
                     custom_print(f"Failed to retrieve update information after {max_retries} attempts: {e}")
                     return
                 else:
                     custom_print(f"Attempt {attempt + 1} failed: {e}")
 
-        self.text_edit.setPlainText(content)
+        # Convert Markdown to HTML
+        html_content = markdown.markdown(
+            content,
+            extensions=[
+                'fenced_code',
+                'tables',
+                'attr_list',
+                'def_list',
+                'nl2br'
+            ]
+        )
+        
+        # Add custom styles
+        html_template = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    padding: 20px;
+                    background-color: white;
+                }}
+                code {{
+                    background-color: #f5f5f5;
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                    font-family: "Consolas", "Courier New", monospace;
+                }}
+                pre {{
+                    background-color: #f5f5f5;
+                    padding: 10px;
+                    border-radius: 5px;
+                    margin: 10px 0;
+                    overflow-x: auto;
+                }}
+                h1, h2, h3, h4, h5, h6 {{
+                    color: #444;
+                    margin-top: 20px;
+                    margin-bottom: 10px;
+                }}
+                p {{
+                    margin: 10px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            {html_content}
+        </body>
+        </html>
+        """
+        
+        self.web_view.setHtml(html_template)
 
         if not os.path.exists("CHANGELOG.md"):
             with open("CHANGELOG.md", "w", encoding="utf-8") as f:

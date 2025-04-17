@@ -277,3 +277,276 @@
 2025-03-31 11:12:23,965 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
 2025-03-31 11:12:24,353 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
 2025-03-31 11:12:38,569 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-04-17 22:53:53,984 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 22:53:53,987 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 22:53:54,607 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 22:53:55,577 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 22:55:50,650 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:03:35,665 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:03:35,667 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:03:36,347 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:03:37,766 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:03:41,144 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:03:41,146 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:04:44,864 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:05:12,343 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:05:12,345 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:05:13,036 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:05:15,022 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:05:17,252 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:05:17,253 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:05:17,253 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:05:17,255 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:05:17,256 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:05:29,198 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:07:03,916 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:07:03,920 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:07:04,537 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:07:06,989 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:07:08,639 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:07:08,640 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:07:08,640 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:07:08,642 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:07:08,643 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:07:18,022 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:08:57,721 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:08:57,724 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:08:58,438 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:08:59,576 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:09:00,991 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:09:00,992 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:09:00,992 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:09:00,994 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:09:00,995 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:13:15,342 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:13:19,726 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:13:19,728 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:13:20,420 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:13:20,992 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:13:23,076 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:13:23,078 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:13:23,078 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:13:23,079 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:13:23,081 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:14:25,460 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:14:45,753 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:14:45,755 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:14:46,374 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:14:49,590 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:14:51,733 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:14:51,735 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:14:51,735 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:14:51,736 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:14:51,737 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:15:01,498 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:15:54,405 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:15:54,408 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:15:55,015 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:15:55,617 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:15:56,983 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:15:56,985 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:15:56,985 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:15:56,986 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:15:56,988 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:16:13,567 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:17:51,375 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:17:51,377 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:17:51,970 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:17:52,578 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:17:54,012 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:17:54,014 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:17:54,014 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:17:54,015 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:17:54,016 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:18:14,910 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:00,607 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:00,609 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:01,224 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:19:02,481 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:19:03,749 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:19:03,751 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:19:03,751 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:19:03,752 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:19:03,753 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:19:09,875 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:43,283 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:43,286 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:19:43,987 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:19:44,622 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:19:46,053 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:19:46,054 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:19:46,054 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:19:46,056 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:19:46,057 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:20:08,413 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:20:21,617 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:20:21,619 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:20:22,219 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:20:23,305 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:20:24,475 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:20:24,477 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:20:24,477 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:20:24,478 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:20:24,479 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:20:39,040 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:20:39,040 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:20:39,040 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:20:39,040 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:20:39,040 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:20:56,489 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:23:00,839 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:23:00,842 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:23:01,424 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:23:03,363 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:23:06,018 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:23:06,020 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:23:06,020 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:23:06,023 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:23:06,025 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:23:10,735 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:24:56,475 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:24:56,479 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:24:57,134 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:24:57,992 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:24:58,041 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:24:58,043 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:24:58,043 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:24:58,044 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:24:58,045 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:25:01,295 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:25:01,903 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:25:01,905 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:25:01,905 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:25:01,905 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:25:01,905 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:25:01,905 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:25:25,414 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:26:52,670 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:26:52,672 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:26:53,255 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:26:54,136 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:26:54,186 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:26:54,187 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:26:54,187 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:26:54,189 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:26:54,190 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:27:28,844 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:28:47,033 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:28:47,036 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:28:47,681 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:28:48,312 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:28:48,367 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:28:48,368 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:28:48,368 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:28:48,370 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:28:48,371 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:29:08,352 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:30:50,330 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:30:50,332 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:30:50,943 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:30:51,583 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:30:51,634 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:30:51,635 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:30:51,635 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:30:51,637 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:30:51,638 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:31:30,254 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:31:31,018 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:31:31,019 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:31:31,019 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:31:31,019 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:31:31,019 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:31:31,019 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:31:47,392 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:32:54,006 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:32:54,009 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:32:54,647 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:32:55,510 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:32:55,567 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:32:55,569 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:32:55,569 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:32:55,571 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:32:55,572 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:33:11,221 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:34:37,144 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:34:37,146 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:34:37,723 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:34:42,780 - Attempt 1 failed: ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))
+2025-04-17 23:34:42,783 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:34:43,447 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:34:43,497 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:34:43,499 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:34:43,499 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:34:43,500 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:34:43,501 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:35:02,910 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:36:13,468 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:36:13,471 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:36:14,075 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:36:14,700 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:36:14,752 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:36:14,754 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:36:14,754 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:36:14,756 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:36:14,757 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:36:22,632 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:37:04,473 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:37:04,475 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:37:05,088 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:37:05,839 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:37:05,889 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:37:05,891 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:37:05,891 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:37:05,892 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:37:05,894 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:38:21,352 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:38:31,417 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:38:31,419 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:38:31,992 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:38:33,343 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:38:33,392 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:38:33,394 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:38:33,394 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:38:33,396 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:38:33,396 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:38:47,979 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:40:08,310 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:40:08,313 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:40:08,908 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:40:10,766 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:40:10,815 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:40:10,817 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:40:10,817 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:40:10,819 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:40:10,820 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:40:25,200 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:42:15,170 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:42:15,172 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:42:15,789 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:42:16,374 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:42:16,424 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:42:16,425 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:42:16,426 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:42:16,427 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:42:16,428 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:42:33,308 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:27,782 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:27,785 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:28,466 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:43:29,206 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:43:29,259 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:43:29,260 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:43:29,260 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:43:29,262 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:43:29,263 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:43:36,167 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:48,224 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:48,227 - Writing config file to D:\CODE\SCOM\config.ini
+2025-04-17 23:43:48,892 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-04-17 23:43:49,852 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1394
+2025-04-17 23:43:49,906 - DEBUG - Successfully loaded extension "markdown.extensions.fenced_code.FencedCodeExtension".
+2025-04-17 23:43:49,908 - DEBUG - Successfully loaded extension "markdown.extensions.tables.TableExtension".
+2025-04-17 23:43:49,908 - DEBUG - Successfully loaded extension "markdown.extensions.attr_list.AttrListExtension".
+2025-04-17 23:43:49,910 - DEBUG - Successfully loaded extension "markdown.extensions.def_list.DefListExtension".
+2025-04-17 23:43:49,911 - DEBUG - Successfully loaded extension "markdown.extensions.nl2br.Nl2BrExtension".
+2025-04-17 23:43:57,634 - Writing config file to D:\CODE\SCOM\config.ini
