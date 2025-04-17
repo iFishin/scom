@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QTextBrowser
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtCore import Qt
+import os
+from dotenv import load_dotenv
 
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
@@ -26,8 +28,14 @@ class AboutDialog(QDialog):
         layout.addWidget(image_label)
 
         text_browser = QTextBrowser()
-        text_browser.setHtml("""
-            <p>Version: 1.0</p>
+        # Load environment variables from .env file
+        load_dotenv()
+
+        # Get the version from the .env file
+        version = os.getenv('VERSION', 'Unknown')
+
+        text_browser.setHtml(f"""
+            <p>Version: {version}</p>
             <p>Description: Serial Communication Tool</p>
             <p>Repository: <a href="https://github.com/ifishin/SCOM">https://github.com/ifishin/SCOM</a></p>
         """)

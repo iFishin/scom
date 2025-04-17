@@ -57,3 +57,4 @@ Button_group = True
 ATCRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
 TimeStampRegex = \[20(.*?)\]
 MaxRowsOfButtonGroup = 100
+ShowCommandEcho = False

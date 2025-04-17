@@ -11,6 +11,16 @@ from datetime import datetime
 class SerialPortNotInitializedError(Exception):
     pass
 
+def get_current_time() -> str:
+    """
+    获取当前时间的字符串格式（YYYY-MM-DD HH:MM:SS:ms）
+    
+    
+    返回：
+    str: 当前时间的字符串格式
+    """
+    return datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
+
 def get_absolute_path(file_name):
     """
     获取文件的绝对路径

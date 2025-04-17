@@ -346,36 +346,51 @@ class MyWidget(QWidget):
         self.baud_rate_combo = QComboBox()
         self.baud_rate_combo.addItems(
             [
-                "50",
-                "75",
-                "110",
-                "134",
-                "150",
-                "200",
-                "300",
-                "600",
-                "1200",
-                "1800",
-                "2400",
-                "4800",
-                "9600",
-                "19200",
-                "38400",
-                "57600",
-                "115200",
-                "230400",
-                "460800",
-                "500000",
-                "576000",
-                "921600",
-                "1000000",
-                "1152000",
-                "1500000",
-                "2000000",
-                "2500000",
-                "3000000",
-                "3500000",
-                "4000000",
+            "50",
+            "75",
+            "110",
+            "134",
+            "150",
+            "200",
+            "300",
+            "600",
+            "1200",
+            "1800",
+            "2400",
+            "4800",
+            "7200",
+            "9600",
+            "14400",
+            "19200",
+            "28800",
+            "38400",
+            "57600",
+            "76800",
+            "115200",
+            "128000",
+            "153600",
+            "230400",
+            "256000",
+            "460800",
+            "500000",
+            "576000",
+            "921600",
+            "1000000",
+            "1152000",
+            "1500000",
+            "2000000",
+            "2500000",
+            "3000000",
+            "3500000",
+            "4000000",
+            "4500000",
+            "5000000",
+            "5500000",
+            "6000000",
+            "6500000",
+            "7000000",
+            "7500000",
+            "8000000",
             ]
         )
         self.baud_rate_combo.setCurrentText("115200")
@@ -1051,7 +1066,7 @@ class MyWidget(QWidget):
             self.text_input_layout_4.setPlainText(
                 common.remove_TimeStamp(
                     self.received_data_textarea.toPlainText(),
-                    re.escape(self.config["MoreSettings"]["TimeStampRegex"])
+                    self.config["MoreSettings"]["TimeStampRegex"]
                 )
             )
         elif index == 4 or self.stacked_widget.currentIndex() == 4:
@@ -1214,6 +1229,13 @@ class MyWidget(QWidget):
             else:
                 common.port_write(command, serial_port, False)
             self.data_receiver.is_new_data_written = True
+            
+            # If `ShowCommandEcho` is enabled, show the command in the received data area
+            if self.config.getboolean("MoreSettings", "ShowCommandEcho"):
+                command_withTimestamp = '(' + common.get_current_time() + ')--> ' + command
+                self.full_data_store.append(command_withTimestamp)
+                self.received_data_textarea.append(command_withTimestamp)
+                # self.apply_style(command)
         except Exception as e:
             common.custom_print(f"Error sending command: {e}")
             self.set_status_label("Failed", "#dc3545")

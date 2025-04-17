@@ -10,6 +10,8 @@ class DataReceiver(QThread):
 
     def __init__(self, serial_port):
         super().__init__()
+        self._last_data_size = 0
+        self._curr_data_size = 0
         self.serial_port = serial_port
         self.baud_rate = self.serial_port.baudrate
         self.is_paused = False
@@ -21,6 +23,12 @@ class DataReceiver(QThread):
         self.mutex = QMutex()
         self.cond = QWaitCondition()
         self._last_read_time = datetime.datetime.now()
+        
+        # Add persistent buffer
+        self.persistent_buffer = bytearray()
+        self.last_data_time = datetime.datetime.now()
+        self.buffer_timeout = 0.05  # 50 milliseconds timeout
+        
 
     def pause_thread(self):
         with QMutexLocker(self.mutex):
@@ -65,22 +73,22 @@ class DataReceiver(QThread):
                 self.handle_exception(e)
 
     def read_raw_data(self):
-        """Safely read raw bytes from serial port with type conversion"""
+        """Safely read raw bytes from serial port with proper buffer handling"""
         if not self.serial_port.is_open:
             raise RuntimeError("Serial port is not open")
         
         try:
-            # Force returning data as bytes
+            # Check the buffer status first
+            if self.serial_port.in_waiting > 0:
+                # If data is available, read all immediately
+                return self.serial_port.read_all()
+            
+            # If no data is waiting, use the standard read method
             if self.is_show_hex:
                 raw = common.port_read_hex(self.serial_port)
             else:
-                # Ensure port_read returns bytes
                 raw = common.port_read(self.serial_port)
             
-            # Perform real-time reading based on hardware buffer
-            if self.serial_port.in_waiting > 32:  # Read immediately if buffer exceeds 32 bytes
-                return self.serial_port.read_all()
-
             # Type conversion protection
             if isinstance(raw, str):
                 return raw.encode('utf-8')
@@ -115,7 +123,7 @@ class DataReceiver(QThread):
         return data_bytes.decode('latin-1')
 
     def format_text_data(self, data_bytes, read_time):
-        """Format text data with per-line timestamp calculation"""
+        """Format text data with improved line handling"""
         try:
             if not isinstance(data_bytes, bytes):
                 raise ValueError(f"Expected bytes, got {type(data_bytes)}")
@@ -123,58 +131,42 @@ class DataReceiver(QThread):
             if not data_bytes:
                 return ""
 
-            # Validate input parameters
-            if not isinstance(data_bytes, bytes):
-                raise ValueError("Invalid byte data received")
-
-            # Calculate time parameters with safety checks
-            byte_count = len(data_bytes)
-            if byte_count == 0 or self.baud_rate <= 0:
-                return ""
-
-            bits_per_byte = 10  # 1 start + 8 data + 1 stop
-            total_time = byte_count * bits_per_byte / self.baud_rate
-            receive_duration = max(0.0, (read_time - self._last_read_time).total_seconds())
+            self.persistent_buffer.extend(data_bytes)
+            self.last_data_time = read_time
             
-            # Calculate time_per_byte with bounds checking
-            time_per_byte = min(total_time, receive_duration) / byte_count if byte_count > 0 else 0
-            time_per_byte = max(0.0, time_per_byte)  # Prevent negative time
-
-            lines = []
-            line_buffer = []
-            current_time = self._last_read_time
+            complete_lines = []
+            remaining_buffer = bytearray()
             
-            # Add timestamp for each byte
-            for i, byte in enumerate(data_bytes):
-                try:
-                    # Calculate progressive timestamp
-                    current_time = self._last_read_time + datetime.timedelta(
-                        seconds=(i * time_per_byte)
-                    )
-                    
-                    line_buffer.append(byte)
-                    
-                    if byte == 0x0A:  # LF byte (\n)
-                        line_str = self.decode_line(line_buffer)
-                        lines.append(self.add_timestamp(line_str, current_time))
-                        line_buffer = []
-                except Exception as e:
-                    print(f"Error processing byte {i}: {str(e)}")
-                    line_buffer = []  # Reset buffer on error
-
-            # Process remaining data
-            if line_buffer:
-                try:
-                    line_str = self.decode_line(line_buffer)
-                    lines.append(self.add_timestamp(line_str, current_time))
-                except Exception as e:
-                    print(f"Error processing final line: {str(e)}")
-
-            return '\n'.join(lines)
+            buffer_parts = self.persistent_buffer.split(b'\n')
+            
+            # Process all parts except the last one (i.e., complete lines)
+            for i in range(len(buffer_parts) - 1):
+                line_bytes = buffer_parts[i]
+                if line_bytes:  # Ignore empty lines
+                    line_str = self.decode_line(line_bytes + b'\n')  # Add back newline character
+                    complete_lines.append(self.add_timestamp(line_str, read_time))
+            
+            # The last part is an incomplete line, keep it in the buffer
+            remaining_buffer = buffer_parts[-1]
+            
+            # Check if the incomplete line has timed out (no new data received for a certain time)
+            time_since_last_data = (datetime.datetime.now() - self.last_data_time).total_seconds()
+            if time_since_last_data > self.buffer_timeout and remaining_buffer:
+                # Timeout, force process the remaining data
+                line_str = self.decode_line(remaining_buffer)
+                complete_lines.append(self.add_timestamp(line_str, read_time))
+                remaining_buffer = bytearray()
+            
+            # Update the persistent buffer with unprocessed data
+            self.persistent_buffer = remaining_buffer
+            
+            # Return all complete lines, joined with newline characters
+            return '\n'.join(complete_lines)
+            
         except Exception as e:
             print(f"Critical format error: {str(e)}")
-            return "⚙ Data format error"  # Return error indicator instead of crashing
-
+            return "⚙ Data format error"
+    
     def decode_line(self, byte_buffer):
         """Decode byte buffer to string with error handling"""
         line = common.force_decode(bytes(byte_buffer))
@@ -192,24 +184,24 @@ class DataReceiver(QThread):
         return f"[{ts}]{content}"
 
     def calculate_sleep_interval(self):
-        """基于数据活跃度的动态间隔计算"""
-        active_factor = 0.2  # 0-1, 1表示持续有数据
-        base_interval = 10  # 基准间隔(ms)
-        min_interval = 2    # 最小间隔(ms)
+        """Dynamic interval calculation based on data activity"""
+        active_factor = 0.2  # 0-1, 1 indicates continuous data flow
+        base_interval = 10  # Base interval (ms)
+        min_interval = 2    # Minimum interval (ms)
         
-        # 根据最近两次数据量计算活跃度
+        # Calculate activity level based on recent data size differences
         if hasattr(self, '_prev_data_size'):
             data_diff = abs(len(self._last_data) - self._prev_data_size)
-            active_factor = min(1.0, data_diff / 64)  # 64字节为参考值
+            active_factor = min(1.0, data_diff / 64)  # 64 bytes as reference value
         
-        # 动态调整公式
+        # Dynamic adjustment formula
         interval = max(min_interval, base_interval * (1 - active_factor))
         return int(interval)
 
     def handle_exception(self, error):
         """Centralized exception handling"""
         error_msg = str(error)
-        # 区分异常类型处理
+        # Handle exceptions based on type
         if isinstance(error, SerialTimeoutException):
             self.exceptionOccurred.emit("Read timeout occurred")
         elif "closed" in error_msg.lower():
@@ -218,6 +210,6 @@ class DataReceiver(QThread):
                 self.serial_port.close()
         else:
             self.exceptionOccurred.emit(f"Error: {error_msg}")
-            # 仅在严重错误时关闭端口
+            # Close the port only for critical errors
             if "critical" in error_msg.lower():
                 self.serial_port.close()

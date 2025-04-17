@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QScrollArea,
     QWidget,
+    QCheckBox,
 )
 
 
@@ -37,10 +38,17 @@ class MoreSettingsDialog(QDialog):
         # Create input fields for each setting
         for name, value in self.settings.items():
             label = QLabel(name)
-            input_field = QLineEdit(value)
-            settings_layout.addWidget(label)
-            settings_layout.addWidget(input_field)
-            self.setting_inputs[name] = input_field
+            if value in ["True", "False"]:  # Check if the value is a boolean
+                checkbox = QCheckBox()
+                checkbox.setChecked(value == "True")
+                settings_layout.addWidget(label)
+                settings_layout.addWidget(checkbox)
+                self.setting_inputs[name] = checkbox
+            else:
+                input_field = QLineEdit(value)
+                settings_layout.addWidget(label)
+                settings_layout.addWidget(input_field)
+                self.setting_inputs[name] = input_field
 
         # Add the settings container to the scroll area
         scroll_area.setWidget(settings_container)
@@ -62,10 +70,12 @@ class MoreSettingsDialog(QDialog):
 
     def save_settings(self):
         # Update settings with input values
-        new_settings = {
-            name: input_field.text()
-            for name, input_field in self.setting_inputs.items()
-        }
+        new_settings = {}
+        for name, input_field in self.setting_inputs.items():
+            if isinstance(input_field, QCheckBox):  # Handle checkbox values
+                new_settings[name] = "True" if input_field.isChecked() else "False"
+            else:
+                new_settings[name] = input_field.text()
 
         # Check if reconstructUI needs to be triggered
         if new_settings.get("MaxRowsOfButtonGroup") != self.settings.get("MaxRowsOfButtonGroup"):
