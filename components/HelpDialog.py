@@ -4,7 +4,6 @@ import markdown
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
-    QLabel,
     QPushButton,
     QHBoxLayout,
 )
@@ -16,33 +15,24 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 class HelpDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Help❓")
-        self.setFixedSize(600, 600)
+        self.setObjectName("helpDialog")  # 设置对象名称以应用特定样式
+        self.setWindowTitle("帮助")
+        self.setFixedSize(800, 700)
         self.setWindowFlag(Qt.FramelessWindowHint)
 
         layout = QVBoxLayout()
-
-        title_label = QLabel("Help❓")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title_label)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         md_file_path = "./res/Help.md"
         self.web_view = QWebEngineView()
         if os.path.exists(md_file_path):
             with open(md_file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                # Get absolute path of res directory
                 res_dir = os.path.abspath(os.path.dirname(md_file_path))
-                
-                # Calculate image width (90% of dialog width)
                 dialog_width = self.width()
                 image_width = int(dialog_width * 0.9)
                 
-                # Convert Markdown to HTML
                 html_content = markdown.markdown(
                     content,
                     extensions=[
@@ -54,7 +44,6 @@ class HelpDialog(QDialog):
                     ]
                 )
                 
-                # Add custom styles
                 html_template = f"""
                 <!DOCTYPE html>
                 <html>
@@ -63,39 +52,51 @@ class HelpDialog(QDialog):
                     <style>
                         body {{
                             font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
-                            font-size: 14px;
-                            line-height: 1.6;
+                            font-size: 15px;
+                            line-height: 1.8;
                             padding: 20px;
                             background-color: white;
+                            color: #333;
                         }}
                         img {{
                             max-width: 100%;
                             width: {image_width}px;
                             height: auto;
-                            margin: 10px auto;
-                            border-radius: 5px;
+                            margin: 15px auto;
+                            border-radius: 8px;
                             display: block;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                         }}
                         code {{
-                            background-color: #f5f5f5;
-                            padding: 2px 4px;
-                            border-radius: 3px;
+                            background-color: #f8f9fa;
+                            padding: 3px 6px;
+                            border-radius: 4px;
                             font-family: "Consolas", "Courier New", monospace;
+                            color: #e83e8c;
                         }}
                         pre {{
-                            background-color: #f5f5f5;
-                            padding: 10px;
-                            border-radius: 5px;
-                            margin: 10px 0;
+                            background-color: #f8f9fa;
+                            padding: 15px;
+                            border-radius: 8px;
+                            margin: 15px 0;
                             overflow-x: auto;
+                            border: 1px solid #e9ecef;
                         }}
                         h1, h2, h3, h4, h5, h6 {{
-                            color: #444;
-                            margin-top: 20px;
-                            margin-bottom: 10px;
+                            color: #2c3e50;
+                            margin-top: 25px;
+                            margin-bottom: 15px;
+                            font-weight: 600;
                         }}
                         p {{
-                            margin: 10px 0;
+                            margin: 12px 0;
+                        }}
+                        a {{
+                            color: #007bff;
+                            text-decoration: none;
+                        }}
+                        a:hover {{
+                            text-decoration: underline;
                         }}
                     </style>
                 </head>
@@ -105,10 +106,9 @@ class HelpDialog(QDialog):
                 </html>
                 """
                 
-                # Set HTML content
                 self.web_view.setHtml(html_template, QUrl.fromLocalFile(res_dir + "/"))
         else:
-            self.web_view.setHtml("<h1>Help file not found.</h1>")
+            self.web_view.setHtml("<h1>帮助文件未找到</h1>")
             
         layout.addWidget(self.web_view)
 
@@ -116,6 +116,7 @@ class HelpDialog(QDialog):
         button_layout.addStretch()
 
         close_button = QPushButton("Close")
+        close_button.setObjectName("closeButton")  # 设置对象名称以应用特定样式
         close_button.clicked.connect(self.close)
         button_layout.addWidget(close_button)
 
@@ -127,26 +128,25 @@ class HelpDialog(QDialog):
         self.setStyleSheet(
             """
             QDialog {
-                border-radius: 10px;
-                border: 2px solid #888;
-            }
-            QLabel {
-                color: #444;
+                border-radius: 12px;
+                border: 1px solid #e0e0e0;
+                background-color: white;
             }
             QPushButton {
-                background-color: #6699cc;
+                background-color: #4a90e2;
                 color: white;
                 border: none;
-                padding: 10px 20px;
+                padding: 8px 16px;
                 text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                border-radius: 5px;
+                font-size: 14px;
+                border-radius: 6px;
+                font-weight: 500;
             }
             QPushButton:hover {
-                background-color: #5588bb;
+                background-color: #357abd;
+            }
+            QPushButton:pressed {
+                background-color: #2d6da3;
             }
             """
         )

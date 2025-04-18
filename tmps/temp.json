@@ -1,1 +1,10 @@
-{}
+{
+    "Commands": [
+        {
+            "selected": false,
+            "command": "2",
+            "withEnter": true,
+            "interval": ""
+        }
+    ]
+}

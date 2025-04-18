@@ -48,32 +48,6 @@ class UpdateInfoDialog(QDialog):
 
         self.setLayout(layout)
 
-        self.setStyleSheet(
-            """
-            QDialog {
-                border-radius: 10px;
-                border: 2px solid #888;
-            }
-            QLabel {
-                color: #444;
-            }
-            QPushButton {
-                background-color: #6699cc;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #5588bb;
-            }
-            """
-        )
         max_retries = 3
         for attempt in range(max_retries):
             try:

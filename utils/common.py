@@ -140,7 +140,7 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     configparser.ConfigParser: 配置文件对象
     """
     if config_path is None:
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.ini")
     else:
         config_path = os.path.abspath(config_path)
     config = configparser.ConfigParser()
@@ -156,6 +156,15 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     else:
         try:
             config.read(config_path, encoding="utf-8")
+        except UnicodeDecodeError:
+            # 如果UTF-8失败，尝试使用其他编码
+            try:
+                config.read(config_path, encoding="gbk")
+            except Exception as e:
+                custom_print(f"Error reading config file with GBK encoding: {e}")
+                # 如果仍然失败，创建默认配置
+                create_default_config()
+                config.read(config_path, encoding="utf-8")
         except configparser.MissingSectionHeaderError as e:
             custom_print("Configuration file is corrupted or missing section headers.")
             create_default_config()
@@ -164,6 +173,11 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
             except configparser.Error as e:
                 custom_print(f"Error reading config file: {e}")
                 raise e
+        except Exception as e:
+            custom_print(f"Unexpected error reading config file: {e}")
+            # 如果出现意外错误，创建默认配置
+            create_default_config()
+            config.read(config_path, encoding="utf-8")
     
     return config
 
@@ -601,12 +615,31 @@ def read_ATCommand(path_command_json: str) -> list:
     list: AT 命令列表
     """
     try:
+        # 尝试使用UTF-8编码读取
         with open(path_command_json, "r", encoding="utf-8") as f:
             data = json.load(f)
             commands = [item["command"] for item in data.get("Commands", [])]
             return commands
+    except UnicodeDecodeError:
+        # 如果UTF-8失败，尝试使用其他编码
+        try:
+            with open(path_command_json, "r", encoding="gbk") as f:
+                data = json.load(f)
+                commands = [item["command"] for item in data.get("Commands", [])]
+                return commands
+        except Exception as e:
+            custom_print(f"Error reading AT command file with GBK encoding: {e}")
+            # 如果仍然失败，返回空列表
+            return []
     except IOError as e:
         custom_print(f"Error reading AT command file: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        custom_print(f"Error decoding JSON from AT command file: {e}")
+        return []
+    except Exception as e:
+        custom_print(f"Unexpected error reading AT command file: {e}")
+        return []
 
 
 def write_ATCommand(path_command_json: str, commands: list) -> None:

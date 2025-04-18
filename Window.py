@@ -29,8 +29,9 @@ from PySide6.QtWidgets import (
     QMenuBar,
     QDialog,
     QMessageBox,
+    QMainWindow,
 )
-from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread
+from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread, QMimeData
 from PySide6.QtGui import (
     QTextDocument,
     QTextCursor,
@@ -42,6 +43,7 @@ from PySide6.QtGui import (
     QKeySequence,
     QTextCharFormat,
     QFont,
+    QDrag,
 )
 from serial.tools import list_ports
 import utils.common as common
@@ -62,6 +64,7 @@ from components.StringAsciiConvertDialog import StringAsciiConvertDialog
 from components.StringGenerateDialog import StringGenerateDialog
 from components.CustomToggleSwitchDialog import CustomToggleSwitchDialog
 from components.DictRecorder import DictRecorderWindow
+from components.DraggableGroupBox import DraggableGroupBox
 
 
 class MyWidget(QWidget):
@@ -525,7 +528,6 @@ class MyWidget(QWidget):
         self.settings_groupbox.mouseDoubleClickEvent = (
             lambda event: self.set_settings_groupbox_visible()
         )
-        self.settings_groupbox.setToolTip("Double click to Show/Hide")
         self.settings_layout = QGridLayout(self.settings_groupbox)
         self.settings_layout.addWidget(
             self.serial_port_label, 0, 0, 1, 1, alignment=Qt.AlignRight
@@ -602,7 +604,6 @@ class MyWidget(QWidget):
         self.command_groupbox.mouseDoubleClickEvent = (
             lambda event: self.set_command_groupbox_visible()
         )
-        self.command_groupbox.setToolTip("Double click to Show/Hide")
         self.command_layout = QHBoxLayout(self.command_groupbox)
         self.command_layout.addWidget(self.command_input)
         self.command_layout.addWidget(self.expand_button)
@@ -613,7 +614,6 @@ class MyWidget(QWidget):
         self.file_groupbox.mouseDoubleClickEvent = (
             lambda event: self.set_file_groupbox_visible()
         )
-        self.file_groupbox.setToolTip("Double click to Show/Hide")
         self.file_layout = QVBoxLayout(self.file_groupbox)
         file_row_layout = QHBoxLayout()
         file_row_layout.addWidget(self.file_label)
@@ -630,7 +630,6 @@ class MyWidget(QWidget):
         self.hotkeys_groupbox.mouseDoubleClickEvent = (
             lambda event: self.set_hotkeys_groupbox_visible()
         )
-        self.hotkeys_groupbox.setToolTip("Double click to Show/Hide")
         self.hotkeys_layout = QGridLayout(self.hotkeys_groupbox)
 
         # Create a group box for the received data section
@@ -684,20 +683,51 @@ class MyWidget(QWidget):
             "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: 600; }"
         )
         self.text_input_layout_2.setAcceptRichText(False)
+        
+        # Create a group box for the radio buttons
         self.radio_groupbox = QGroupBox()
         self.radio_layout = QGridLayout(self.radio_groupbox)
+        
+        # 创建一个滚动区域来容纳radio按钮
+        self.radio_scroll_area = QScrollArea()
+        self.radio_scroll_area.setWidgetResizable(True)
+        self.radio_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.radio_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.radio_scroll_area.setWidget(self.radio_groupbox)
+        
+        # 设置radio_groupbox的最大高度，使其不会占据太多空间
+        # self.radio_groupbox.setMaximumHeight(300)
+        
+        # 创建一个水平布局来容纳展开按钮和滚动区域
+        radio_container = QWidget()
+        radio_container_layout = QHBoxLayout(radio_container)
+        radio_container_layout.setContentsMargins(0, 0, 0, 0)
+        radio_container_layout.setSpacing(0)
+        
         self.expand_left_button = QPushButton()
+        self.expand_left_button.setFixedWidth(30)  # 设置固定宽度
         self.expand_left_button.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; }"
+            "QPushButton { background-color: transparent; color: #00A86B; border-radius: 5px; padding: 5px; font-size: 16px; font-weight: bold; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
-        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))  # 初始状态为向右
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
-        self.radio_layout.addWidget(self.expand_left_button, 0, 0, 1, 2)
-
+        
+        radio_container_layout.addWidget(self.expand_left_button)
+        radio_container_layout.addWidget(self.radio_scroll_area)
+        
+        layout_2_main.addWidget(radio_container)
+        
         self.radio_path_command_buttons = []
         self.path_command_inputs = []
+
+        # 从配置文件中读取路径
+        self.path_configs = []
+        for i in range(15):
+            path_key = f"Path_{i+1}"
+            path_value = self.config.get("Paths", path_key, fallback="")
+            self.path_configs.append(path_value)
 
         for i in range(15):
             radio_button = QRadioButton(f"Path {i + 1}")
@@ -709,17 +739,21 @@ class MyWidget(QWidget):
                 self.select_json_file(pi) if event else None
             )
             path_input.setPlaceholderText("Path, double click to select")
-            path_input.setVisible(False)
+            path_input.setVisible(False)  # 默认隐藏路径输入框
+            
+            # 设置初始值
+            if i == 0 and not self.path_configs[0]:
+                path_input.setText(common.get_absolute_path("tmps\\ATCommand.json"))
+            else:
+                path_input.setText(self.path_configs[i])
+                
             self.radio_layout.addWidget(radio_button, i + 1, 0)
             self.radio_layout.addWidget(path_input, i + 1, 1)
             self.radio_path_command_buttons.append(radio_button)
             self.path_command_inputs.append(path_input)
 
         self.radio_path_command_buttons[0].setChecked(True)
-        self.path_command_inputs[0].setText(
-            common.get_absolute_path("tmps/ATCommand.json")
-        )
-        layout_2_main.addWidget(self.radio_groupbox)
+        layout_2_main.addWidget(self.radio_scroll_area)
         layout_2.addLayout(layout_2_main)
 
         layout_3 = QVBoxLayout()
@@ -836,6 +870,10 @@ class MyWidget(QWidget):
         main_layout.addLayout(button_switch_layout)
         main_layout.addWidget(self.stacked_widget)
         
+        # 设置初始状态 - 路径选项框收起
+        self.radio_scroll_area.setMaximumWidth(50)
+        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+        
         # Post actions after the initialization of the UI.
         self.post_init_UI()
 
@@ -909,6 +947,15 @@ class MyWidget(QWidget):
                 config.getboolean("Set", "IsSaveDataReceived")
             )
             self.file_input.setText(config.get("Set", "PathFileSend"))
+            
+            # 加载路径配置
+            if "Paths" in config:
+                for i in range(1, 16):
+                    path_key = f"Path_{i}"
+                    if path_key in config["Paths"]:
+                        path_value = config["Paths"][path_key]
+                        if i <= len(self.path_command_inputs):
+                            self.path_command_inputs[i-1].setText(path_value)
         except configparser.NoSectionError as e:
             logging.error(f"Error applying config: {e}")
         except configparser.NoOptionError as e:
@@ -949,6 +996,14 @@ class MyWidget(QWidget):
                 str(self.checkbox_data_received.isChecked()),
             )
             config.set("Set", "PathFileSend", self.file_input.text())
+            
+            # 保存路径配置
+            if "Paths" not in config:
+                config.add_section("Paths")
+            for i in range(len(self.path_command_inputs)):
+                path_key = f"Path_{i+1}"
+                path_value = self.path_command_inputs[i].text()
+                config.set("Paths", path_key, path_value)
 
             # Hotkeys
             # for i in range(1, 9):
@@ -1058,6 +1113,8 @@ class MyWidget(QWidget):
                     self.path_ATCommand,
                     common.split_text(self.text_input_layout_2.toPlainText()),
                 )
+                # 保存路径到配置文件
+                self.save_paths_to_config()
         elif index == 2 or self.stacked_widget.currentIndex() == 2:
             self.text_input_layout_3.setPlainText(
                 self.received_data_textarea.toPlainText()
@@ -1673,6 +1730,8 @@ class MyWidget(QWidget):
                 self.text_input_layout_2.setPlainText(
                     common.join_text(common.read_ATCommand(self.path_ATCommand))
                 )
+                # 保存当前选中的路径到配置文件
+                self.save_paths_to_config()
             else:
                 self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
         else:
@@ -1856,13 +1915,41 @@ class MyWidget(QWidget):
 
     def set_radio_groupbox_visible(self):
         if self.path_command_inputs[0].isVisible():
+            # 收起状态
             self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+            # 保存路径到配置文件
+            self.save_paths_to_config()
+            # 隐藏所有路径输入框
+            for path_input in self.path_command_inputs:
+                path_input.setVisible(False)
+            # 设置最大宽度为50
+            self.radio_scroll_area.setMaximumWidth(50)
         else:
+            # 展开状态
             self.expand_left_button.setIcon(QIcon("res/direction_right.png"))
-        for i in range(len(self.path_command_inputs)):
-            self.path_command_inputs[i].setVisible(
-                not self.path_command_inputs[i].isVisible()
-            )
+            # 显示所有路径输入框
+            for path_input in self.path_command_inputs:
+                path_input.setVisible(True)
+            # 设置最大宽度为窗口宽度的1/3
+            self.radio_scroll_area.setMaximumWidth(self.width() // 3)
+            
+    def save_paths_to_config(self):
+        """保存路径到配置文件"""
+        try:
+            # 确保Paths部分存在
+            if "Paths" not in self.config:
+                self.config.add_section("Paths")
+                
+            # 保存所有路径
+            for i in range(len(self.path_command_inputs)):
+                path_key = f"Path_{i+1}"
+                path_value = self.path_command_inputs[i].text()
+                self.config.set("Paths", path_key, path_value)
+                
+            # 写入配置文件
+            common.write_config(self.config)
+        except Exception as e:
+            logging.error(f"Error saving paths to config: {e}")
 
     # Filter selected commands
     def filter_selected_command(self):
@@ -2014,6 +2101,13 @@ def main():
         sys.exit(app.exec())
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+        # 显示错误对话框
+        error_msg = QMessageBox()
+        error_msg.setIcon(QMessageBox.Critical)
+        error_msg.setText("应用程序启动失败")
+        error_msg.setInformativeText(f"错误信息: {str(e)}")
+        error_msg.setWindowTitle("错误")
+        error_msg.exec_()
 
 
 if __name__ == "__main__":

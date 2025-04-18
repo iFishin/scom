@@ -1,3 +1,10 @@
+'''
+Date: 2025-04-17
+LastEditors: Fishing
+LastEditTime: 2025-04-18
+FilePath: \SCOM\components\AboutDialog.py
+Description: https://github.com/iFishin
+'''
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QTextBrowser
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtCore import Qt
@@ -81,33 +88,3 @@ class AboutDialog(QDialog):
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
-
-        # Style settings
-        self.setStyleSheet("""
-            QDialog {
-                border-radius: 10px;
-                border: 2px solid #888;
-                background-color: white;
-            }
-            QLabel {
-                color: #444;
-            }
-            QPushButton {
-                background-color: #6699cc;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #5588bb;
-            }
-            QTextBrowser {
-                background-color: transparent;
-            }
-        """)
