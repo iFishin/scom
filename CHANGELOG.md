@@ -3,7 +3,7 @@
 ## [v1.2.0](https://github.com/iFishin/scom/releases)
 
 - 改进：
-  - 由于WebEngine性能占用过高，导致软件卡顿，已剔除
+  - 由于WebEngine性能占用过高，违背软件初衷，已剔除
 
 ## [v1.1.9](https://github.com/iFishin/scom/releases)
 
