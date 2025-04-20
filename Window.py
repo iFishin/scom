@@ -65,6 +65,8 @@ from components.StringGenerateDialog import StringGenerateDialog
 from components.CustomToggleSwitchDialog import CustomToggleSwitchDialog
 from components.DictRecorder import DictRecorderWindow
 from components.DraggableGroupBox import DraggableGroupBox
+from dotenv import load_dotenv
+import os
 
 
 class MyWidget(QWidget):
@@ -1457,6 +1459,24 @@ class MyWidget(QWidget):
             new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
             scrollbar.setValue(max(0, new_scroll_value))
 
+    def fetch_new_data(self):
+        """Method to fetch new data, adjust implementation based on your data source."""
+        if hasattr(self, 'data_receiver') and self.data_receiver:
+            try:
+                # Assuming your DataReceiver class has a fetch_data method
+                new_data = self.data_receiver.fetch_latest_data()
+                if new_data:
+                    # Add new data to the display buffer
+                    self.full_data_store.append(new_data)
+                    if len(self.full_data_store) > self.buffer_size:
+                        del self.full_data_store[0]
+                else:
+                    # If no new data is available, do nothing
+                    pass
+            except Exception as e:
+                # logging.error(f"Error occurred while fetching new data: {e}")
+                pass
+
     def update_display(self):
         """Update UI with current data slice"""
         # Calculate display range
@@ -1478,7 +1498,7 @@ class MyWidget(QWidget):
                     self.received_data_textarea.insertPlainText(text_line+'\n')
                     hex_line = hex_slice.split("<br>")[i]
                     if hex_line.strip():
-                        self.received_data_textarea.insertPlainText(hex_line+'\n')
+                        self.received_data_textarea.insertHtml(hex_line + "<br>")
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
 
@@ -1805,7 +1825,13 @@ class MyWidget(QWidget):
         
         # Scroll down detection
         elif event.angleDelta().y() < 0 and scrollbar.value() >= scrollbar.maximum() - scrollbar.singleStep():
-            self.load_newer_data()
+            # When reaching the bottom, attempt to fetch more new data
+            self.fetch_new_data()
+            
+            # Reset the offset to ensure the latest content is displayed
+            self.current_offset = 0
+            self.update_display()
+            
         # Else, do nothing
         else:
             pass
@@ -2089,7 +2115,9 @@ def main():
         app = QApplication([])
         widget = MyWidget()
         widget.setStyleSheet(QSSLoader.load_stylesheet("styles/fish.qss"))
-        widget.setWindowTitle("Serial Communication")
+        load_dotenv()
+        version = os.getenv("VERSION", "1.0.0")
+        widget.setWindowTitle(f"Serial Communication v{version}")
         app.setWindowIcon(QIcon("favicon.ico"))
 
         # widget.showMaximized()

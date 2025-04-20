@@ -15,8 +15,8 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 class HelpDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("helpDialog")  # 设置对象名称以应用特定样式
-        self.setWindowTitle("帮助")
+        self.setObjectName("helpDialog")  # Set object name for applying specific styles
+        self.setWindowTitle("Help")
         self.setFixedSize(800, 700)
         self.setWindowFlag(Qt.FramelessWindowHint)
 
@@ -116,7 +116,6 @@ class HelpDialog(QDialog):
         button_layout.addStretch()
 
         close_button = QPushButton("Close")
-        close_button.setObjectName("closeButton")  # 设置对象名称以应用特定样式
         close_button.clicked.connect(self.close)
         button_layout.addWidget(close_button)
 
@@ -128,25 +127,23 @@ class HelpDialog(QDialog):
         self.setStyleSheet(
             """
             QDialog {
-                border-radius: 12px;
                 border: 1px solid #e0e0e0;
                 background-color: white;
             }
             QPushButton {
-                background-color: #4a90e2;
+                background-color: #00a86b;
                 color: white;
-                border: none;
+                border: 2px solid white;
                 padding: 8px 16px;
-                text-align: center;
-                font-size: 14px;
-                border-radius: 6px;
-                font-weight: 500;
+                border-radius: 8px;
             }
+
             QPushButton:hover {
-                background-color: #357abd;
+                background-color: #008c5a;
             }
+
             QPushButton:pressed {
-                background-color: #2d6da3;
+                background-color: #006f4a;
             }
             """
         )

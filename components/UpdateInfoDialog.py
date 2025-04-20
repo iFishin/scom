@@ -48,7 +48,7 @@ class UpdateInfoDialog(QDialog):
 
         self.setLayout(layout)
 
-        max_retries = 3
+        max_retries = 2
         for attempt in range(max_retries):
             try:
                 response = requests.get(self.url_update_info, timeout=5)

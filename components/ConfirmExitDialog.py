@@ -9,7 +9,6 @@ class ConfirmExitDialog(QDialog):
         self.setModal(True)
         self.setLayout(QVBoxLayout())
 
-        # 设置图标
         self.setWindowIcon(QIcon('favicon.ico'))
         
         icon_label = QLabel()

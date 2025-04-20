@@ -488,10 +488,6 @@ QProgressBar::chunk {
     width: 20px;
 }
 
-QLabel {
-    color: #666;
-}
-
 QLineEdit, QTextEdit {
     background-color: #f0f0f0;
     font-size: 14px;
@@ -527,9 +523,7 @@ QProgressBar::chunk {
 
 /* 统一对话框样式 */
 QDialog {
-    border-radius: 12px;
     border: 1px solid #e0e0e0;
-    background-color: white;
 }
 
 /* HelpDialog 特定样式 */
@@ -538,7 +532,7 @@ QDialog#helpDialog {
     min-height: 700px;
 }
 
-QDialog#helpDialog QWebEngineView {
+QDialog QWebEngineView {
     border: none;
     background-color: white;
 }
@@ -563,14 +557,14 @@ QDialog QPushButton:pressed {
 }
 
 /* Markdown 内容样式 */
-QDialog#helpDialog QWebEngineView {
+QDialog QWebEngineView {
     font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
     font-size: 15px;
     line-height: 1.8;
     color: #333;
 }
 
-QDialog#helpDialog QWebEngineView img {
+QDialog QWebEngineView img {
     max-width: 100%;
     margin: 15px auto;
     border-radius: 8px;
@@ -578,7 +572,7 @@ QDialog#helpDialog QWebEngineView img {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-QDialog#helpDialog QWebEngineView code {
+QDialog QWebEngineView code {
     background-color: #f8f9fa;
     padding: 3px 6px;
     border-radius: 4px;
@@ -586,7 +580,7 @@ QDialog#helpDialog QWebEngineView code {
     color: #e83e8c;
 }
 
-QDialog#helpDialog QWebEngineView pre {
+QDialog QWebEngineView pre {
     background-color: #f8f9fa;
     padding: 15px;
     border-radius: 8px;
@@ -595,28 +589,28 @@ QDialog#helpDialog QWebEngineView pre {
     border: 1px solid #e9ecef;
 }
 
-QDialog#helpDialog QWebEngineView h1,
-QDialog#helpDialog QWebEngineView h2,
-QDialog#helpDialog QWebEngineView h3,
-QDialog#helpDialog QWebEngineView h4,
-QDialog#helpDialog QWebEngineView h5,
-QDialog#helpDialog QWebEngineView h6 {
+QDialog QWebEngineView h1,
+QDialog QWebEngineView h2,
+QDialog QWebEngineView h3,
+QDialog QWebEngineView h4,
+QDialog QWebEngineView h5,
+QDialog QWebEngineView h6 {
     color: #2c3e50;
     margin-top: 25px;
     margin-bottom: 15px;
     font-weight: 600;
 }
 
-QDialog#helpDialog QWebEngineView p {
+QDialog QWebEngineView p {
     margin: 12px 0;
 }
 
-QDialog#helpDialog QWebEngineView a {
+QDialog QWebEngineView a {
     color: #007bff;
     text-decoration: none;
 }
 
-QDialog#helpDialog QWebEngineView a:hover {
+QDialog QWebEngineView a:hover {
     text-decoration: underline;
 }
 
@@ -656,10 +650,8 @@ QPushButton#maximizeButton {
     color: #666666;
 }
 
-QPushButton#closeButton {
-    color: #666666;
-}
-
-QPushButton#closeButton:hover {
-    color: white;
+QTextBrowser {
+    border: none;
+    background-color: transparent;
+    font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
 }
