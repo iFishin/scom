@@ -98,6 +98,12 @@ class DataReceiver(QThread):
             self.serial_port.close()
             raise
 
+    @property
+    def byte_transmission_time(self) -> float:
+        """计算单个字节的传输时间（秒）"""
+        bits_per_byte = 10  # 1起始 + 8数据 + 1停止
+        return bits_per_byte / self.baud_rate
+
     def process_raw_data(self, raw_data, read_time):
         """Process raw bytes with type validation"""
         # Ensure raw_data is of type bytes
@@ -107,23 +113,50 @@ class DataReceiver(QThread):
         if not raw_data:
             return ""
         
+        # Calculate the number of bytes received
+        byte_count = len(raw_data)
+        if byte_count == 0:
+            return ""
+        
+        # Calculate the time when the first byte was received
+        block_duration = self.byte_transmission_time * (byte_count - 1)
+        start_time = read_time - datetime.timedelta(seconds=block_duration)
+        
         try:
             if self.is_show_hex:
-                return self.format_hex_data(raw_data, read_time)
-            return self.format_text_data(raw_data, read_time)
+                return self.format_hex_data(raw_data, start_time)
+            return self.format_text_data(raw_data, start_time)
         except Exception as e:
             print(f"[ERROR] Processing failed: {str(e)}")
             return "⚙ Data processing error"
 
-    def format_hex_data(self, data_bytes, read_time):
-        """Format hexadecimal data with timestamp"""
-        if self.is_show_timeStamp:
-            ts = read_time.strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
-            return f"[{ts}]{data_bytes.decode('latin-1')}"
-        return data_bytes.decode('latin-1')
+    def format_hex_data(self, data_bytes, start_time):
+        """Format HEX data with precise timestamps"""
+        formatted_lines = []
+        current_pos = 0
+        
+        # Split data by newline character
+        for line in data_bytes.split(b'\n'):
+            if not line:
+                continue
+                
+            # Calculate the timestamp for the current line
+            line_duration = self.byte_transmission_time * current_pos
+            line_time = start_time + datetime.timedelta(seconds=line_duration)
+            
+            # Calculate the number of bytes in the current line (including the newline character)
+            line_length = len(line) + 1  # +1 for the split '\n'
+            
+            # Generate the timestamp
+            ts = line_time.strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
+            formatted_lines.append(f"[{ts}]{line.decode('latin-1')}")
+            
+            current_pos += line_length
+            
+        return '\n'.join(formatted_lines)
 
-    def format_text_data(self, data_bytes, read_time):
-        """Format text data with improved line handling"""
+    def format_text_data(self, data_bytes, start_time):
+        """Format text data with precise timestamps"""
         try:
             if not isinstance(data_bytes, bytes):
                 raise ValueError(f"Expected bytes, got {type(data_bytes)}")
@@ -131,40 +164,54 @@ class DataReceiver(QThread):
             if not data_bytes:
                 return ""
 
+            # Add to persistent buffer and update the last data time
             self.persistent_buffer.extend(data_bytes)
-            self.last_data_time = read_time
+            self.last_data_time = datetime.datetime.now()
             
             complete_lines = []
-            remaining_buffer = bytearray()
+            current_pos = 0  # Current position in the data block
             
-            buffer_parts = self.persistent_buffer.split(b'\n')
+            # Split the buffer into complete lines
+            while True:
+                # Find the position of the newline character
+                newline_pos = self.persistent_buffer.find(b'\n')
+                if newline_pos == -1:
+                    break
+                    
+                # Extract a single line of data (including the newline character)
+                line_bytes = self.persistent_buffer[:newline_pos+1]
+                
+                # Calculate the start time of the line (considering transmission delay)
+                line_duration = self.byte_transmission_time * current_pos
+                line_time = start_time + datetime.timedelta(seconds=line_duration)
+                
+                # Decode and add a timestamp
+                line_str = self.decode_line(line_bytes)
+                formatted = self.add_timestamp(line_str, line_time)
+                complete_lines.append(formatted)
+                
+                # Remove the processed line from the buffer
+                del self.persistent_buffer[:newline_pos+1]
+                
+                # Update the position counter
+                current_pos += len(line_bytes)
             
-            # Process all parts except the last one (i.e., complete lines)
-            for i in range(len(buffer_parts) - 1):
-                line_bytes = buffer_parts[i]
-                if line_bytes:  # Ignore empty lines
-                    line_str = self.decode_line(line_bytes + b'\n')  # Add back newline character
-                    complete_lines.append(self.add_timestamp(line_str, read_time))
-            
-            # The last part is an incomplete line, keep it in the buffer
-            remaining_buffer = buffer_parts[-1]
-            
-            # Check if the incomplete line has timed out (no new data received for a certain time)
-            time_since_last_data = (datetime.datetime.now() - self.last_data_time).total_seconds()
-            if time_since_last_data > self.buffer_timeout and remaining_buffer:
-                # Timeout, force process the remaining data
-                line_str = self.decode_line(remaining_buffer)
-                complete_lines.append(self.add_timestamp(line_str, read_time))
-                remaining_buffer = bytearray()
-            
-            # Update the persistent buffer with unprocessed data
-            self.persistent_buffer = remaining_buffer
-            
-            # Return all complete lines, joined with newline characters
+            # Handle timeout for remaining data
+            if self.persistent_buffer:
+                time_since_last = (datetime.datetime.now() - self.last_data_time).total_seconds()
+                if time_since_last > self.buffer_timeout:
+                    # Timeout, process remaining data
+                    line_duration = self.byte_transmission_time * current_pos
+                    line_time = start_time + datetime.timedelta(seconds=line_duration)
+                    line_str = self.decode_line(bytes(self.persistent_buffer))
+                    complete_lines.append(self.add_timestamp(line_str, line_time))
+                    self.persistent_buffer.clear()
+                    
+            # Return all complete lines, joined by newline characters
             return '\n'.join(complete_lines)
             
         except Exception as e:
-            print(f"Critical format error: {str(e)}")
+            print(f"Format error: {str(e)}")
             return "⚙ Data format error"
     
     def decode_line(self, byte_buffer):

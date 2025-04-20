@@ -1,10 +1,3 @@
-'''
-Date: 2025-04-17
-LastEditors: Fishing
-LastEditTime: 2025-04-18
-FilePath: \SCOM\components\AboutDialog.py
-Description: https://github.com/iFishin
-'''
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QTextBrowser
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtCore import Qt
@@ -54,25 +47,18 @@ class AboutDialog(QDialog):
         text_browser = QTextBrowser()
         text_browser.setHtml(f"""
             <div style='text-align: center;'>
-                <p style='font-size: 14px; margin: 10px 0;'>A Professional Serial Communication Tool</p>
-                <p style='font-size: 14px; margin: 10px 0;'>Created by iFishin</p>
-                <p style='font-size: 14px; margin: 10px 0;'>Developed by the SCOM Community</p>
-                <p style='font-size: 14px; margin: 10px 0;'>
-                    <a href='https://github.com/ifishin/SCOM' style='color: #6699cc; text-decoration: none;'>
-                        GitHub Repository
-                    </a>
-                </p>
+            <p style='font-size: 14px; margin: 10px 0;'>A Professional Serial Communication Tool</p>
+            <p style='font-size: 14px; margin: 10px 0;'>Created by iFishin</p>
+            <p style='font-size: 14px; margin: 10px 0;'>Developed by enthusiastic developers</p>
+            <p style='font-size: 14px; margin: 10px 0;'>
+            <a href='https://github.com/ifishin/SCOM' style='color: #6699cc; text-decoration: none;'>
+            GitHub Repository
+            </a>
+            </p>
             </div>
         """)
         text_browser.setReadOnly(True)
         text_browser.setOpenExternalLinks(True)
-        text_browser.setStyleSheet("""
-            QTextBrowser {
-                border: none;
-                background-color: transparent;
-                font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
-            }
-        """)
         layout.addWidget(text_browser)
 
         # Button layout
