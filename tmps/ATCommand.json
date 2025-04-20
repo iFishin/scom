@@ -1,26 +1,8 @@
 {
-    "commands": [
+    "Commands": [
         {
             "selected": false,
-            "command": "1、升级过程中断电，断电后继续升级",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "2、升级后查询版本号",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QVERSION",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+CSUB",
+            "command": "1",
             "withEnter": true,
             "interval": ""
         }

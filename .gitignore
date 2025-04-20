@@ -1,2 +1,4 @@
 *.log
 *.pyc
+tmps/*
+!tmps/temp.log

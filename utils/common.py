@@ -11,6 +11,16 @@ from datetime import datetime
 class SerialPortNotInitializedError(Exception):
     pass
 
+def get_current_time() -> str:
+    """
+    获取当前时间的字符串格式（YYYY-MM-DD HH:MM:SS:ms）
+    
+    
+    返回：
+    str: 当前时间的字符串格式
+    """
+    return datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
+
 def get_absolute_path(file_name):
     """
     获取文件的绝对路径
@@ -33,25 +43,65 @@ def get_absolute_path(file_name):
     else:
         raise FileNotFoundError(f"File not found at path: {abs_path}")
 
-
-def force_decode(text: bytes) -> str:
-    """
-    强制解码文本
+def escape_control_characters(s: str, ignore_crlf: bool = True) -> str:
+    r"""
+    将文本中的控制字符和扩展ASCII字符转义为\x{XX}格式
 
     参数：
-    text (bytes): 要解码的字节文本
+    s (str): 输入字符串（字符的Unicode码位需在0-255范围内）
+    ignore_crlf (bool): 是否忽略 \r 和 \n 的转义（默认 False）
 
     返回：
-    str: 解码后的文本
+    str: 转义后的字符串（如 \x00, \xFF）
+    """
+    return ''.join(
+        f'\\x{ord(c):02X}' 
+        if (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n')) 
+        else c 
+        for c in s
+    )
+    
+def remove_control_characters(s: str, ignore_crlf: bool = True) -> str:
+    r"""
+    将文本中的控制字符和扩展ASCII字符移除
+
+    参数：
+    s (str): 输入字符串（字符的Unicode码位需在0-255范围内）
+    ignore_crlf (bool): 是否忽略 \r 和 \n 的移除（默认 False）
+
+    返回：
+    str: 移除后的字符串
+    """
+    return ''.join(
+        c for c in s 
+        if not (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n'))
+    )
+
+def force_decode(bytes_data: bytes, replace_null: str = 'escape') -> str:
+    r"""
+    强制解码字节数据为字符串，并处理空字符（\x00）
+
+    参数：
+    bytes_data (bytes): 要解码的字节数据
+    replace_null (str): 处理空字符的方式，可选值为 'escape'（转义为\x00）或 'remove'（删除空字符）或 'ignore'（忽略空字符）
+
+    返回：
+    str: 解码后的字符串
     """
     encoding_list = ["utf-8", "gbk", "big5", "latin1"]
+    
     for encoding in encoding_list:
         try:
-            return text.decode(encoding)
+            decoded_str = bytes_data.decode(encoding)
+            if replace_null == 'escape':
+                decoded_str = escape_control_characters(decoded_str)
+            elif replace_null == 'remove':
+                decoded_str = remove_control_characters(decoded_str)
+            elif replace_null == 'ignore':
+                pass
+            return decoded_str
         except UnicodeDecodeError:
             continue
-    return text.decode("utf-8", "ignore")
-
 
 def create_default_config() -> None:
     """
@@ -90,7 +140,7 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     configparser.ConfigParser: 配置文件对象
     """
     if config_path is None:
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.ini")
     else:
         config_path = os.path.abspath(config_path)
     config = configparser.ConfigParser()
@@ -106,6 +156,15 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
     else:
         try:
             config.read(config_path, encoding="utf-8")
+        except UnicodeDecodeError:
+            # 如果UTF-8失败，尝试使用其他编码
+            try:
+                config.read(config_path, encoding="gbk")
+            except Exception as e:
+                custom_print(f"Error reading config file with GBK encoding: {e}")
+                # 如果仍然失败，创建默认配置
+                create_default_config()
+                config.read(config_path, encoding="utf-8")
         except configparser.MissingSectionHeaderError as e:
             custom_print("Configuration file is corrupted or missing section headers.")
             create_default_config()
@@ -114,6 +173,11 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
             except configparser.Error as e:
                 custom_print(f"Error reading config file: {e}")
                 raise e
+        except Exception as e:
+            custom_print(f"Unexpected error reading config file: {e}")
+            # 如果出现意外错误，创建默认配置
+            create_default_config()
+            config.read(config_path, encoding="utf-8")
     
     return config
 
@@ -213,6 +277,7 @@ def port_on(
             ser.rtscts = False
             ser.xonxoff = False
             ser.dsrdtr = False
+        ser.write_byte_size = 1024
         ser.rts = rts
         ser.dtr = dtr
         ser.open()
@@ -270,57 +335,87 @@ def port_write(
             raise e
 
 
-def port_read(port_serial: serial.Serial, size: int = 1) -> str:
-    """
-    从串口读取数据
-
-    参数：
-    port_serial (serial.Serial): 串口对象
-    size (int): 读取的最大字节数（默认 1）
-
-    返回：
-    str: 读取到的数据
-    """
+def port_read(port_serial, size=256, max_data_size=512, timeout=0.1) -> str:
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        try:
-            data = bytearray()
-            while port_serial.in_waiting > 0:
-                data.extend(port_serial.read(size=port_serial.in_waiting or size))
+
+    data = bytearray()
+    start_time = time.monotonic()
+
+    try:
+        while (time.monotonic() - start_time) < timeout:
+            if port_serial.in_waiting > 0:
+                chunk = port_serial.read(min(port_serial.in_waiting, size))
+                data.extend(chunk)
+                if len(data) >= max_data_size:
+                    break
+            else:
+                # Reduce CPU usage by adding a small sleep when no data is available
                 time.sleep(0.01)
-            return data.decode("UTF-8", errors="ignore")
-        except Exception as e:
-            custom_print(f"Error reading from serial port: {e}")
-            raise e
+        return force_decode(data)
+    except Exception as e:
+        custom_print(f"Error reading from serial port: {e}")
+        raise e
 
 
-def port_read_hex(port_serial: serial.Serial, size: int = 1) -> str:
+def port_read_hex(port_serial: serial.Serial, size: int = 256, max_data_size: int = 512, timeout: float = 0.1) -> str:
     """
-    从串口读取数据并以带空格的大写十六进制形式返回
+    从串口读取数据并以带空格的大写十六进制形式返回，支持动态调整读取块大小和最大数据量
 
     参数：
     port_serial (serial.Serial): 串口对象
-    size (int): 读取的最大字节数（默认 1）
+    size (int): 读取的最大字节数（默认 256）
+    max_data_size (int): 最大分包数据量（默认 512）
+    timeout (float): 读取超时时间（默认 0.1 秒）
 
     返回：
     str: 读取到的数据的十六进制表示，每个字节之间有一个空格且为大写
     """
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        try:
-            reply = bytearray()
-            while port_serial.inWaiting() > 0:
-                reply.extend(port_serial.read(size=size))
-            if reply:
-                hex_reply = " ".join(f"{byte:02X}" for byte in reply)
-                return hex_reply
-            else:
-                return ""
-        except Exception as e:
-            custom_print(f"Error reading from serial port as hex: {e}")
-            raise e
+
+    data = bytearray()
+    total_timeout = 1.0  # 总超时时间（秒）
+    start_time = time.monotonic()
+
+    try:
+        while (time.monotonic() - start_time) < total_timeout:
+            # 动态计算可用数据量
+            in_waiting = port_serial.in_waiting
+            if in_waiting == 0:
+                # 无数据时使用阶梯式休眠
+                time.sleep(timeout)
+                continue
+
+            # 计算本次读取量（智能块大小）
+            chunk_size = min(
+                max(size, in_waiting),  # 至少读取size大小
+                max_data_size - len(data),
+                in_waiting
+            )
+
+            if chunk_size <= 0:
+                break  # 达到最大数据量或超限
+
+            # 批量读取数据
+            chunk = port_serial.read(chunk_size)
+            data.extend(chunk)
+
+            # 动态调整休眠时间（数据量越大，休眠时间越短）
+            sleep_time = max(0.0001, timeout - (len(data) / max_data_size) * 0.09)
+            time.sleep(sleep_time)
+
+            # 达到最大数据量提前退出
+            if len(data) >= max_data_size:
+                break
+
+        if data:
+            return " ".join(f"{byte:02X}" for byte in data)
+        else:
+            return ""
+    except Exception as e:
+        custom_print(f"Error reading from serial port as hex: {e}")
+        raise e
 
 
 def port_read_until(
@@ -347,15 +442,13 @@ def port_read_until(
         reply = ""
         try:
             while True:
-                if reply.endswith(expected.decode("UTF-8")):
+                if reply.endswith(force_decode(expected)):
                     if is_show_symbol:
                         return repr(reply)[1:-1]
                     else:
                         return reply
                 else:
-                    reply += port_serial.read_until(expected, size=size).decode(
-                        "UTF-8", errors="ignore"
-                    )
+                    reply += force_decode(port_serial.read_until(expected, size=size))
         except Exception as e:
             custom_print(f"Error reading from serial port: {e}")
             raise e
@@ -377,7 +470,7 @@ def port_readline(port_serial: serial.Serial) -> str:
         try:
             line = port_serial.readline()
             if line:
-                return line.decode("UTF-8", errors="ignore")
+                return force_decode(line)
             else:
                 return ""
         except Exception as e:
@@ -522,12 +615,31 @@ def read_ATCommand(path_command_json: str) -> list:
     list: AT 命令列表
     """
     try:
+        # 尝试使用UTF-8编码读取
         with open(path_command_json, "r", encoding="utf-8") as f:
             data = json.load(f)
-            commands = [item["command"] for item in data.get("commands", [])]
+            commands = [item["command"] for item in data.get("Commands", [])]
             return commands
+    except UnicodeDecodeError:
+        # 如果UTF-8失败，尝试使用其他编码
+        try:
+            with open(path_command_json, "r", encoding="gbk") as f:
+                data = json.load(f)
+                commands = [item["command"] for item in data.get("Commands", [])]
+                return commands
+        except Exception as e:
+            custom_print(f"Error reading AT command file with GBK encoding: {e}")
+            # 如果仍然失败，返回空列表
+            return []
     except IOError as e:
         custom_print(f"Error reading AT command file: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        custom_print(f"Error decoding JSON from AT command file: {e}")
+        return []
+    except Exception as e:
+        custom_print(f"Unexpected error reading AT command file: {e}")
+        return []
 
 
 def write_ATCommand(path_command_json: str, commands: list) -> None:
@@ -545,7 +657,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
         with open(path_command_json, "w", encoding="utf-8") as f:
             json.dump(
                 {
-                    "commands": [
+                    "Commands": [
                         {
                             "selected": False,
                             "command": command,
@@ -564,7 +676,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
 
 
 def strip_AT_command(
-    text: str, regex: str = r"(?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)"
+    text: str, regex: str
 ) -> list:
     """
     提取 AT 命令
@@ -576,10 +688,13 @@ def strip_AT_command(
     返回：
     list: 提取的 AT 命令列表
     """
-    return re.findall(regex, text)
+    if not regex:
+        return re.findall("", text)
+    else:
+        return re.findall(regex, text)
 
 
-def update_AT_command(path_command_json: str) -> str:
+def update_AT_command(path_command_json: str, regex: str = r"(?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)") -> str:
     """
     更新 AT 命令文件，去除无效内容
 
@@ -596,8 +711,8 @@ def update_AT_command(path_command_json: str) -> str:
             return ""
         else:
             with open(path_command_json, "w", encoding="utf-8") as f:
-                write_ATCommand(path_command_json, strip_AT_command(text))
-                result = "\n".join(strip_AT_command(text))
+                write_ATCommand(path_command_json, strip_AT_command(text, regex))
+                result = "\n".join(strip_AT_command(text, regex))
                 return result
     except IOError as e:
         custom_print(f"Error updating AT command file: {e}")

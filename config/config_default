@@ -11,7 +11,7 @@ SendWithEnter = True
 ShowSymbol = False
 TimeStamp = False
 ReceivedHex = False
-PathDataReceived = C:\Users\fishley.gong\SCOM\tmps\temp.log
+PathDataReceived = 
 IsSaveDataReceived = False
 PathFileSend = 
 
@@ -30,7 +30,7 @@ HotkeyValue_1 =
 HotkeyValue_2 = 
 HotkeyValue_3 = 
 HotkeyValue_4 = 
-HotkeyValue_5 = AT+QSTAAPINFO=NewMar,12345678
+HotkeyValue_5 = AT+QSTAAPINFO="NewMar","12345678"
 HotkeyValue_6 = AT+QRST
 HotkeyValue_7 = AT+QECHO=1
 HotkeyValue_8 = AT+QVERSION
@@ -53,3 +53,8 @@ Hotkeys = True
 Data_received = True
 Button_group = True
 
+[MoreSettings]
+ATCRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
+TimeStampRegex = \[20(.*?)\]
+MaxRowsOfButtonGroup = 100
+ShowCommandEcho = False
