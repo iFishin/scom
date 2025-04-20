@@ -1,149 +1,110 @@
-import sys
 import os
-import markdown
+import webbrowser
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QPushButton,
     QHBoxLayout,
+    QLabel
 )
-from PySide6.QtCore import Qt, QUrl, QSize
-from PySide6.QtGui import QFont
-from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtCore import Qt
 
 
 class HelpDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("helpDialog")  # Set object name for applying specific styles
+        self.setObjectName("helpDialog")
         self.setWindowTitle("Help")
-        self.setFixedSize(800, 700)
+        self.setFixedSize(500, 220)
         self.setWindowFlag(Qt.FramelessWindowHint)
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        # Main layout
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
 
-        md_file_path = "./res/Help.md"
-        self.web_view = QWebEngineView()
-        if os.path.exists(md_file_path):
-            with open(md_file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-                res_dir = os.path.abspath(os.path.dirname(md_file_path))
-                dialog_width = self.width()
-                image_width = int(dialog_width * 0.9)
-                
-                html_content = markdown.markdown(
-                    content,
-                    extensions=[
-                        'fenced_code',
-                        'tables',
-                        'attr_list',
-                        'def_list',
-                        'nl2br'
-                    ]
-                )
-                
-                html_template = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>
-                        body {{
-                            font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
-                            font-size: 15px;
-                            line-height: 1.8;
-                            padding: 20px;
-                            background-color: white;
-                            color: #333;
-                        }}
-                        img {{
-                            max-width: 100%;
-                            width: {image_width}px;
-                            height: auto;
-                            margin: 15px auto;
-                            border-radius: 8px;
-                            display: block;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        }}
-                        code {{
-                            background-color: #f8f9fa;
-                            padding: 3px 6px;
-                            border-radius: 4px;
-                            font-family: "Consolas", "Courier New", monospace;
-                            color: #e83e8c;
-                        }}
-                        pre {{
-                            background-color: #f8f9fa;
-                            padding: 15px;
-                            border-radius: 8px;
-                            margin: 15px 0;
-                            overflow-x: auto;
-                            border: 1px solid #e9ecef;
-                        }}
-                        h1, h2, h3, h4, h5, h6 {{
-                            color: #2c3e50;
-                            margin-top: 25px;
-                            margin-bottom: 15px;
-                            font-weight: 600;
-                        }}
-                        p {{
-                            margin: 12px 0;
-                        }}
-                        a {{
-                            color: #007bff;
-                            text-decoration: none;
-                        }}
-                        a:hover {{
-                            text-decoration: underline;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    {html_content}
-                </body>
-                </html>
-                """
-                
-                self.web_view.setHtml(html_template, QUrl.fromLocalFile(res_dir + "/"))
-        else:
-            self.web_view.setHtml("<h1>帮助文件未找到</h1>")
-            
-        layout.addWidget(self.web_view)
+        # Information label
+        info_label = QLabel(
+            "Click the button below to open the Help documentation. "
+        )
+        info_label.setAlignment(Qt.AlignCenter)
 
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
+        # Open button
+        open_btn = QPushButton("Open Help.md")
+        open_btn.clicked.connect(self.open_help_file)
+        open_btn.setFixedSize(150, 40)
 
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.close)
-        button_layout.addWidget(close_button)
+        # Close button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        close_btn.setFixedSize(150, 40)
 
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
+        # Button layout
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(20)
+        btn_layout.addStretch()
+        btn_layout.addWidget(open_btn)
+        btn_layout.addWidget(close_btn)
+        btn_layout.addStretch()
 
-        self.setLayout(layout)
+        # Combine layouts
+        main_layout.addWidget(info_label)
+        main_layout.addStretch()
+        main_layout.addLayout(btn_layout)
+        main_layout.addStretch()
+        self.setLayout(main_layout)
 
-        self.setStyleSheet(
-            """
+        # Style settings
+        self.setStyleSheet("""
             QDialog {
-                border: 1px solid #e0e0e0;
-                background-color: white;
-            }
-            QPushButton {
-                background-color: #00a86b;
-                color: white;
-                border: 2px solid white;
-                padding: 8px 16px;
+                background: #FFFFFF;
+                border: 1px solid #E0E0E0;
                 border-radius: 8px;
             }
-
-            QPushButton:hover {
-                background-color: #008c5a;
+            QPushButton {
+                background: #00A67C;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
             }
-
-            QPushButton:pressed {
-                background-color: #006f4a;
+            QPushButton:hover { background: #008F6B; }
+            QPushButton:pressed { background: #007755; }
+            QLabel {
+                font-family: 'Microsoft YaHei';
+                font-size: 14px;
+                color: #333;
             }
-            """
-        )
+        """)
+
+    def open_help_file(self):
+        """Open the Help.md file in the root directory"""
+        md_file_path = os.path.abspath("Help.md")
+        if os.path.exists(md_file_path):
+            webbrowser.open(f"file://{md_file_path}")
+        else:
+            self.show_error_message("Help.md not found in the root directory.")
+
+    def show_error_message(self, message):
+        """Display an error message dialog"""
+        error_dialog = QDialog(self)
+        error_dialog.setWindowTitle("Error")
+        error_dialog.setFixedSize(300, 150)
+
+        # Error dialog layout
+        layout = QVBoxLayout()
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # Error message label
+        label = QLabel(message)
+        label.setAlignment(Qt.AlignCenter)
+
+        # Close button for error dialog
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(error_dialog.close)
+        close_btn.setFixedSize(100, 35)
+
+        layout.addWidget(label)
+        layout.addWidget(close_btn, alignment=Qt.AlignCenter)
+        error_dialog.setLayout(layout)
+        error_dialog.exec()
