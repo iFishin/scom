@@ -2,7 +2,31 @@
     "Commands": [
         {
             "selected": false,
-            "command": "1",
+            "command": "AT+QBLEINIT=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=0",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLECONN=1,\"7c8ac6dc4a16\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
             "withEnter": true,
             "interval": ""
         }

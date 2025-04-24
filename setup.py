@@ -51,12 +51,17 @@ def run_nuitka(version):
     include_data_dirs = [
         f"--include-data-dir={data_dir}={data_dir}" for data_dir in data_dirs if os.path.exists(data_dir)
     ]
+    
+    data_files = [ICON_PATH, ".env", "Help.md", "CHANGELOG.md"]
+    include_data_files = [
+        f"--include-data-file={file}={file}" for file in data_files if os.path.exists(file)
+    ]
 
     nuitka_command = (
         f"python -m nuitka --plugin-enable=pyside6 "
         f"--follow-import-to=utils --follow-import-to=components "
         f"{' '.join(include_data_dirs)} "
-        f"--include-data-file={ICON_PATH}={ICON_PATH} "
+        f"{' '.join(include_data_files)} "
         f"--windows-icon-from-ico={ICON_PATH} "
         f"--mingw64 --standalone --windows-disable-console "
         f"--assume-yes-for-downloads "

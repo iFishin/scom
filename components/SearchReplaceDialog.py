@@ -1,33 +1,51 @@
 import re
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QDialog, QTextEdit
+    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QDialog, QTextEdit,
+    QMessageBox
 )
 from PySide6.QtGui import (
-    QTextCursor, QTextCharFormat, QColor
+    QTextCursor, QTextCharFormat, QColor, QAction
 )
-
+from PySide6.QtCore import Qt
 
 class SearchReplaceDialog(QDialog):
     def __init__(self, text_edit, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Search and Replace")
         self.text_edit = text_edit
-
+        self.last_search = ""
+        self.results = []
+        self.current_result_index = -1
+        self.case_sensitive_checkbox.setChecked(False)
+        self.regex_checkbox.setChecked(False)
+        self.whole_word_checkbox.setChecked(False)
+        
         layout = QVBoxLayout(self)
+        self.setMinimumWidth(500)
 
         # Search section
         search_layout = QHBoxLayout()
         self.search_label = QLabel("Search:")
         self.search_input = QLineEdit()
+        self.search_input.textChanged.connect(self.clear_highlights)
         self.search_button = QPushButton("Find")
-        self.case_sensitive_checkbox = QCheckBox("Case Sensitive")
+        self.case_sensitive_checkbox = QCheckBox("Case sensitive")
         self.regex_checkbox = QCheckBox("Regex")
+        self.whole_word_checkbox = QCheckBox("Whole word")
+
         search_layout.addWidget(self.search_label)
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(self.search_button)
         search_layout.addWidget(self.case_sensitive_checkbox)
         search_layout.addWidget(self.regex_checkbox)
+        search_layout.addWidget(self.whole_word_checkbox)
+
+        # Navigation buttons
+        self.prev_button = QPushButton("↑")
+        self.next_button = QPushButton("↓")
+        search_layout.addWidget(self.prev_button)
+        search_layout.addWidget(self.next_button)
 
         # Replace section
         replace_layout = QHBoxLayout()
@@ -35,6 +53,7 @@ class SearchReplaceDialog(QDialog):
         self.replace_input = QLineEdit()
         self.replace_button = QPushButton("Replace")
         self.replace_all_button = QPushButton("Replace All")
+        
         replace_layout.addWidget(self.replace_label)
         replace_layout.addWidget(self.replace_input)
         replace_layout.addWidget(self.replace_button)
@@ -43,148 +62,169 @@ class SearchReplaceDialog(QDialog):
         layout.addLayout(search_layout)
         layout.addLayout(replace_layout)
 
+        # Connect signals
         self.search_button.clicked.connect(self.find_text)
         self.search_input.returnPressed.connect(self.find_text)
-        self.replace_button.clicked.connect(self.replace_text)
-        self.replace_all_button.clicked.connect(self.replace_all_text)
+        self.prev_button.clicked.connect(self.prev_match)
+        self.next_button.clicked.connect(self.next_match)
+        self.replace_button.clicked.connect(self.replace)
+        self.replace_all_button.clicked.connect(self.replace_all)
 
-        self.up_button = QPushButton("↑")
-        self.down_button = QPushButton("↓")
-        search_layout.addWidget(self.up_button)
-        search_layout.addWidget(self.down_button)
+        # Initialize highlighting
+        self.highlight_format = QTextCharFormat()
+        self.highlight_format.setBackground(QColor(255, 255, 0))  # Yellow
+        self.current_highlight_format = QTextCharFormat()
+        self.current_highlight_format.setBackground(QColor(0, 255, 0))  # Green
 
-        self.up_button.clicked.connect(self.move_to_previous_result)
-        self.down_button.clicked.connect(self.move_to_next_result)
+    def get_flags(self):
+        flags = 0
+        if not self.case_sensitive_checkbox.isChecked():
+            flags |= re.IGNORECASE
+        if self.whole_word_checkbox.isChecked():
+            return flags | re.UNICODE
+        return flags
 
-        self.current_result_index = -1
-        self.results = []
+    def get_pattern(self):
+        text = self.search_input.text()
+        if not self.regex_checkbox.isChecked():
+            text = re.escape(text)
+        if self.whole_word_checkbox.isChecked():
+            text = rf"\b{text}\b"
+        return text
+
+    def clear_highlights(self):
+        self.text_edit.setExtraSelections([])
 
     def find_text(self):
-        self.text_edit.setExtraSelections([])
-        text_to_find = self.search_input.text()
+        pattern = self.get_pattern()
+        text = self.text_edit.toPlainText()
+        flags = self.get_flags()
+
+        try:
+            regex = re.compile(pattern, flags)
+        except re.error as e:
+            QMessageBox.warning(self, "Regex Error", f"Invalid regular expression: {e}")
+            return
+
+        self.results = [match.span() for match in regex.finditer(text)]
+        self.current_result_index = -1
+        self.highlight_matches()
+
+        if self.results:
+            self.next_match()
+        else:
+            self.clear_highlights()
+
+    def highlight_matches(self):
+        selections = []
         cursor = self.text_edit.textCursor()
-        if cursor.hasSelection():
-            cursor.setPosition(cursor.selectionEnd())
+        current_pos = cursor.position()
+
+        for i, (start, end) in enumerate(self.results):
+            fmt = self.highlight_format
+            if start <= current_pos <= end:
+                fmt = self.current_highlight_format
+                self.current_result_index = i
+
+            selection = QtWidgets.QTextEdit.ExtraSelection()
+            selection.format = fmt
+            
+            sel_cursor = self.text_edit.textCursor()
+            sel_cursor.setPosition(start)
+            sel_cursor.setPosition(end, QTextCursor.KeepAnchor)
+            selection.cursor = sel_cursor
+            selections.append(selection)
+
+        self.text_edit.setExtraSelections(selections)
+
+    def navigate_match(self, direction):
+        if not self.results:
+            return
+
+        if self.current_result_index == -1:
+            self.current_result_index = 0 if direction == 1 else len(self.results)-1
+        else:
+            self.current_result_index = (self.current_result_index + direction) % len(self.results)
+
+        start, end = self.results[self.current_result_index]
+        cursor = self.text_edit.textCursor()
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.KeepAnchor)
+        
+        # Set the cursor to the current match
         self.text_edit.setTextCursor(cursor)
+        self.text_edit.setFocus(Qt.TabFocusReason)
+        self.text_edit.viewport().update()
+        
+        self.highlight_matches()
+        
 
-        doc = self.text_edit.document()
-        found = False
-        self.results = []
-        regex_flags = 0
-        if not self.case_sensitive_checkbox.isChecked():
-            regex_flags |= re.IGNORECASE
-        if self.regex_checkbox.isChecked():
-            regex_str = re.compile(text_to_find, regex_flags)
-        else:
-            regex_str = re.compile(re.escape(text_to_find), regex_flags)
-        text = doc.toPlainText()
-        for match in regex_str.finditer(text):
-            start = match.start()
-            end = match.end()
-            self.results.append(start)
-            self.results.append(end)
-            found = True
-        if found:
-            self.current_result_index = 0
-            new_cursor = QTextCursor(doc)
-            new_cursor.setPosition(self.results[self.current_result_index])
-            new_cursor.setPosition(self.results[self.current_result_index + 1], QTextCursor.KeepAnchor)
-            self.text_edit.setTextCursor(new_cursor)
-            self.highlight_text(text_to_find)
-        else:
-            self.current_result_index = -1
-            self.results = []
+    def prev_match(self):
+        self.navigate_match(-1)
 
-    def replace_text(self):
-        if self.current_result_index != -1 and len(self.results) > self.current_result_index + 1:
-            cursor = self.text_edit.textCursor()
-            start = self.results[self.current_result_index]
-            end = self.results[self.current_result_index + 1]
-            cursor.setPosition(start)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            cursor.insertText(self.replace_input.text())
-            self.find_text()
-            # Adjust the current result index to avoid out of range error
-            if self.current_result_index >= len(self.results):
-                self.current_result_index = len(self.results) - 2
-            self.results[self.current_result_index] = start
-            self.results[self.current_result_index + 1] = start + len(self.replace_input.text())
+    def next_match(self):
+        self.navigate_match(1)
 
-    def replace_all_text(self):
-        text_to_find = self.search_input.text()
-        replacement_text = self.replace_input.text()
+    def replace(self):
+        if not self.results or self.current_result_index == -1:
+            return
+
+        start, end = self.results[self.current_result_index]
         cursor = self.text_edit.textCursor()
         cursor.beginEditBlock()
-        doc = self.text_edit.document()
-        regex_flags = 0
-        if not self.case_sensitive_checkbox.isChecked():
-            regex_flags |= re.IGNORECASE
+
+        # Get replacement text
+        replacement = self.replace_input.text()
         if self.regex_checkbox.isChecked():
-            regex_str = re.compile(text_to_find, regex_flags)
-        else:
-            regex_str = re.compile(re.escape(text_to_find), regex_flags)
-        text = doc.toPlainText()
-        for match in regex_str.finditer(text):
-            start = match.start()
-            end = match.end()
-            cursor.setPosition(start)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            cursor.insertText(replacement_text)
-            # Adjust the positions of the remaining matches
-            shift = len(replacement_text) - (end - start)
-            for i in range(len(self.results)):
-                if self.results[i] > start:
-                    self.results[i] += shift
+            try:
+                match_text = self.text_edit.toPlainText()[start:end]
+                replacement = re.sub(
+                    self.get_pattern(),
+                    replacement,
+                    match_text,
+                    flags=self.get_flags(),
+                    count=1
+                )
+            except re.error as e:
+                QMessageBox.warning(self, "Regex Error", f"Replacement error: {e}")
+                return
+
+        # Perform replacement
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.KeepAnchor)
+        cursor.insertText(replacement)
         cursor.endEditBlock()
-        self.find_text()
 
-    def move_to_previous_result(self):
-        if self.results and len(self.results) > self.current_result_index + 1:
-            self.current_result_index = (self.current_result_index - 2) % len(self.results)
-            cursor = QTextCursor(self.text_edit.document())
-            start = self.results[self.current_result_index]
-            end = self.results[self.current_result_index + 1]
-            cursor.setPosition(start)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            self.text_edit.setTextCursor(cursor)
-            self.highlight_text(self.search_input.text())
+        # Update results after replacement
+        delta = len(replacement) - (end - start)
+        self.results = [
+            (s + delta if s > start else s, e + delta if e > start else e)
+            for s, e in self.results
+        ]
 
-    def move_to_next_result(self):
-        if self.results and len(self.results) > self.current_result_index + 1:
-            self.current_result_index = (self.current_result_index + 2) % len(self.results)
-            cursor = QTextCursor(self.text_edit.document())
-            start = self.results[self.current_result_index]
-            end = self.results[self.current_result_index + 1]
-            cursor.setPosition(start)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            self.text_edit.setTextCursor(cursor)
-            self.highlight_text(self.search_input.text())
+        self.find_text()  # Refresh search results
 
-    def highlight_text(self, text):
-        selections = []
-        normal_format = QTextCharFormat()
-        normal_format.setBackground(QColor("yellow"))
-        selected_format = QTextCharFormat()
-        selected_format.setBackground(QColor("green"))
-        regex_flags = 0
-        if not self.case_sensitive_checkbox.isChecked():
-            regex_flags |= re.IGNORECASE
-        if self.regex_checkbox.isChecked():
-            regex = re.compile(text, regex_flags)
-        else:
-            regex = re.compile(re.escape(text), regex_flags)
-        cursor = self.text_edit.textCursor()
-        for match in regex.finditer(self.text_edit.toPlainText()):
-            start = match.start()
-            end = match.end()
-            selection = QTextEdit.ExtraSelection()
+    def replace_all(self):
+        text = self.text_edit.toPlainText()
+        pattern = self.get_pattern()
+        replacement = self.replace_input.text()
+        flags = self.get_flags()
 
-            selection.cursor = QTextCursor(self.text_edit.document())
-            selection.cursor.setPosition(start)
-            selection.cursor.setPosition(end, QTextCursor.KeepAnchor)
-            selections.append(selection)
-            if cursor.hasSelection() and (start <= cursor.selectionStart() and cursor.selectionEnd() <= end or cursor.selectionStart() <= start and end <= cursor.selectionEnd()):
-                selection.format = selected_format
-            else:
-                selection.format = normal_format
-        self.text_edit.setExtraSelections(selections)
+        try:
+            new_text, count = re.subn(pattern, replacement, text, flags=flags)
+        except re.error as e:
+            QMessageBox.warning(self, "Regex Error", f"Replace all error: {e}")
+            return
+
+        if count > 0:
+            cursor = self.text_edit.textCursor()
+            cursor.beginEditBlock()
+            cursor.select(QTextCursor.Document)
+            cursor.insertText(new_text)
+            cursor.endEditBlock()
+            self.find_text()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+        super().keyPressEvent(event)

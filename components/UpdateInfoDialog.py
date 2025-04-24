@@ -28,6 +28,7 @@ class UpdateInfoDialog(QDialog):
         self.setWindowFlag(Qt.FramelessWindowHint)
 
 
+        layout = QVBoxLayout()
         title_label = QLabel("Update Information")
         title_font = QFont()
         title_font.setPointSize(24)
