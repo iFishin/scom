@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [v1.2.1](https://github.com/iFishin/scom/releases)
+
+- 新增功能
+  - 新增窗口加载过渡窗口
+- 改进
+  - 修复了批量执行时，单选框错误选中的问题
+  - 优化了串口接收性能，稍微减少了CPU占用
+  - 修复了部分情况下窗口崩溃的问题
+  - 修正了部分样式问题
+
 ## [v1.2.0](https://github.com/iFishin/scom/releases)
 
 - 改进：

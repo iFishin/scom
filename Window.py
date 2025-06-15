@@ -30,8 +30,9 @@ from PySide6.QtWidgets import (
     QDialog,
     QMessageBox,
     QMainWindow,
+    QSplashScreen,
 )
-from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread, QMimeData
+from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, QThread, QMimeData, QRunnable, Signal, QObject
 from PySide6.QtGui import (
     QTextDocument,
     QTextCursor,
@@ -44,6 +45,8 @@ from PySide6.QtGui import (
     QTextCharFormat,
     QFont,
     QDrag,
+    QPixmap,
+    QPainter,
 )
 from serial.tools import list_ports
 import utils.common as common
@@ -86,12 +89,28 @@ class MyWidget(QWidget):
         self.thread_pool = QThreadPool()
         self.data_receiver = None
         self.command_executor = None
-        ## Update main text area
+        
+        ## Update main text area - 优化的缓冲区管理
         self.hex_buffer = []
         self.buffer_size = 1000     # Maximum stored lines
         self.visible_lines = 100
         self.current_offset = 0    # Scroll position tracker
         self.full_data_store = [] # Complete history
+        
+        # 添加UI更新优化相关变量
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.batch_update_ui)
+        self.update_timer.setSingleShot(True)
+        self.pending_updates = []
+        self.last_ui_update_time = time.time()
+        self.ui_update_interval = 0.1  # 100ms最小更新间隔
+        
+        # 性能监控
+        self.performance_stats = {
+            'updates_per_second': 0,
+            'last_stats_time': time.time(),
+            'update_count': 0
+        }
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
@@ -700,23 +719,56 @@ class MyWidget(QWidget):
         # 设置radio_groupbox的最大高度，使其不会占据太多空间
         # self.radio_groupbox.setMaximumHeight(300)
         
-        # 创建一个水平布局来容纳展开按钮和滚动区域
+        # 在radio_container_layout部分修改代码
         radio_container = QWidget()
         radio_container_layout = QHBoxLayout(radio_container)
         radio_container_layout.setContentsMargins(0, 0, 0, 0)
         radio_container_layout.setSpacing(0)
-        
+
+        # 创建左侧按钮容器（垂直布局）
+        left_buttons_container = QWidget()
+        left_buttons_layout = QVBoxLayout(left_buttons_container)
+        left_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        left_buttons_layout.setSpacing(2)
+
+        # 创建存储按钮
+        self.save_paths_button = QPushButton()
+        self.save_paths_button.setFixedSize(30, 30)
+        self.save_paths_button.setIcon(QIcon("res/save.png"))
+        self.save_paths_button.setStyleSheet(
+            "QPushButton { "
+            "background-color: transparent; "
+            "border-radius: 5px; "
+            "font-size: 12px; "
+            "font-weight: bold; "
+            "}"
+            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
+            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
+        )
+        self.save_paths_button.setToolTip("Save current path configuration")
+        self.save_paths_button.clicked.connect(self.save_paths_to_config)
+
+        # 展开/收起按钮保持原有设置
         self.expand_left_button = QPushButton()
-        self.expand_left_button.setFixedWidth(30)  # 设置固定宽度
+        self.expand_left_button.setFixedWidth(30)
+        self.expand_left_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.expand_left_button.setStyleSheet(
             "QPushButton { background-color: transparent; color: #00A86B; border-radius: 5px; padding: 5px; font-size: 16px; font-weight: bold; }"
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
-        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))  # 初始状态为向右
+        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
-        
-        radio_container_layout.addWidget(self.expand_left_button)
+
+        # 将按钮添加到左侧容器
+        left_buttons_layout.addWidget(self.save_paths_button)
+        left_buttons_layout.addWidget(self.expand_left_button)
+
+        # 设置左侧按钮容器的固定宽度
+        left_buttons_container.setFixedWidth(30)
+
+        # 将左侧按钮容器和滚动区域添加到主容器
+        radio_container_layout.addWidget(left_buttons_container)
         radio_container_layout.addWidget(self.radio_scroll_area)
         
         layout_2_main.addWidget(radio_container)
@@ -915,7 +967,8 @@ class MyWidget(QWidget):
         self.apply_config(self.config)
         self.layout_config_dialog.apply()
 
-        self.save_settings_action.triggered.connect(self.save_config(self.config))        
+        # self.save_settings_action.triggered.connect(self.save_config(self.config))        
+        self.save_settings_action.triggered.connect(lambda: self.save_config(self.config))
 
 
     """
@@ -1161,7 +1214,14 @@ class MyWidget(QWidget):
 
     def config_save(self):
         self.save_config(self.config)
-        QMessageBox.information(self, "Save", "Save successfully")
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("Save Successful")
+        msg_box.setText("Configuration has been saved successfully!")
+        msg_box.setInformativeText("Your settings are now up to date.\n\n"
+                       "You can continue using the application or close this dialog.")
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec()
 
     def layout_config(self):
         # LayoutConfigDialog
@@ -1477,68 +1537,134 @@ class MyWidget(QWidget):
                 # logging.error(f"Error occurred while fetching new data: {e}")
                 pass
 
-    def update_display(self):
-        """Update UI with current data slice"""
-        # Calculate display range
-        end_idx = len(self.full_data_store) - self.current_offset
-        start_idx = max(0, end_idx - self.visible_lines)
+    def batch_update_ui(self):
+        """批量更新UI，减少刷新频率"""
+        if not self.pending_updates:
+            return
         
-        # Get data slices
-        text_slice = "\n".join(self.full_data_store[start_idx:end_idx])
-        hex_slice = "".join(self.hex_buffer[start_idx:end_idx])
-
-        # Batch update UI
-        self.received_data_textarea.setUpdatesEnabled(False)
-        try:
-            self.received_data_textarea.clear()
-            for i, text_line in enumerate(text_slice.split("\n")):
-                if text_line.strip():  # Ensure non-empty text lines
-                    self.received_data_textarea.insertPlainText(text_line+'\n')
-                if self.received_hex_data_checkbox.isChecked() and i < len(hex_slice.split("<br>")):
-                    self.received_data_textarea.insertPlainText(text_line+'\n')
-                    hex_line = hex_slice.split("<br>")[i]
-                    if hex_line.strip():
-                        self.received_data_textarea.insertHtml(hex_line + "<br>")
-        finally:
-            self.received_data_textarea.setUpdatesEnabled(True)
-
-        # Maintain scroll position
-        scrollbar = self.received_data_textarea.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum() if self.current_offset == 0 else scrollbar.singleStep())
-
-    def update_main_textarea(self, data):
-        """Main update entry point"""
+        # 更新性能统计
+        current_time = time.time()
+        self.performance_stats['update_count'] += len(self.pending_updates)
         
-        # Initialize buffers if not exists (defensive programming)
-        if not hasattr(self, 'full_data_store'):
-            self.full_data_store = []
-            self.hex_buffer = []
-            self.buffer_size = 500
-            self.visible_lines = 200
-            self.current_offset = 0
+        # 每秒计算一次更新频率
+        time_diff = current_time - self.performance_stats['last_stats_time']
+        if time_diff >= 1.0:
+            self.performance_stats['updates_per_second'] = self.performance_stats['update_count'] / time_diff
+            self.performance_stats['update_count'] = 0
+            self.performance_stats['last_stats_time'] = current_time
             
-        # Store new data
-        self.full_data_store.append(data)
-        self.hex_buffer.append(self._process_hex_data(data))
+            # 根据更新频率自适应调整间隔
+            if self.performance_stats['updates_per_second'] > 50:
+                self.ui_update_interval = 0.2  # 高频时增加间隔
+            elif self.performance_stats['updates_per_second'] > 20:
+                self.ui_update_interval = 0.15
+            else:
+                self.ui_update_interval = 0.1  # 低频时减少间隔
         
-        # Maintain buffer size
-        if len(self.full_data_store) > self.buffer_size:
+        # 处理所有待更新的数据
+        for data in self.pending_updates:
+            self.full_data_store.append(data)
+            self.hex_buffer.append(self._process_hex_data(data))
+            
+            # 文件日志记录（异步处理以减少阻塞）
+            if self.checkbox_data_received.isChecked():
+                file_path = self.input_path_data_received.text()
+                # 使用线程池异步写入文件
+                self.thread_pool.start(
+                    lambda: common.print_write(data, file_path if file_path else None)
+                )
+        
+        # 清空待更新队列
+        self.pending_updates.clear()
+        
+        # 维护缓冲区大小
+        while len(self.full_data_store) > self.buffer_size:
             del self.full_data_store[0]
             del self.hex_buffer[0]
         
-        # Auto-scroll logic
+        # 检查是否需要更新显示
         scrollbar = self.received_data_textarea.verticalScrollBar()
-        at_bottom = scrollbar.maximum() - scrollbar.value() <= 60  # Allow a range of 60 pixels from the bottom
+        at_bottom = scrollbar.maximum() - scrollbar.value() <= 60
         
-        # Only auto-scroll if within the range near the bottom
         if at_bottom:
             self.current_offset = 0
-            self.update_display()
+            self.efficient_update_display()
+
+    def efficient_update_display(self):
+        """高效的UI更新方法"""
+        # 计算显示范围
+        end_idx = len(self.full_data_store) - self.current_offset
+        start_idx = max(0, end_idx - self.visible_lines)
+        
+        # 如果没有新数据，直接返回
+        if (hasattr(self, '_last_start_idx') and 
+            start_idx == self._last_start_idx and 
+            end_idx == self._last_end_idx):
+            return
+        
+        self._last_start_idx = start_idx
+        self._last_end_idx = end_idx
+        
+        # 禁用更新以提高性能
+        self.received_data_textarea.setUpdatesEnabled(False)
+        try:
+            # 使用QTextDocument进行批量更新
+            document = QTextDocument()
             
-        # File logging (original behavior)
-        if self.checkbox_data_received.isChecked():
-            file_path = self.input_path_data_received.text()
-            common.print_write(data, file_path if file_path else None)
+            # 保持原有的字体设置
+            current_font = self.received_data_textarea.font()
+            document.setDefaultFont(current_font)
+            
+            cursor = QTextCursor(document)
+            
+            # 获取数据切片
+            text_lines = self.full_data_store[start_idx:end_idx]
+            hex_lines = self.hex_buffer[start_idx:end_idx] if self.received_hex_data_checkbox.isChecked() else []
+            
+            # 批量插入文本
+            for i, line in enumerate(text_lines):
+                if line.strip():  # 只处理非空行
+                    cursor.insertText(line + '\n')
+                    
+                    # 如果需要显示十六进制数据
+                    if (self.received_hex_data_checkbox.isChecked() and 
+                        i < len(hex_lines) and hex_lines[i].strip()):
+                        cursor.insertHtml(hex_lines[i])
+            
+            # 一次性设置整个文档
+            self.received_data_textarea.setDocument(document)
+            
+        finally:
+            self.received_data_textarea.setUpdatesEnabled(True)
+        
+        # 维护滚动位置
+        if self.current_offset == 0:
+            scrollbar = self.received_data_textarea.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+
+    def update_main_textarea(self, data):
+        # 初始化缓冲区（如果不存在）
+        if not hasattr(self, 'full_data_store'):
+            self.full_data_store = []
+            self.hex_buffer = []
+            self.buffer_size = 1000
+            self.visible_lines = 100
+            self.current_offset = 0
+        
+        # 将数据添加到待更新队列，而不是立即更新
+        self.pending_updates.append(data)
+        
+        # 检查是否应该立即更新（基于时间或数量阈值）
+        current_time = time.time()
+        time_since_last_update = current_time - self.last_ui_update_time
+        
+        # 如果缓冲区满了或者时间间隔够了，立即更新
+        if (len(self.pending_updates) >= 20 or 
+            time_since_last_update >= self.ui_update_interval):
+            
+            if not self.update_timer.isActive():
+                self.update_timer.start(10)  # 10ms后批量更新
+                self.last_ui_update_time = current_time
 
     def show_search_dialog(self):
         if self.stacked_widget.currentIndex() == 0:
@@ -1992,7 +2118,7 @@ class MyWidget(QWidget):
         return self.selected_commands
 
     def handle_command_executed(self, index, command):
-        self.checkbox[index].setChecked(True)
+        # self.checkbox[index].setChecked(True)
         self.input_prompt_index.setText(str(index))
         self.input_prompt.setText(command)
         self.input_prompt.setCursorPosition(0)
@@ -2093,6 +2219,15 @@ class MyWidget(QWidget):
         if confirm_exit_dialog.exec() == QDialog.Accepted:
             # Save configuration settings
             self.save_config(self.config)
+            # Properly stop and wait for the data receive thread
+            try:
+                if hasattr(self, "data_receiver") and self.data_receiver:
+                    self.data_receiver.stop_thread()
+                if hasattr(self, "data_receive_thread") and self.data_receive_thread:
+                    self.data_receive_thread.quit()
+                    self.data_receive_thread.wait(2000)  # Wait up to 2 seconds
+            except Exception as e:
+                logging.error(f"Error stopping data receive thread: {e}")
             # Close serial port
             if self.main_Serial:
                 self.port_off()
@@ -2106,36 +2241,132 @@ class MyWidget(QWidget):
             event.ignore()
 
 
-# Create a logger for the application
-logger = logging.getLogger(__name__)
-
-
 def main():
     try:
         app = QApplication([])
-        widget = MyWidget()
-        widget.setStyleSheet(QSSLoader.load_stylesheet("styles/fish.qss"))
+        
         load_dotenv()
         version = os.getenv("VERSION", "1.0.0")
-        widget.setWindowTitle(f"Serial Communication v{version}")
+        
+        # 创建启动画面
+        splash_pixmap = QPixmap(400, 300)
+        splash_pixmap.fill(QColor("#f0f0f0"))
+        
+        # 在启动画面上绘制内容
+        painter = QPainter(splash_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # 绘制应用图标（如果存在）
+        try:
+            icon_pixmap = QPixmap("favicon.ico")
+            if not icon_pixmap.isNull():
+                scaled_icon = icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                painter.drawPixmap(168, 80, scaled_icon)
+        except:
+            pass
+        
+        # 绘制应用名称
+        painter.setPen(QColor("#333333"))
+        font = QFont("Microsoft YaHei", 18, QFont.Bold)
+        painter.setFont(font)
+        text_rect = splash_pixmap.rect().adjusted(0, 150, 0, -120)
+        painter.drawText(text_rect, Qt.AlignHCenter | Qt.AlignTop, f"SCOM v{version}")
+        
+        # 绘制加载文本
+        font = QFont("Consolas", 12)
+        painter.setFont(font)
+        painter.setPen(QColor("#666666"))
+        painter.drawText(50, 210, 300, 30, Qt.AlignCenter, "Starting SCOM...")
+
+        # 绘制进度条背景
+        painter.setPen(QColor("#cccccc"))
+        painter.setBrush(QColor("#f8f8f8"))
+        painter.drawRoundedRect(80, 240, 240, 8, 4, 4)
+        
+        painter.end()
+        
+        splash = QSplashScreen(splash_pixmap)
+        splash.show()
+        app.processEvents()
+        
+        # 更新启动画面消息
+        def update_splash_message(message):
+            splash.showMessage(
+                f"{message}",
+                Qt.AlignBottom | Qt.AlignCenter,
+                QColor("#333333")
+            )
+            app.processEvents()
+        
+        # 分步骤加载
+        update_splash_message("Initializing application...")
+        app.processEvents()
+        
+        update_splash_message("Loading main interface...")
+        widget = MyWidget()
+        app.processEvents()
+        
+        update_splash_message("Applying styles...")
+        widget.setStyleSheet(QSSLoader.load_stylesheet("styles/fish.qss"))
+        app.processEvents()
+        
+        update_splash_message("Configuring window...")
+        widget.setWindowTitle(f"SCOM v{version}")
         app.setWindowIcon(QIcon("favicon.ico"))
-
-        # widget.showMaximized()
         widget.resize(1000, 900)
-        widget.show()
-
-        UpdateInfoDialog(widget)
-
+        app.processEvents()
+        
+        update_splash_message("Checking for updates...")
+        app.processEvents()
+        
+        update_loader = UpdateInfoDialog.load_update_info_async()
+        
+        def on_update_finished(success, should_show_dialog):
+            update_splash_message("Startup complete!")
+            QTimer.singleShot(300, lambda: finish_startup(should_show_dialog))
+        
+        def finish_startup(should_show_dialog=False):
+            widget.show()
+            splash.finish(widget)
+            
+            # 如果检测到更新信息有变化，显示更新信息对话框
+            if should_show_dialog:
+                def show_update_dialog():
+                    try:
+                        update_dialog = UpdateInfoDialog(widget)
+                        update_dialog.show()
+                    except Exception as e:
+                        print(f"显示更新信息对话框失败: {e}")
+                
+                # 延迟500毫秒后显示更新对话框，让主界面先完全显示
+                QTimer.singleShot(500, show_update_dialog)
+        
+        # 连接完成信号
+        update_loader.finished.connect(on_update_finished)
+        
+        # 设置超时机制，如果10秒内没有完成就强制关闭启动画面
+        def force_close_splash():
+            if update_loader.isRunning():
+                print("Update info loading timeout, force closing splash screen")
+                update_splash_message("Startup complete!")
+                widget.show()
+                splash.finish(widget)
+        
+        QTimer.singleShot(10000, force_close_splash)  # 10秒超时
+        
         sys.exit(app.exec())
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
-        # 显示错误对话框
-        error_msg = QMessageBox()
-        error_msg.setIcon(QMessageBox.Critical)
-        error_msg.setText("应用程序启动失败")
-        error_msg.setInformativeText(f"错误信息: {str(e)}")
-        error_msg.setWindowTitle("错误")
-        error_msg.exec_()
+        logging.error(f"An unexpected error occurred: {e}")
+        print(f"Startup failed: {e}")
+        try:
+            error_msg = QMessageBox()
+            error_msg.setIcon(QMessageBox.Critical)
+            error_msg.setText("Application failed to start")
+            error_msg.setInformativeText(f"Error: {str(e)}")
+            error_msg.setWindowTitle("Error")
+            error_msg.exec()
+        except:
+            print("Unable to display error dialog")
 
 
 if __name__ == "__main__":
@@ -2145,3 +2376,4 @@ if __name__ == "__main__":
         format="%(asctime)s - %(levelname)s - %(message)s",
     )
     main()
+

@@ -17,9 +17,6 @@ class SearchReplaceDialog(QDialog):
         self.last_search = ""
         self.results = []
         self.current_result_index = -1
-        self.case_sensitive_checkbox.setChecked(False)
-        self.regex_checkbox.setChecked(False)
-        self.whole_word_checkbox.setChecked(False)
         
         layout = QVBoxLayout(self)
         self.setMinimumWidth(500)
@@ -31,8 +28,11 @@ class SearchReplaceDialog(QDialog):
         self.search_input.textChanged.connect(self.clear_highlights)
         self.search_button = QPushButton("Find")
         self.case_sensitive_checkbox = QCheckBox("Case sensitive")
+        self.case_sensitive_checkbox.setChecked(False)
         self.regex_checkbox = QCheckBox("Regex")
+        self.regex_checkbox.setChecked(False)
         self.whole_word_checkbox = QCheckBox("Whole word")
+        self.whole_word_checkbox.setChecked(False)
 
         search_layout.addWidget(self.search_label)
         search_layout.addWidget(self.search_input)

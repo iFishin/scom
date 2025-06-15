@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import zipfile
 from setuptools import setup, find_packages
@@ -19,6 +20,11 @@ env_file = ".env"
 load_dotenv(env_file)
 CURRENT_VERSION = os.getenv("VERSION", "1.0.0")
 
+# Check if the script is run with the --feature argument
+IS_FEATURE_BUILD = '--feature' in sys.argv
+if IS_FEATURE_BUILD:
+    sys.argv.remove('--feature')
+
 def increment_version():
     current_version = os.getenv("VERSION", "1.0.0")
     version_parts = current_version.split(".")
@@ -29,8 +35,10 @@ def increment_version():
     return new_version
 
 def create_setup():
+    app_name = f"{APP_NAME}-feature" if IS_FEATURE_BUILD else APP_NAME
+    
     setup_kwargs = {
-        "name": APP_NAME,
+        "name": app_name,
         "scripts": [MAIN_SCRIPT],
         "install_requires": REQUIRED_PACKAGES,
         "packages": find_packages(include=['utils', 'utils.*']),
@@ -41,9 +49,12 @@ def create_setup():
     return setup_kwargs
 
 def run_nuitka(version):
+    app_name = f"{APP_NAME}-feature" if IS_FEATURE_BUILD else APP_NAME
+    build_dir = f"{app_name}.build"
+    
     try:
-        if os.path.exists(NUITKA_BUILD_DIR):
-            shutil.rmtree(NUITKA_BUILD_DIR)
+        if os.path.exists(build_dir):
+            shutil.rmtree(build_dir)
     except Exception as e:
         print(f"Error while removing build directory: {e}")
 
@@ -65,11 +76,13 @@ def run_nuitka(version):
         f"--windows-icon-from-ico={ICON_PATH} "
         f"--mingw64 --standalone --windows-disable-console "
         f"--assume-yes-for-downloads "
-        f"--output-dir={NUITKA_BUILD_DIR} "
-        f"--output-filename={APP_NAME}.exe {MAIN_SCRIPT}"
+        f"--output-dir={build_dir} "
+        f"--output-filename={app_name}.exe {MAIN_SCRIPT}"
     )
 
+    print(f"Building {'feature' if IS_FEATURE_BUILD else 'main'} version...")
     print(f"Running Nuitka command: {nuitka_command}")
+    
     try:
         result = os.system(nuitka_command)
         if result != 0:
@@ -82,29 +95,33 @@ def run_nuitka(version):
         print(f"Error while running Nuitka command: {e}")
         return
 
-    compress_and_cleanup(version)
+    compress_and_cleanup(version, app_name, build_dir)
 
-def compress_and_cleanup(version):
+def compress_and_cleanup(version, app_name, build_dir):
     try:
-        dist_dir = os.path.join(NUITKA_BUILD_DIR, "window.dist")
+        dist_dir = os.path.join(build_dir, "window.dist")
         if not os.path.exists(dist_dir):
             print(f"Directory {dist_dir} not found.")
             return
 
-        zip_filename = f"{APP_NAME}-{version}.zip"
+        zip_filename = f"{app_name}-{version}.zip"
+        
         with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(dist_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, dist_dir)
                     zipf.write(file_path, arcname)
+        
         print(f"Compressed {dist_dir} to {zip_filename}")
 
         # Cleanup: remove build directory
-        shutil.rmtree(NUITKA_BUILD_DIR)
-        print(f"Removed build directory: {NUITKA_BUILD_DIR}")
-        shutil.rmtree("build")
-        print("Removed build directory: build")
+        shutil.rmtree(build_dir)
+        print(f"Removed build directory: {build_dir}")
+        
+        if os.path.exists("build"):
+            shutil.rmtree("build")
+            print("Removed build directory: build")
 
     except Exception as e:
         print(f"Error during compression or cleanup: {e}")
@@ -113,6 +130,12 @@ if __name__ == "__main__":
     try:
         setup(**create_setup())
         run_nuitka(CURRENT_VERSION)
-        increment_version()
+        
+        # 只在非feature分支时自动递增版本号
+        if not IS_FEATURE_BUILD:
+            increment_version()
+        else:
+            print("Feature branch build completed, version not incremented.")
+            
     except Exception as e:
         print(f"Error during setup or Nuitka run: {e}")

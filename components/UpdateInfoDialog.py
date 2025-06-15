@@ -1,5 +1,5 @@
 import os
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 import requests
 from utils.common import custom_print
@@ -14,6 +14,101 @@ from PySide6.QtWidgets import (
 )
 
 
+class UpdateInfoLoader(QThread):
+    """异步加载更新信息的线程"""
+    finished = Signal(bool, bool)  # 完成信号，传递是否成功加载和是否需要显示对话框
+    
+    def __init__(self):
+        super().__init__()
+        self.url_update_info = "https://raw.githubusercontent.com/iFishin/scom/refs/heads/main/CHANGELOG.md"
+        self.proxy_list = [
+            "https://gh-proxy.com/",
+            "https://gh-proxy.ygxz.in/",
+            "https://goppx.com/"
+        ]
+        self.content = None
+        self.success = False
+        self.should_show_dialog = False
+    
+    def run(self):
+        """在后台线程中执行网络请求"""
+        try:
+            content = None
+            max_retries = 3
+            
+            # 首先尝试直接访问
+            custom_print("尝试直接访问GitHub...")
+            for attempt in range(max_retries):
+                try:
+                    response = requests.get(self.url_update_info, timeout=5)
+                    response.raise_for_status()
+                    response.encoding = 'utf-8'
+                    content = response.text
+                    custom_print("直接访问GitHub成功")
+                    break
+                except requests.RequestException as e:
+                    custom_print(f"直接访问尝试 {attempt + 1} 失败: {e}")
+                    
+                    if attempt == max_retries - 1:
+                        custom_print("直接访问GitHub失败，尝试使用代理...")
+            
+            # 如果直接访问失败，依次尝试代理
+            if content is None:
+                for proxy in self.proxy_list:
+                    proxy_url = f"{proxy}{self.url_update_info}"
+                    custom_print(f"尝试使用代理: {proxy}")
+                    
+                    for attempt in range(max_retries):
+                        try:
+                            response = requests.get(proxy_url, timeout=8)
+                            response.raise_for_status()
+                            response.encoding = 'utf-8'
+                            content = response.text
+                            custom_print(f"使用代理 {proxy} 访问成功")
+                            break
+                        except requests.RequestException as e:
+                            custom_print(f"代理 {proxy} 尝试 {attempt + 1} 失败: {e}")
+                            
+                            if attempt == max_retries - 1:
+                                custom_print(f"代理 {proxy} 访问失败，尝试下一个代理...")
+                    
+                    if content is not None:
+                        break
+            
+            # 处理获取到的内容
+            if content is not None:
+                self.content = content
+                # 检查和保存文件
+                should_show_dialog = False
+                if not os.path.exists("CHANGELOG.md"):
+                    with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                        f.write(content)
+                    should_show_dialog = True
+                else:
+                    with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+                        old_content = f.read()
+                        if content != old_content:
+                            with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                                f.write(content)
+                            should_show_dialog = True
+                
+                custom_print(f"更新信息处理完成，需要显示对话框: {should_show_dialog}")
+                self.success = True
+                self.should_show_dialog = should_show_dialog
+                self.finished.emit(True, should_show_dialog)
+            else:
+                custom_print("所有访问方式均失败，无法获取更新信息")
+                self.success = False
+                self.should_show_dialog = False
+                self.finished.emit(False, False)
+                
+        except Exception as e:
+            custom_print(f"异步加载更新信息失败: {e}")
+            self.success = False
+            self.should_show_dialog = False
+            self.finished.emit(False, False)
+
+
 class UpdateInfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,7 +121,6 @@ class UpdateInfoDialog(QDialog):
         self.setWindowTitle("Update Information")
         self.setFixedSize(600, 400)
         self.setWindowFlag(Qt.FramelessWindowHint)
-
 
         layout = QVBoxLayout()
         title_label = QLabel("Update Information")
@@ -53,6 +147,18 @@ class UpdateInfoDialog(QDialog):
 
         self.setLayout(layout)
 
+        # 同步加载更新信息（保持原有逻辑）
+        self._load_update_info()
+    
+    @staticmethod
+    def load_update_info_async():
+        """静态方法：异步加载更新信息，返回加载器对象"""
+        loader = UpdateInfoLoader()
+        loader.start()
+        return loader
+    
+    def _load_update_info(self):
+        """加载更新信息的内部方法"""
         # 尝试获取更新信息
         content = None
         max_retries = 3

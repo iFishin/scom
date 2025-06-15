@@ -58,3 +58,20 @@ ATCRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
 TimeStampRegex = \[20(.*?)\]
 MaxRowsOfButtonGroup = 100
 ShowCommandEcho = False
+
+[Paths]
+Path_1 = 
+Path_2 = 
+Path_3 = 
+Path_4 = 
+Path_5 = 
+Path_6 = 
+Path_7 = 
+Path_8 = 
+Path_9 = 
+Path_10 = 
+Path_11 = 
+Path_12 = 
+Path_13 = 
+Path_14 = 
+Path_15 = 

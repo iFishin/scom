@@ -1,6 +1,7 @@
 import datetime
+import time
 from utils import common
-from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker
+from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker, QTimer
 from serial import SerialTimeoutException
 
 
@@ -24,11 +25,23 @@ class DataReceiver(QThread):
         self.cond = QWaitCondition()
         self._last_read_time = datetime.datetime.now()
         
-        # Add persistent buffer
+        # 批处理相关配置
+        self.batch_buffer = []
+        self.batch_timeout = 0.1  # 100ms批处理超时
+        self.batch_max_size = 50  # 最大批处理条目数
+        self.last_emit_time = time.time()
+        
+        # 持久化缓冲区
         self.persistent_buffer = bytearray()
         self.last_data_time = datetime.datetime.now()
-        self.buffer_timeout = 0.05  # 50 milliseconds timeout
+        self.buffer_timeout = 0.05  # 50毫秒超时
         
+        # 性能监控
+        self.data_rate_monitor = {
+            'last_time': time.time(),
+            'data_count': 0,
+            'bytes_per_second': 0
+        }
 
     def pause_thread(self):
         with QMutexLocker(self.mutex):
@@ -58,47 +71,71 @@ class DataReceiver(QThread):
             
             try:
                 if not self.is_paused and self.serial_port.is_open:
-                    raw_data = self.read_raw_data()
-                    read_time = datetime.datetime.now()
-                    if raw_data:
-                        formatted = self.process_raw_data(raw_data, read_time)
-                        self.dataReceived.emit(formatted)
+                    # 检查缓冲区状态
+                    waiting_bytes = self.serial_port.in_waiting
                     
-                    # Dynamic sleep based on data transmission time
-                    sleep_ms = self.calculate_sleep_interval()
+                    if waiting_bytes > 0:
+                        # 一次性读取所有可用数据
+                        raw_data = self.serial_port.read(min(waiting_bytes, 4096))
+                        if raw_data:
+                            read_time = datetime.datetime.now()
+                            formatted = self.process_raw_data(raw_data, read_time)
+                            if formatted:
+                                self.add_to_batch(formatted)
+                            
+                            # 更新数据速率监控
+                            self.update_data_rate_monitor(len(raw_data))
+                    
+                    # 检查是否需要发送批处理数据
+                    self.check_and_emit_batch()
+                    
+                    # 智能休眠
+                    sleep_ms = self.calculate_optimized_sleep_interval()
                     QThread.msleep(sleep_ms)
-                    self._last_read_time = read_time
+                    self._last_read_time = datetime.datetime.now()
             
             except Exception as e:
                 self.handle_exception(e)
 
-    def read_raw_data(self):
-        """Safely read raw bytes from serial port with proper buffer handling"""
-        if not self.serial_port.is_open:
-            raise RuntimeError("Serial port is not open")
+    def add_to_batch(self, data):
+        """添加数据到批处理缓冲区"""
+        self.batch_buffer.append(data)
         
-        try:
-            # Check the buffer status first
-            if self.serial_port.in_waiting > 0:
-                # If data is available, read all immediately
-                return self.serial_port.read_all()
-            
-            # If no data is waiting, use the standard read method
-            if self.is_show_hex:
-                raw = common.port_read_hex(self.serial_port)
-            else:
-                raw = common.port_read(self.serial_port)
-            
-            # Type conversion protection
-            if isinstance(raw, str):
-                return raw.encode('utf-8')
-            return raw or b''
-        
-        except Exception as e:
-            self.serial_port.close()
-            raise
+        # 如果达到最大批处理大小，立即发送
+        if len(self.batch_buffer) >= self.batch_max_size:
+            self.emit_batch()
 
-    @property
+    def check_and_emit_batch(self):
+        """检查并发送批处理数据"""
+        current_time = time.time()
+        
+        # 如果有数据且超过批处理超时时间，发送数据
+        if self.batch_buffer and (current_time - self.last_emit_time) >= self.batch_timeout:
+            self.emit_batch()
+
+    def emit_batch(self):
+        """发送批处理数据"""
+        if self.batch_buffer:
+            # 合并所有数据为一个字符串
+            combined_data = '\n'.join(self.batch_buffer)
+            self.dataReceived.emit(combined_data)
+            
+            # 清空缓冲区并更新时间
+            self.batch_buffer.clear()
+            self.last_emit_time = time.time()
+
+    def update_data_rate_monitor(self, bytes_received):
+        """更新数据速率监控"""
+        current_time = time.time()
+        self.data_rate_monitor['data_count'] += bytes_received
+        
+        # 每秒更新一次速率统计
+        time_diff = current_time - self.data_rate_monitor['last_time']
+        if time_diff >= 1.0:
+            self.data_rate_monitor['bytes_per_second'] = self.data_rate_monitor['data_count'] / time_diff
+            self.data_rate_monitor['data_count'] = 0
+            self.data_rate_monitor['last_time'] = current_time
+
     def byte_transmission_time(self) -> float:
         """计算单个字节的传输时间（秒）"""
         bits_per_byte = 10  # 1起始 + 8数据 + 1停止
@@ -119,7 +156,7 @@ class DataReceiver(QThread):
             return ""
         
         # Calculate the time when the first byte was received
-        block_duration = self.byte_transmission_time * (byte_count - 1)
+        block_duration = self.byte_transmission_time() * (byte_count - 1)
         start_time = read_time - datetime.timedelta(seconds=block_duration)
         
         try:
@@ -141,7 +178,7 @@ class DataReceiver(QThread):
                 continue
                 
             # Calculate the timestamp for the current line
-            line_duration = self.byte_transmission_time * current_pos
+            line_duration = self.byte_transmission_time() * current_pos
             line_time = start_time + datetime.timedelta(seconds=line_duration)
             
             # Calculate the number of bytes in the current line (including the newline character)
@@ -156,59 +193,50 @@ class DataReceiver(QThread):
         return '\n'.join(formatted_lines)
 
     def format_text_data(self, data_bytes, start_time):
-        """Format text data with precise timestamps"""
+        """优化的文本数据格式化"""
         try:
-            if not isinstance(data_bytes, bytes):
-                raise ValueError(f"Expected bytes, got {type(data_bytes)}")
-            
-            if not data_bytes:
+            if not isinstance(data_bytes, bytes) or not data_bytes:
                 return ""
 
-            # Add to persistent buffer and update the last data time
+            # 添加到持久缓冲区
             self.persistent_buffer.extend(data_bytes)
             self.last_data_time = datetime.datetime.now()
             
             complete_lines = []
-            current_pos = 0  # Current position in the data block
+            current_pos = 0
             
-            # Split the buffer into complete lines
-            while True:
-                # Find the position of the newline character
-                newline_pos = self.persistent_buffer.find(b'\n')
-                if newline_pos == -1:
-                    break
-                    
-                # Extract a single line of data (including the newline character)
-                line_bytes = self.persistent_buffer[:newline_pos+1]
-                
-                # Calculate the start time of the line (considering transmission delay)
-                line_duration = self.byte_transmission_time * current_pos
-                line_time = start_time + datetime.timedelta(seconds=line_duration)
-                
-                # Decode and add a timestamp
-                line_str = self.decode_line(line_bytes)
-                formatted = self.add_timestamp(line_str, line_time)
-                complete_lines.append(formatted)
-                
-                # Remove the processed line from the buffer
-                del self.persistent_buffer[:newline_pos+1]
-                
-                # Update the position counter
-                current_pos += len(line_bytes)
+            # 使用更高效的行分割
+            buffer_parts = self.persistent_buffer.split(b'\n')
             
-            # Handle timeout for remaining data
-            if self.persistent_buffer:
-                time_since_last = (datetime.datetime.now() - self.last_data_time).total_seconds()
-                if time_since_last > self.buffer_timeout:
-                    # Timeout, process remaining data
-                    line_duration = self.byte_transmission_time * current_pos
+            # 处理除最后一部分外的所有完整行
+            for i in range(len(buffer_parts) - 1):
+                line_bytes = buffer_parts[i]
+                if line_bytes:  # 忽略空行
+                    line_duration = self.byte_transmission_time() * current_pos
                     line_time = start_time + datetime.timedelta(seconds=line_duration)
-                    line_str = self.decode_line(bytes(self.persistent_buffer))
-                    complete_lines.append(self.add_timestamp(line_str, line_time))
-                    self.persistent_buffer.clear()
                     
-            # Return all complete lines, joined by newline characters
-            return '\n'.join(complete_lines)
+                    line_str = self.decode_line(line_bytes + b'\n')
+                    formatted = self.add_timestamp(line_str, line_time)
+                    complete_lines.append(formatted)
+                    
+                    current_pos += len(line_bytes) + 1  # +1 for newline
+            
+            # 最后一部分是不完整行，保留在缓冲区
+            remaining_buffer = buffer_parts[-1]
+            
+            # 检查超时
+            time_since_last = (datetime.datetime.now() - self.last_data_time).total_seconds()
+            if time_since_last > self.buffer_timeout and remaining_buffer:
+                line_duration = self.byte_transmission_time() * current_pos
+                line_time = start_time + datetime.timedelta(seconds=line_duration)
+                line_str = self.decode_line(remaining_buffer)
+                complete_lines.append(self.add_timestamp(line_str, line_time))
+                remaining_buffer = b''
+            
+            # 更新缓冲区
+            self.persistent_buffer = bytearray(remaining_buffer)
+            
+            return '\n'.join(complete_lines) if complete_lines else ""
             
         except Exception as e:
             print(f"Format error: {str(e)}")
@@ -230,20 +258,25 @@ class DataReceiver(QThread):
         ts = timestamp.strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
         return f"[{ts}]{content}"
 
-    def calculate_sleep_interval(self):
-        """Dynamic interval calculation based on data activity"""
-        active_factor = 0.2  # 0-1, 1 indicates continuous data flow
-        base_interval = 10  # Base interval (ms)
-        min_interval = 2    # Minimum interval (ms)
+    def calculate_optimized_sleep_interval(self):
+        """优化的休眠间隔计算"""
+        base_interval = 20  # 基础间隔(ms)
+        min_interval = 5    # 最小间隔(ms)
         
-        # Calculate activity level based on recent data size differences
-        if hasattr(self, '_prev_data_size'):
-            data_diff = abs(len(self._last_data) - self._prev_data_size)
-            active_factor = min(1.0, data_diff / 64)  # 64 bytes as reference value
+        # 根据缓冲区状态调整
+        if self.serial_port.is_open:
+            waiting_bytes = self.serial_port.in_waiting
+            if waiting_bytes > 0:
+                return min_interval
+            
+            # 根据数据速率调整
+            bps = self.data_rate_monitor['bytes_per_second']
+            if bps > 1000:  # 高速数据流
+                return min_interval
+            elif bps > 100:  # 中速数据流
+                return base_interval // 2
         
-        # Dynamic adjustment formula
-        interval = max(min_interval, base_interval * (1 - active_factor))
-        return int(interval)
+        return base_interval
 
     def handle_exception(self, error):
         """Centralized exception handling"""

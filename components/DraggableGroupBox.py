@@ -1,10 +1,3 @@
-'''
-Date: 2025-04-18
-LastEditors: Fishing
-LastEditTime: 2025-04-18
-FilePath: \SCOM\components\DraggableGroupBox.py
-Description: https://github.com/iFishin
-'''
 from PySide6.QtWidgets import QGroupBox, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDrag
