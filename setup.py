@@ -78,7 +78,7 @@ def run_nuitka(version):
         f"{' '.join(include_data_dirs)} "
         f"{' '.join(include_data_files)} "
         f"--windows-icon-from-ico={ICON_PATH} "
-        f"--mingw64 --standalone --onefile "
+        f"--mingw64 --standalone "
         f"--windows-disable-console "
         f"--assume-yes-for-downloads "
         f"--no-pyi-file "
