@@ -476,18 +476,6 @@ QTabBar::tab:selected {
     border-color: #ccc;
 }
 
-QProgressBar {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #e5e5e5;
-    text-align: center;
-}
-
-QProgressBar::chunk {
-    background-color: #0078d7;
-    width: 20px;
-}
-
 QLineEdit, QTextEdit {
     background-color: #f0f0f0;
     font-size: 14px;
@@ -514,11 +502,15 @@ QTabBar::tab:selected {
 }
 
 QProgressBar {
-    background: #d9d9d9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #e5e5e5;
+    text-align: center;
 }
 
 QProgressBar::chunk {
     background-color: #00a86b;
+    border-radius: 8px;
 }
 
 /* 统一对话框样式 */

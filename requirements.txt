@@ -2,3 +2,4 @@ pyside6
 pyserial
 requests
 markdown
+dotenv

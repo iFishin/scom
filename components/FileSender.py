@@ -29,7 +29,6 @@ class FileSender(QThread):
                     if is_crlf:
                         formatted_chunk = chunk.replace(b'\r\n', b'\n').decode('utf-8')
                         formatted_chunk = formatted_chunk.replace('\n', '\r\n')
-                        print(formatted_chunk)
                     elif is_lf:
                         formatted_chunk = chunk.decode('utf-8')
                     else:

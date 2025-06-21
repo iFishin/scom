@@ -6,10 +6,108 @@ import json
 import serial
 import configparser
 from datetime import datetime
+from pathlib import Path
 
 
 class SerialPortNotInitializedError(Exception):
     pass
+
+def get_resource_path(relative_path):
+    """
+    获取资源文件的绝对路径，支持开发和打包环境
+    
+    参数：
+    relative_path (str): 资源文件的相对路径
+    
+    返回：
+    str: 资源文件的绝对路径
+    """
+    # 打包环境检测
+    if getattr(sys, 'frozen', False):
+        # 打包后的环境
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller
+            base_path = sys._MEIPASS
+        else:
+            # Nuitka 或其他打包工具
+            base_path = os.path.dirname(sys.executable)
+    else:
+        # 开发环境 - 获取项目根目录
+        base_path = Path(__file__).parent.parent
+    
+    return os.path.join(base_path, relative_path)
+
+def ensure_user_directories(app_name="SCOM"):
+    """
+    确保用户数据目录存在，跨平台兼容
+    
+    参数：
+    app_name (str): 应用名称
+    
+    返回：
+    str: 用户数据目录路径
+    """
+    if getattr(sys, 'frozen', False):
+        # 打包环境 - 使用用户目录
+        if os.name == 'nt':  # Windows
+            app_data_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), app_name)
+        else:  # Linux/macOS
+            app_data_dir = os.path.join(os.path.expanduser('~'), f'.{app_name.lower()}')
+    else:
+        # 开发环境 - 使用项目目录
+        app_data_dir = get_resource_path(".")
+    
+    # 创建必要的子目录
+    for subdir in ["logs", "tmps", "config"]:
+        os.makedirs(os.path.join(app_data_dir, subdir), exist_ok=True)
+    
+    return app_data_dir
+
+def get_config_path(filename="config.ini", app_name="SCOM"):
+    """
+    获取配置文件路径，如果用户目录没有则从资源目录复制
+    
+    参数：
+    filename (str): 配置文件名
+    app_name (str): 应用名称
+    
+    返回：
+    str: 配置文件路径
+    """
+    user_data_dir = ensure_user_directories(app_name)
+    config_path = os.path.join(user_data_dir, "config", filename)
+    
+    # 如果用户配置不存在，尝试从资源目录复制
+    if not os.path.exists(config_path):
+        try:
+            resource_config = get_resource_path(filename)
+            if os.path.exists(resource_config):
+                import shutil
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                shutil.copy2(resource_config, config_path)
+        except Exception:
+            pass  # 忽略复制失败，使用默认配置
+    
+    return config_path
+
+# 便捷函数
+def resource_exists(relative_path):
+    """检查资源文件是否存在"""
+    return os.path.exists(get_resource_path(relative_path))
+
+def safe_resource_path(relative_path, fallback=""):
+    """
+    安全获取资源路径，如果不存在返回备选路径
+    
+    参数：
+    relative_path (str): 资源文件相对路径
+    fallback (str): 备选路径
+    
+    返回：
+    str: 资源文件路径或备选路径
+    """
+    path = get_resource_path(relative_path)
+    return path if os.path.exists(path) else fallback
 
 def get_current_time() -> str:
     """
@@ -218,7 +316,7 @@ def log_write(res: str, log_file: str = None) -> bool:
     bool: 写入成功返回 True，否则返回 False
     """
     if log_file is None:
-        log_file = "./tmps/temp.log"
+        log_file = get_resource_path("tmps/temp.log")
     try:
         with open(os.path.join(log_file), "a", encoding="utf-8") as log_file_object:
             log_file_object.write("{}\n".format(res.strip()))
@@ -308,8 +406,8 @@ def port_off(port_serial: serial.Serial) -> None:
 def port_write(
     command: str,
     port_serial: serial.Serial,
-    sendWithEnter: bool = True,
-    sendWithOther: str = None,
+    endWithEnter: bool = True,
+    endWithOther: str = None,
 ) -> None:
     """
     向串口写入命令
@@ -317,19 +415,31 @@ def port_write(
     参数：
     command (str): 要写入的命令
     port_serial (serial.Serial): 打开的串口对象
-    sendWithEnter (bool): 是否添加回车换行（默认 True）
+    endWithEnter (bool): 是否添加回车换行（默认 True）
+    endWithOther (str): 自定义的十六进制结束字符，如 "0D0A", "0A", "20" 等（默认 None）
+                       如果提供此参数，将优先使用此参数而不是 endWithEnter
     """
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
     else:
         try:
-            if sendWithEnter:
+            if endWithOther:
+                try:
+                    hex_string = endWithOther.replace(" ", "").replace("0x", "").replace("\\x", "")
+                    if len(hex_string) % 2 != 0:
+                        hex_string = "0" + hex_string
+                    end_bytes = bytes.fromhex(hex_string)
+                    port_serial.write(command.encode("UTF-8") + end_bytes)
+                except ValueError as e:
+                    custom_print(f"Invalid hex string '{endWithOther}': {e}")
+                    if endWithEnter:
+                        port_serial.write((command + "\r\n").encode("UTF-8"))
+                    else:
+                        port_serial.write(command.encode("UTF-8"))
+            elif endWithEnter:
                 port_serial.write((command + "\r\n").encode("UTF-8"))
             else:
-                if sendWithOther:
-                    port_serial.write((command + sendWithOther).encode("UTF-8"))
-                else:
-                    port_serial.write(command.encode("UTF-8"))
+                port_serial.write(command.encode("UTF-8"))
         except Exception as e:
             custom_print(f"Error writing to serial port: {e}")
             raise e
@@ -561,7 +671,7 @@ def custom_print(text: str, log_file: str = None, isPrint: bool = False) -> None
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
     formatted_text = f"{timestamp} - {text}"
     if log_file is None:
-        log_file = "logs/error.log"
+        log_file = get_resource_path("logs/error.log")
     if isPrint:
         print_write(formatted_text, log_file=log_file, isPrint=isPrint)
     else:
