@@ -2,31 +2,73 @@
     "Commands": [
         {
             "selected": false,
-            "command": "AT+QBLEINIT=1",
+            "command": "1. 模块上电，设置广播名称，并查看是否设置成功",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLESCAN=1",
+            "command": "AT+NAME=TestDevice",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+QBLESCAN=0",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "AT+QBLECONN=1,\"7c8ac6dc4a16\"",
+            "command": "AT+NAME?",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
             "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "2. 开启广播，并查看是否开启成功",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+ADV=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+ADV?",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "3. 手机端扫描所设置的广播名称，使用调试工具连接至模块，连接过程中弹出配对对话框，点击配对即可",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "4. 数据收发，手机端找到指定特征服务UUID，发送数据 \"HelloWorld\"；模块下发指令发送数据",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+SEND=HelloWorld",
             "withEnter": true,
             "interval": ""
         }

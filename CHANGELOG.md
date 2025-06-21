@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v1.2.2](https://github.com/iFishin/scom/releases)
+
+- 新增功能
+  - 新增EndWithOther参数至顶部Settings-MoreSettings菜单中，供用户自定义指令结尾符，输入的格式为Ascii码字符
+
+- 改进
+  - 修复了上个打包版本运行不了的问题
+
 ## [v1.2.1](https://github.com/iFishin/scom/releases)
 
 - 新增功能
@@ -30,18 +38,6 @@
   - 由于加入了数据缓冲区，在缓冲区长度范围内，向上滑动显示旧数据，向下滑动显示新数据。
   - 修正指令页的布局，并加入了保存到配置文件的功能。
   - 修正部分样式。
-
----
-
-目前待解决问题项：
-
-- [ ] Ctrl+F 的搜索框中，替换和全部替换有问题
-- [ ] 配置文件编码异常，导致窗口无法打开
-- [ ] 热键重复删除导致错误
-- [ ] ....
-
-
----
 
 ## [v1.1.3](https://github.com/iFishin/scom/releases) - [2025-3-18]
 

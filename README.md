@@ -76,8 +76,7 @@ SCOM/
 ├── favicon.ico
 ├── requirements.txt
 ├── run as admin.bat
-├── setup.py
-└── 一键运行.bat
+└── setup.py
 ```
 
 - **components**：包含项目的组件模块，用于实现不同的功能。
@@ -91,7 +90,6 @@ SCOM/
 - **config.ini**：配置文件，存储一些常用的设置。
 - **run as admin.bat**：Windows 下的批处理文件，用于以管理员权限运行程序，可以检查环境并安装所需的组件。
 - **setup.py**：用于项目的安装和打包。
-- **一键运行.bat**：用于在Windows下直接运行SCOM。
 
 ## 五、使用方法
 

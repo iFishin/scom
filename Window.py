@@ -75,6 +75,9 @@ import os
 class MyWidget(QWidget):
     def __init__(self):
         super().__init__()
+        
+        # Get User Data Directory
+        self.app_data_dir = common.ensure_user_directories()
 
         # Init constants for the widget
         self.main_Serial = None
@@ -84,7 +87,7 @@ class MyWidget(QWidget):
         self.total_times = 0
         self.is_stop_batch = False
         self.last_one_click_time = None
-        self.path_ATCommand = common.get_absolute_path("tmps\\ATCommand.json")
+        self.path_ATCommand = os.path.join(self.app_data_dir, "tmps", "ATCommand.json")
         self.received_data_textarea_scrollBottom = True
         self.thread_pool = QThreadPool()
         self.data_receiver = None
@@ -116,7 +119,7 @@ class MyWidget(QWidget):
         self.config = common.read_config("config.ini")
         
         # Init the UI of the widget
-        self.init_UI()    
+        self.init_UI()
     
     """
     🎨🎨🎨
@@ -467,7 +470,7 @@ class MyWidget(QWidget):
         self.label_data_received = QLabel("Data Received:", Alignment=Qt.AlignRight)
         self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(
-            common.get_absolute_path("tmps/temp.log")
+            common.safe_resource_path("tmps/temp.log")
         )
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = (
@@ -489,7 +492,7 @@ class MyWidget(QWidget):
 
         self.toggle_button = QPushButton()
         self.toggle_button.setToolTip("Show More Options")
-        self.toggle_button.setIcon(QIcon("res/expander-down.png"))
+        self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/expander-down.png")))
         self.toggle_button_is_expanded = False
         self.toggle_button.clicked.connect(self.show_more_options)
 
@@ -526,7 +529,7 @@ class MyWidget(QWidget):
         # Create a button for expanding/collapsing the input field
         self.expand_button = QPushButton()
         self.expand_button.setIcon(
-            QIcon("res/expand.png")
+            QIcon(common.safe_resource_path("res/expand.png"))
         )  # You need to have an icon for this
         self.expand_button.setCheckable(True)
         self.expand_button.setChecked(False)
@@ -734,7 +737,7 @@ class MyWidget(QWidget):
         # 创建存储按钮
         self.save_paths_button = QPushButton()
         self.save_paths_button.setFixedSize(30, 30)
-        self.save_paths_button.setIcon(QIcon("res/save.png"))
+        self.save_paths_button.setIcon(QIcon(common.safe_resource_path("res/save.png")))
         self.save_paths_button.setStyleSheet(
             "QPushButton { "
             "background-color: transparent; "
@@ -757,7 +760,7 @@ class MyWidget(QWidget):
             "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
             "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
         )
-        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+        self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
 
         # 将按钮添加到左侧容器
@@ -926,7 +929,7 @@ class MyWidget(QWidget):
         
         # 设置初始状态 - 路径选项框收起
         self.radio_scroll_area.setMaximumWidth(50)
-        self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+        self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
         
         # Post actions after the initialization of the UI.
         self.post_init_UI()
@@ -1316,22 +1319,22 @@ class MyWidget(QWidget):
             if widget:
                 widget.setVisible(not widget.isVisible())
         if self.toggle_button_is_expanded:
-            self.toggle_button.setIcon(QIcon("res/expander-down.png"))
+            self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/expander-down.png")))
         else:
-            self.toggle_button.setIcon(QIcon("res/fork.png"))
+            self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/fork.png")))
         self.toggle_button_is_expanded = not self.toggle_button_is_expanded
 
     def expand_command_input(self):
         self.command_input.setFixedHeight(100)
         self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QIcon("res/collapse.png"))
+        self.expand_button.setIcon(QIcon(common.safe_resource_path("res/collapse.png")))
         self.expand_button.setChecked(True)
         self.expand_button.clicked.connect(self.collapse_command_input)
 
     def collapse_command_input(self):
         self.command_input.setFixedHeight(35)
         self.command_input.setLineWrapMode(QTextEdit.WidgetWidth)
-        self.expand_button.setIcon(QIcon("res/expand.png"))
+        self.expand_button.setIcon(QIcon(common.safe_resource_path("res/expand.png")))
         self.expand_button.setChecked(False)
         self.expand_button.clicked.connect(self.expand_command_input)
 
@@ -1343,10 +1346,12 @@ class MyWidget(QWidget):
 
     def port_write(self, command, serial_port, send_with_enter):
         try:
+            endWithOther = self.config.get("MoreSettings", "EndWithOther", fallback="")
+            
             if send_with_enter:
-                common.port_write(command, serial_port, True)
+                common.port_write(command, serial_port, endWithEnter=True, endWithOther=endWithOther)
             else:
-                common.port_write(command, serial_port, False)
+                common.port_write(command, serial_port, endWithEnter=False, endWithOther=endWithOther)
             self.data_receiver.is_new_data_written = True
             
             # If `ShowCommandEcho` is enabled, show the command in the received data area
@@ -1502,7 +1507,7 @@ class MyWidget(QWidget):
             lines_in_view = self.received_data_textarea.height() // self.received_data_textarea.fontMetrics().lineSpacing()
             top_line_index = self.current_offset + (previous_scroll_value // self.received_data_textarea.fontMetrics().lineSpacing())
             self.current_offset += lines_in_view // 2  # Overlap half the actual visible lines for better context
-            self.update_display()
+            self.efficient_update_display()
             new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
             scrollbar.setValue(max(0, new_scroll_value))
 
@@ -1515,7 +1520,7 @@ class MyWidget(QWidget):
             top_line_index = self.current_offset + (previous_scroll_value // self.received_data_textarea.fontMetrics().lineSpacing())
             self.current_offset -= lines_in_view // 2  # Overlap half the actual visible lines for better context
             self.current_offset = max(0, self.current_offset)  # Ensure offset doesn't go below 0
-            self.update_display()
+            self.efficient_update_display()
             new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
             scrollbar.setValue(max(0, new_scroll_value))
 
@@ -1584,11 +1589,15 @@ class MyWidget(QWidget):
         
         # 检查是否需要更新显示
         scrollbar = self.received_data_textarea.verticalScrollBar()
-        at_bottom = scrollbar.maximum() - scrollbar.value() <= 60
+        self.efficient_update_display()
+        scrollbar.setValue(scrollbar.maximum())  # 确保滚动条在底部
+
         
-        if at_bottom:
-            self.current_offset = 0
-            self.efficient_update_display()
+        # at_bottom = scrollbar.maximum() - scrollbar.value() == 0
+        
+        # if at_bottom:
+        #     self.current_offset = 0
+        #     self.efficient_update_display()
 
     def efficient_update_display(self):
         """高效的UI更新方法"""
@@ -1604,6 +1613,10 @@ class MyWidget(QWidget):
         
         self._last_start_idx = start_idx
         self._last_end_idx = end_idx
+        
+        # 记录更新前的滚动位置
+        scrollbar = self.received_data_textarea.verticalScrollBar()
+        was_at_bottom = scrollbar.maximum() - scrollbar.value() <= 60
         
         # 禁用更新以提高性能
         self.received_data_textarea.setUpdatesEnabled(False)
@@ -1637,9 +1650,8 @@ class MyWidget(QWidget):
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
         
-        # 维护滚动位置
-        if self.current_offset == 0:
-            scrollbar = self.received_data_textarea.verticalScrollBar()
+        # 维护滚动位置 - 只有用户之前在底部时才自动滚动到底部
+        if self.current_offset == 0 and was_at_bottom:
             scrollbar.setValue(scrollbar.maximum())
 
     def update_main_textarea(self, data):
@@ -1647,8 +1659,8 @@ class MyWidget(QWidget):
         if not hasattr(self, 'full_data_store'):
             self.full_data_store = []
             self.hex_buffer = []
-            self.buffer_size = 1000
-            self.visible_lines = 100
+            self.buffer_size = 2000
+            self.visible_lines = 500
             self.current_offset = 0
         
         # 将数据添加到待更新队列，而不是立即更新
@@ -1801,7 +1813,7 @@ class MyWidget(QWidget):
                 f.write("")
         else:
             with open(
-                common.get_absolute_path("tmps/temp.log"),
+                common.get_resource_path("tmps/temp.log"),
                 "w",
                 encoding="utf-8",
             ) as f:
@@ -1879,7 +1891,7 @@ class MyWidget(QWidget):
                 # 保存当前选中的路径到配置文件
                 self.save_paths_to_config()
             else:
-                self.path_ATCommand = common.get_absolute_path("tmps/ATCommand.json")
+                self.path_ATCommand = common.get_resource_path("tmps/ATCommand.json")
         else:
             # common.custom_print(f"Radio button {index + 1} is unchecked.")
             pass
@@ -1956,7 +1968,7 @@ class MyWidget(QWidget):
             
             # Reset the offset to ensure the latest content is displayed
             self.current_offset = 0
-            self.update_display()
+            self.efficient_update_display()
             
         # Else, do nothing
         else:
@@ -2068,7 +2080,7 @@ class MyWidget(QWidget):
     def set_radio_groupbox_visible(self):
         if self.path_command_inputs[0].isVisible():
             # 收起状态
-            self.expand_left_button.setIcon(QIcon("res/direction_left.png"))
+            self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
             # 保存路径到配置文件
             self.save_paths_to_config()
             # 隐藏所有路径输入框
@@ -2078,7 +2090,7 @@ class MyWidget(QWidget):
             self.radio_scroll_area.setMaximumWidth(50)
         else:
             # 展开状态
-            self.expand_left_button.setIcon(QIcon("res/direction_right.png"))
+            self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_right.png")))
             # 显示所有路径输入框
             for path_input in self.path_command_inputs:
                 path_input.setVisible(True)
@@ -2243,9 +2255,31 @@ class MyWidget(QWidget):
 
 def main():
     try:
+        # 确保用户数据目录存在
+        app_data_dir = common.ensure_user_directories()
+        
+        # 设置日志
+        log_file = os.path.join(app_data_dir, "logs", "error.log")
+        logging.basicConfig(
+            filename=log_file,
+            level=logging.DEBUG,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            filemode='a'
+        )
+        
+        # 添加控制台输出
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        logging.getLogger().addHandler(console_handler)
+        
+        logging.info("Application starting...")
+        
         app = QApplication([])
         
-        load_dotenv()
+        # 加载环境变量
+        env_path = common.get_resource_path(".env")
+        if os.path.exists(env_path):
+            load_dotenv(env_path)
         version = os.getenv("VERSION", "1.0.0")
         
         # 创建启动画面
@@ -2256,18 +2290,20 @@ def main():
         painter = QPainter(splash_pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # 绘制应用图标（如果存在）
+        # 绘制应用图标（使用资源路径函数）
         try:
-            icon_pixmap = QPixmap("favicon.ico")
-            if not icon_pixmap.isNull():
-                scaled_icon = icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                painter.drawPixmap(168, 80, scaled_icon)
-        except:
-            pass
+            icon_path = common.get_resource_path("favicon.ico")
+            if os.path.exists(icon_path):
+                icon_pixmap = QPixmap(icon_path)
+                if not icon_pixmap.isNull():
+                    scaled_icon = icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    painter.drawPixmap(168, 80, scaled_icon)
+        except Exception as e:
+            logging.warning(f"Could not load icon: {e}")
         
         # 绘制应用名称
         painter.setPen(QColor("#333333"))
-        font = QFont("Microsoft YaHei", 18, QFont.Bold)
+        font = QFont("Consolas", 18, QFont.Bold)
         painter.setFont(font)
         text_rect = splash_pixmap.rect().adjusted(0, 150, 0, -120)
         painter.drawText(text_rect, Qt.AlignHCenter | Qt.AlignTop, f"SCOM v{version}")
@@ -2307,23 +2343,45 @@ def main():
         app.processEvents()
         
         update_splash_message("Applying styles...")
-        widget.setStyleSheet(QSSLoader.load_stylesheet("styles/fish.qss"))
+        try:
+            style_path = common.safe_resource_path("styles/fish.qss")
+            if os.path.exists(style_path):
+                widget.setStyleSheet(QSSLoader.load_stylesheet(style_path))
+            else:
+                logging.warning("Style file not found, using default style")
+        except Exception as e:
+            logging.warning(f"Could not load stylesheet: {e}")
         app.processEvents()
         
         update_splash_message("Configuring window...")
         widget.setWindowTitle(f"SCOM v{version}")
-        app.setWindowIcon(QIcon("favicon.ico"))
+        
+        # 设置应用图标
+        try:
+            icon_path = common.safe_resource_path("favicon.ico")
+            if os.path.exists(icon_path):
+                app.setWindowIcon(QIcon(icon_path))
+        except Exception as e:
+            logging.warning(f"Could not set window icon: {e}")
+        
         widget.resize(1000, 900)
         app.processEvents()
         
         update_splash_message("Checking for updates...")
         app.processEvents()
         
-        update_loader = UpdateInfoDialog.load_update_info_async()
-        
-        def on_update_finished(success, should_show_dialog):
-            update_splash_message("Startup complete!")
-            QTimer.singleShot(300, lambda: finish_startup(should_show_dialog))
+        # 更新检查（添加异常处理）
+        try:
+            update_loader = UpdateInfoDialog.load_update_info_async()
+            
+            def on_update_finished(success, should_show_dialog):
+                update_splash_message("Startup complete!")
+                QTimer.singleShot(300, lambda: finish_startup(should_show_dialog))
+            
+            update_loader.finished.connect(on_update_finished)
+        except Exception as e:
+            logging.warning(f"Update check failed: {e}")
+            finish_startup(False)
         
         def finish_startup(should_show_dialog=False):
             widget.show()
@@ -2336,42 +2394,53 @@ def main():
                         update_dialog = UpdateInfoDialog(widget)
                         update_dialog.show()
                     except Exception as e:
-                        print(f"显示更新信息对话框失败: {e}")
+                        logging.warning(f"显示更新信息对话框失败: {e}")
                 
                 # 延迟500毫秒后显示更新对话框，让主界面先完全显示
                 QTimer.singleShot(500, show_update_dialog)
         
-        # 连接完成信号
-        update_loader.finished.connect(on_update_finished)
-        
         # 设置超时机制，如果10秒内没有完成就强制关闭启动画面
         def force_close_splash():
-            if update_loader.isRunning():
-                print("Update info loading timeout, force closing splash screen")
+            try:
+                if 'update_loader' in locals() and update_loader.isRunning():
+                    logging.info("Update info loading timeout, force closing splash screen")
                 update_splash_message("Startup complete!")
                 widget.show()
                 splash.finish(widget)
+            except Exception as e:
+                logging.error(f"Error in force_close_splash: {e}")
         
         QTimer.singleShot(10000, force_close_splash)  # 10秒超时
         
         sys.exit(app.exec())
+        
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
-        print(f"Startup failed: {e}")
+        error_msg = f"Application startup failed: {str(e)}\n"
+        error_msg += f"Python executable: {sys.executable}\n"
+        error_msg += f"Working directory: {os.getcwd()}\n"
+        error_msg += f"Frozen: {getattr(sys, 'frozen', False)}\n"
+        error_msg += f"Sys.path: {sys.path[:3]}...\n"  # 只显示前3个路径
+        
+        logging.error(error_msg)
+        print(error_msg)
+        
+        # 尝试显示错误对话框
         try:
-            error_msg = QMessageBox()
-            error_msg.setIcon(QMessageBox.Critical)
-            error_msg.setText("Application failed to start")
-            error_msg.setInformativeText(f"Error: {str(e)}")
-            error_msg.setWindowTitle("Error")
-            error_msg.exec()
-        except:
-            print("Unable to display error dialog")
-
+            error_app = QApplication([])
+            error_dialog = QMessageBox()
+            error_dialog.setIcon(QMessageBox.Critical)
+            error_dialog.setText("Application failed to start")
+            error_dialog.setDetailedText(error_msg)
+            error_dialog.setWindowTitle("SCOM Startup Error")
+            error_dialog.exec()
+        except Exception as dialog_error:
+            print(f"Unable to display error dialog: {dialog_error}")
+        
+        sys.exit(1)
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="logs/error.log",
+        filename=common.get_resource_path("logs/error.log"),
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - %(message)s",
     )

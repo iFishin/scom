@@ -13,6 +13,7 @@ REQUIRED_PACKAGES = [
     "pyside6",
     "pyserial",
     "requests",
+    "dotenv",
 ]
 
 # Load .env file
@@ -41,9 +42,11 @@ def create_setup():
         "name": app_name,
         "scripts": [MAIN_SCRIPT],
         "install_requires": REQUIRED_PACKAGES,
-        "packages": find_packages(include=['utils', 'utils.*']),
+        "packages": find_packages(include=['utils', 'utils.*', 'components', 'components.*']),
         "package_data": {
             '': ['*.qss'],
+            'components': ['*.py'],
+            'utils': ['*.py'],
         },
     }
     return setup_kwargs
@@ -63,7 +66,7 @@ def run_nuitka(version):
         f"--include-data-dir={data_dir}={data_dir}" for data_dir in data_dirs if os.path.exists(data_dir)
     ]
     
-    data_files = [ICON_PATH, ".env", "Help.md", "CHANGELOG.md"]
+    data_files = [ICON_PATH, ".env", "HELP.md", "CHANGELOG.md", "README.md", "LICENSE", "KNOWN_ISSUES.md", "ROADMAP.md"]
     include_data_files = [
         f"--include-data-file={file}={file}" for file in data_files if os.path.exists(file)
     ]
@@ -71,11 +74,14 @@ def run_nuitka(version):
     nuitka_command = (
         f"python -m nuitka --plugin-enable=pyside6 "
         f"--follow-import-to=utils --follow-import-to=components "
+        f"--include-package=utils --include-package=components "
         f"{' '.join(include_data_dirs)} "
         f"{' '.join(include_data_files)} "
         f"--windows-icon-from-ico={ICON_PATH} "
-        f"--mingw64 --standalone --windows-disable-console "
+        f"--mingw64 --standalone --onefile "
+        f"--windows-disable-console "
         f"--assume-yes-for-downloads "
+        f"--no-pyi-file "
         f"--output-dir={build_dir} "
         f"--output-filename={app_name}.exe {MAIN_SCRIPT}"
     )
