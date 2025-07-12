@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import time
+import datetime
 import json
 import serial
 import logging
@@ -94,13 +95,14 @@ class MyWidget(QWidget):
         self.command_executor = None
         
         ## Update main text area - 优化的缓冲区管理
-        self.hex_buffer = []
-        self.buffer_size = 1000     # Maximum stored lines
-        self.visible_lines = 100
-        self.current_offset = 0    # Scroll position tracker
         self.full_data_store = [] # Complete history
+        self.hex_buffer = []  # 用于存储十六进制数据
+        self.raw_data_buffer = []  # 用于存储原始数据
+        self.buffer_size = 2000     # Maximum stored lines
+        self.visible_lines = 500    # 可见行数
+        self.current_offset = 0    # Scroll position tracker
         
-        # 添加UI更新优化相关变量
+        ## 添加UI更新优化相关变量
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.batch_update_ui)
         self.update_timer.setSingleShot(True)
@@ -108,7 +110,7 @@ class MyWidget(QWidget):
         self.last_ui_update_time = time.time()
         self.ui_update_interval = 0.1  # 100ms最小更新间隔
         
-        # 性能监控
+        ## 性能监控
         self.performance_stats = {
             'updates_per_second': 0,
             'last_stats_time': time.time(),
@@ -139,19 +141,14 @@ class MyWidget(QWidget):
          Initialize the UI of the widget.
          
     """
-    
-    def modify_max_rows_of_button_group(self, max_rows):
-        # Clear the existing button group
-        if hasattr(self, "settings_button_group"):
-            self.settings_button_group.deleteLater()
-
-        # Add setting area for the button group
-        self.settings_button_group = QGroupBox()
+    def add_settings_button_group(self):
+        # Create settings_button_group
+        self.settings_button_group = QGroupBox("Prompt Button Group")
         settings_button_layout = QGridLayout(self.settings_button_group)
         settings_button_layout.setColumnStretch(1, 3)
 
         self.prompt_button = QPushButton("Prompt")
-        self.prompt_button.setObjectName("prompt_button")  # Add an object name for debugging
+        self.prompt_button.setObjectName("prompt_button")
         self.prompt_button.setToolTip(
             "Left button clicked to Execute; Right button clicked to Switch Next"
         )
@@ -189,7 +186,6 @@ class MyWidget(QWidget):
             "QPushButton:pressed { background-color: #0a4c2b; }"
         )
         self.prompt_batch_start_button.setEnabled(False)
-
         self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
 
         self.prompt_batch_stop_button = QPushButton("Stop")
@@ -199,7 +195,6 @@ class MyWidget(QWidget):
             "QPushButton:pressed { background-color: #7b1520; }"
         )
         self.prompt_batch_stop_button.setEnabled(False)
-
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
 
         self.input_prompt_batch_times = QLineEdit()
@@ -212,59 +207,63 @@ class MyWidget(QWidget):
         settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
         settings_button_layout.addWidget(self.input_prompt_index, 0, 5, 1, 1)
         settings_button_layout.addWidget(self.prompt_batch_start_button, 1, 0, 1, 1)
-        settings_button_layout.addWidget(
-            self.input_prompt_batch_times,
-            1,
-            1,
-            1,
-            3,
-        )
-        
-        # Clear the existing layout if it exists
-        if self.button_groupbox.layout():
-            QWidget().setLayout(self.button_groupbox.layout())
-        button_layout = QGridLayout(self.button_groupbox)
-        button_layout.setColumnStretch(2, 2)
+        settings_button_layout.addWidget(self.input_prompt_batch_times, 1, 1, 1, 3)
         settings_button_layout.addWidget(self.prompt_batch_stop_button, 1, 4, 1, 2)
-        button_layout.addWidget(self.settings_button_group, 0, 0, 1, 5)
 
-        # Set the input field to expand horizontally
         self.input_prompt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
-        # Store the screen width
+    def modify_max_rows_of_button_group(self, max_rows):
+        """修改按钮组的最大行数，只操作button_groupbox内部"""
+        # 清理现有的动态控件
+        self.clear_dynamic_controls()
+
+        # 获取现有布局或新建
+        if not self.button_groupbox.layout():
+            button_layout = QGridLayout(self.button_groupbox)
+            button_layout.setColumnStretch(2, 2)
+        else:
+            button_layout = self.button_groupbox.layout()
+
+        # 存储屏幕宽度
         self.screen_width = QApplication.primaryScreen().size().width()
         
-        # Add column titles
-        self.total_checkbox = QCheckBox()
-        button_layout.addWidget(self.total_checkbox, 1, 0)
-        self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
-        label_function = QLabel("Function")
-        label_function.setToolTip("nothing")
-        label_input_field = QLabel("Input Field")
-        label_input_field.setToolTip("Double click to Clear")
-        label_input_field.mouseDoubleClickEvent = lambda event: self.set_input_none()
-        label_enter = QLabel("Enter")
-        label_enter.setToolTip("Double click to Clear")
-        label_enter.mouseDoubleClickEvent = lambda event: self.set_enter_none()
-        label_sec = QLabel("Sec")
-        label_sec.setToolTip("Double click to Clear")
-        label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
-        button_layout.addWidget(label_function, 1, 1, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_enter, 1, 3, alignment=Qt.AlignCenter)
-        button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
-
-        # Add new components
+        # 重置按钮列表（不删除现有的，让 Qt 自己管理）
         self.checkbox = []
         self.buttons = []
         self.input_fields = []
         self.checkbox_send_with_enters = []
         self.interVal = []
+        
+        # 添加列标题
+        if not hasattr(self, 'total_checkbox') or not self.total_checkbox.parent():
+            self.total_checkbox = QCheckBox()
+            button_layout.addWidget(self.total_checkbox, 1, 0)
+            self.total_checkbox.stateChanged.connect(self.handle_total_checkbox_click)
+            
+            label_sender = QLabel("Sender")
+            label_sender.setToolTip("nothing")
+            label_input_field = QLabel("Input")
+            label_input_field.setToolTip("Double click to Clear")
+            label_input_field.mouseDoubleClickEvent = lambda event: self.set_input_none()
+            label_ender = QLabel("Ender")
+            label_ender.setToolTip("Double click to Clear")
+            label_ender.mouseDoubleClickEvent = lambda event: self.set_enter_none()
+            label_sec = QLabel("Sec")
+            label_sec.setToolTip("Double click to Clear")
+            label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
+            
+            button_layout.addWidget(label_sender, 1, 1, alignment=Qt.AlignCenter)
+            button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
+            button_layout.addWidget(label_ender, 1, 3, alignment=Qt.AlignCenter)
+            button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
+
         isEnable = self.main_Serial is not None
+        
+        # 创建新的按钮行
         for i in range(1, max_rows + 1):
             checkbox = QCheckBox()
             checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
-            button = QPushButton(f"Func {i}")
+            button = QPushButton(f"Send {i}")
             input_field = QLineEdit()
             input_field.setMinimumWidth(self.screen_width * 0.08)
             checkbox_send_with_enter = QCheckBox()
@@ -307,6 +306,31 @@ class MyWidget(QWidget):
                     input_interval,
                 )
             )
+
+    def clear_dynamic_controls(self):
+        """安全地清理动态创建的控件（保留第一行的settings_button_group）"""
+        if not hasattr(self, "button_groupbox") or not self.button_groupbox.layout():
+            return
+            
+        layout = self.button_groupbox.layout()
+        
+        # 收集需要删除的控件（从第2行开始，保留第0行的settings_button_group）
+        widgets_to_remove = []
+        
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                # 检查控件的网格位置
+                row, col, rowspan, colspan = layout.getItemPosition(i)
+                if row > 0 and widget != self.settings_button_group:  # 保留第0行和settings_button_group
+                    widgets_to_remove.append(widget)
+        
+        # 安全删除控件
+        for widget in widgets_to_remove:
+            if widget and not widget.isHidden():
+                widget.setParent(None)
+                widget.deleteLater()
         
     def init_UI(self):
         # Pre actions before the initialization of the UI.
@@ -661,6 +685,9 @@ class MyWidget(QWidget):
         received_data_layout = QVBoxLayout(self.received_data_groupbox)
         received_data_layout.addWidget(self.received_data_textarea)
         
+        # Add settings button group
+        self.add_settings_button_group()
+
         # Create a group box for the button group section
         self.button_groupbox = QGroupBox("Button Group")
 
@@ -688,6 +715,7 @@ class MyWidget(QWidget):
         self.left_layout.addWidget(self.received_data_groupbox)
 
         self.right_layout = QVBoxLayout()
+        self.right_layout.addWidget(self.settings_button_group)
         self.right_layout.addWidget(self.button_scroll_area)
 
         # Create a layout_1 for the widget
@@ -1368,6 +1396,45 @@ class MyWidget(QWidget):
         command = self.command_input.toPlainText()
         if not command:
             return
+        
+        try:
+            send_as_hex = self.config.getboolean("MoreSettings", "SendAsHex")
+        except (configparser.NoOptionError, ValueError):
+            send_as_hex = False  # 默认值为False
+        
+        if send_as_hex:
+            try:
+                # 移除空格并验证HEX格式
+                hex_command = command.replace(' ', '').replace('\n', '').replace('\r', '')
+                if not all(c in '0123456789ABCDEFabcdef' for c in hex_command):
+                    QMessageBox.warning(self, "Invalid HEX", "Please enter valid hexadecimal characters (0-9, A-F)")
+                    return
+                if len(hex_command) % 2 != 0:
+                    QMessageBox.warning(self, "Invalid HEX", "Hexadecimal string must have even number of characters")
+                    return
+                
+                # 转换为字节数组
+                command_bytes = bytes.fromhex(hex_command)
+                
+                # 直接发送字节数据
+                if self.main_Serial and self.main_Serial.is_open:
+                    self.main_Serial.write(command_bytes)
+                    self.data_receiver.is_new_data_written = True
+                    
+                    # 默认显示HEX命令回显
+                    hex_display = ' '.join([f'{b:02X}' for b in command_bytes])
+                    command_echo = f'({common.get_current_time()})--> HEX: {hex_display}'
+                    self.full_data_store.append(command_echo)
+                return
+                
+            except ValueError as e:
+                QMessageBox.warning(self, "HEX Conversion Error", f"Error converting to HEX: {str(e)}")
+                return
+            except Exception as e:
+                QMessageBox.warning(self, "Send Error", f"Error sending HEX command: {str(e)}")
+                return
+        
+        # 普通文本发送模式
         if self.checkbox_send_with_enter.isChecked():
             self.port_write(command, self.main_Serial, True)
         else:
@@ -1501,15 +1568,12 @@ class MyWidget(QWidget):
 
     def load_older_data(self):
         """Load previous data chunks when scrolling up"""
-        if self.current_offset + self.visible_lines < len(self.full_data_store):
-            scrollbar = self.received_data_textarea.verticalScrollBar()
-            previous_scroll_value = scrollbar.value()
-            lines_in_view = self.received_data_textarea.height() // self.received_data_textarea.fontMetrics().lineSpacing()
-            top_line_index = self.current_offset + (previous_scroll_value // self.received_data_textarea.fontMetrics().lineSpacing())
-            self.current_offset += lines_in_view // 2  # Overlap half the actual visible lines for better context
+        lines_in_view = self.received_data_textarea.height() // self.received_data_textarea.fontMetrics().lineSpacing()
+        if self.current_offset + lines_in_view < len(self.full_data_store):
+            # 增加 current_offset
+            self.current_offset += lines_in_view // 2  # 向上滚动，增加偏移量
+            self.current_offset = min(self.current_offset, len(self.full_data_store) - lines_in_view)  # 确保不超出范围
             self.efficient_update_display()
-            new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
-            scrollbar.setValue(max(0, new_scroll_value))
 
     def load_newer_data(self):
         """Load next data chunks when scrolling down"""
@@ -1522,7 +1586,7 @@ class MyWidget(QWidget):
             self.current_offset = max(0, self.current_offset)  # Ensure offset doesn't go below 0
             self.efficient_update_display()
             new_scroll_value = (top_line_index - self.current_offset) * self.received_data_textarea.fontMetrics().lineSpacing()
-            scrollbar.setValue(max(0, new_scroll_value))
+            # scrollbar.setValue(max(0, new_scroll_value))
 
     def fetch_new_data(self):
         """Method to fetch new data, adjust implementation based on your data source."""
@@ -1541,139 +1605,191 @@ class MyWidget(QWidget):
             except Exception as e:
                 # logging.error(f"Error occurred while fetching new data: {e}")
                 pass
+            
+    def _process_hex_data(self, data_bytes):
+        """将bytes数据格式化为十六进制HTML字符串"""
+        if not self.received_hex_data_checkbox.isChecked():
+            return ""
+        try:
+            hex_str = ' '.join(f'{b:02X}' for b in data_bytes)
+            return f'<span style="color: #198754;">{hex_str}</span><br>'
+        except Exception as e:
+            return f'<span style="color: #dc3545;">Invalid hex data: {e}</span><br>'
 
     def batch_update_ui(self):
-        """批量更新UI，减少刷新频率"""
+        """批量更新UI，pending_updates只存储(bytes, start_time)，每条日志都带精确时间戳。"""
         if not self.pending_updates:
             return
-        
-        # 更新性能统计
+        # 性能统计
         current_time = time.time()
         self.performance_stats['update_count'] += len(self.pending_updates)
-        
-        # 每秒计算一次更新频率
         time_diff = current_time - self.performance_stats['last_stats_time']
         if time_diff >= 1.0:
             self.performance_stats['updates_per_second'] = self.performance_stats['update_count'] / time_diff
             self.performance_stats['update_count'] = 0
             self.performance_stats['last_stats_time'] = current_time
-            
-            # 根据更新频率自适应调整间隔
             if self.performance_stats['updates_per_second'] > 50:
-                self.ui_update_interval = 0.2  # 高频时增加间隔
+                self.ui_update_interval = 0.2
             elif self.performance_stats['updates_per_second'] > 20:
                 self.ui_update_interval = 0.15
             else:
-                self.ui_update_interval = 0.1  # 低频时减少间隔
-        
+                self.ui_update_interval = 0.1
         # 处理所有待更新的数据
-        for data in self.pending_updates:
-            self.full_data_store.append(data)
-            self.hex_buffer.append(self._process_hex_data(data))
+        for data_bytes, start_time in self.pending_updates:
+            end_with_other = self.config.get("MoreSettings", "EndWithOther", fallback="\r\n")
+            if not end_with_other:
+                end_with_other = "\r\n"
+            end_bytes = end_with_other.encode(errors="replace")
+            baudrate = int(self.baud_rate_combo.currentText()) if self.baud_rate_combo.currentText().isdigit() else 115200
+            bits_per_byte = 10
+
+            segments = data_bytes.split(end_bytes)
+            seg_count = len(segments)
+            byte_offset = 0
+            for i, seg in enumerate(segments):
+                # 最后一段如果为空且是结尾，不处理
+                if i == seg_count - 1 and len(seg) == 0:
+                    continue
+                seg_start_time = start_time + datetime.timedelta(seconds=(byte_offset * bits_per_byte / baudrate))
+                ts = seg_start_time.strftime("%Y-%m-%d_%H:%M:%S.%f")[:-3]
+                try:
+                    text = common.force_decode(seg)
+                except Exception:
+                    text = repr(seg)
+                if self.symbol_checkbox.isChecked():
+                    text = text.replace('\r', r'<CR>').replace('\n', r'<LF>')
+                # 判断是否为完整一行（即后面跟了结尾符）
+                is_full_line = (i < seg_count - 1)
+                display_line = f"[{ts}]{text}"
+                if is_full_line:
+                    display_line += "\n"  # 结尾符分割出的完整行，加换行
+                self.full_data_store.append(display_line)
+                self.hex_buffer.append(self._process_hex_data(seg))
+                byte_offset += len(seg) + (len(end_bytes) if is_full_line else 0)
             
-            # 文件日志记录（异步处理以减少阻塞）
-            if self.checkbox_data_received.isChecked():
-                file_path = self.input_path_data_received.text()
-                # 使用线程池异步写入文件
-                self.thread_pool.start(
-                    lambda: common.print_write(data, file_path if file_path else None)
-                )
-        
-        # 清空待更新队列
+                # 文件日志记录（异步处理以减少阻塞）
+                if self.checkbox_data_received.isChecked():
+                    file_path = self.input_path_data_received.text()
+                    self.thread_pool.start(
+                        lambda: common.print_write(display_line, file_path if file_path else None)
+                    )
         self.pending_updates.clear()
         
         # 维护缓冲区大小
-        while len(self.full_data_store) > self.buffer_size:
-            del self.full_data_store[0]
-            del self.hex_buffer[0]
-        
-        # 检查是否需要更新显示
-        scrollbar = self.received_data_textarea.verticalScrollBar()
+        if len(self.full_data_store) > self.buffer_size:
+            excess = 10
+            del self.full_data_store[:excess]
+            del self.hex_buffer[:excess]
+
+            # 调整 current_offset，保持当前显示内容不被挤到后面
+            self.current_offset = max(0, self.current_offset - excess)
+
+        # 更新显示（只有在触底时才更新）
         self.efficient_update_display()
-        scrollbar.setValue(scrollbar.maximum())  # 确保滚动条在底部
-
         
-        # at_bottom = scrollbar.maximum() - scrollbar.value() == 0
-        
-        # if at_bottom:
-        #     self.current_offset = 0
-        #     self.efficient_update_display()
-
     def efficient_update_display(self):
         """高效的UI更新方法"""
+        # 获取滚动条
+        scrollbar = self.received_data_textarea.verticalScrollBar()
+        scroll_value = scrollbar.value()
+        max_scroll_value = scrollbar.maximum()
+
+        # 判断是否快要触底（比如10像素以内）
+        will_at_bottom = max_scroll_value - scroll_value <= 20
+
+        # 如果快要触底，更新显示范围以显示最新数据
+        if will_at_bottom:
+            self.current_offset = 0  # 重置偏移量，显示最新数据
+        else:
+            # 如果没有触底，保持 current_offset 不变
+            return  # 不更新显示内容
+
         # 计算显示范围
         end_idx = len(self.full_data_store) - self.current_offset
-        start_idx = max(0, end_idx - self.visible_lines)
-        
+        end_idx = max(0, end_idx)
+        start_idx = max(0, end_idx - min(self.visible_lines, len(self.full_data_store)))
+        text_lines = self.full_data_store[start_idx:end_idx]
+
+        # 更新滚动条范围
+        # scrollbar.setMaximum(len(self.full_data_store) * self.received_data_textarea.fontMetrics().lineSpacing())
+
+        # 打印调试信息
+        # print(f"efficient_update_display: start_idx={start_idx}, end_idx={end_idx}, current_offset={self.current_offset}, will_at_bottom={will_at_bottom}")
+
         # 如果没有新数据，直接返回
         if (hasattr(self, '_last_start_idx') and 
             start_idx == self._last_start_idx and 
             end_idx == self._last_end_idx):
             return
-        
+
         self._last_start_idx = start_idx
         self._last_end_idx = end_idx
-        
-        # 记录更新前的滚动位置
-        scrollbar = self.received_data_textarea.verticalScrollBar()
-        was_at_bottom = scrollbar.maximum() - scrollbar.value() <= 60
-        
+
         # 禁用更新以提高性能
         self.received_data_textarea.setUpdatesEnabled(False)
         try:
-            # 使用QTextDocument进行批量更新
+            # 使用 QTextDocument 进行批量更新
             document = QTextDocument()
-            
-            # 保持原有的字体设置
             current_font = self.received_data_textarea.font()
             document.setDefaultFont(current_font)
-            
             cursor = QTextCursor(document)
-            
-            # 获取数据切片
-            text_lines = self.full_data_store[start_idx:end_idx]
-            hex_lines = self.hex_buffer[start_idx:end_idx] if self.received_hex_data_checkbox.isChecked() else []
-            
-            # 批量插入文本
-            for i, line in enumerate(text_lines):
-                if line.strip():  # 只处理非空行
-                    cursor.insertText(line + '\n')
-                    
-                    # 如果需要显示十六进制数据
-                    if (self.received_hex_data_checkbox.isChecked() and 
-                        i < len(hex_lines) and hex_lines[i].strip()):
-                        cursor.insertHtml(hex_lines[i])
-            
-            # 一次性设置整个文档
+
+            # 插入文本数据
+            for line in text_lines:
+                cursor.insertText(line)
+
+            # 设置文档
             self.received_data_textarea.setDocument(document)
-            
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
-        
-        # 维护滚动位置 - 只有用户之前在底部时才自动滚动到底部
-        if self.current_offset == 0 and was_at_bottom:
+
+        # 如果快要触底，自动滚动到底部
+        if will_at_bottom:
             scrollbar.setValue(scrollbar.maximum())
 
-    def update_main_textarea(self, data):
+    def update_main_textarea(self, raw_data: bytes):
+        """
+        接收串口线程传来的原始bytes数据，计算精确起始时间戳，加入pending_updates，等待批量UI刷新。
+        """
         # 初始化缓冲区（如果不存在）
         if not hasattr(self, 'full_data_store'):
             self.full_data_store = []
             self.hex_buffer = []
-            self.buffer_size = 2000
-            self.visible_lines = 500
+            self.buffer_size = 1000
+            self.visible_lines = 100
             self.current_offset = 0
-        
-        # 将数据添加到待更新队列，而不是立即更新
-        self.pending_updates.append(data)
-        
+        if not hasattr(self, 'pending_updates'):
+            self.pending_updates = []
+        if not hasattr(self, 'last_ui_update_time'):
+            self.last_ui_update_time = time.time()
+        if not hasattr(self, 'ui_update_interval'):
+            self.ui_update_interval = 0.1
+        if not hasattr(self, 'update_timer'):
+            self.update_timer = QTimer()
+            self.update_timer.setSingleShot(True)
+            self.update_timer.timeout.connect(self.batch_update_ui)
+
+        # 计算数据起始时间戳（基于波特率和数据长度）
+        baudrate = 115200  # 默认波特率
+        try:
+            baudrate = int(self.baud_rate_combo.currentText())
+        except Exception:
+            pass
+        # 1字节=10bit（含起止位），耗时=10/baudrate
+        byte_count = len(raw_data)
+        duration = byte_count * 10.0 / baudrate
+        end_time = time.time()
+        start_time = end_time - duration if duration < 1 else end_time - min(duration, 1)
+        # 用datetime对象，方便格式化
+        start_dt = datetime.datetime.fromtimestamp(start_time)
+
+        # 只存储(bytes, start_time)元组
+        self.pending_updates.append((raw_data, start_dt))
+
         # 检查是否应该立即更新（基于时间或数量阈值）
         current_time = time.time()
         time_since_last_update = current_time - self.last_ui_update_time
-        
-        # 如果缓冲区满了或者时间间隔够了，立即更新
-        if (len(self.pending_updates) >= 20 or 
-            time_since_last_update >= self.ui_update_interval):
-            
+        if (len(self.pending_updates) >= 20 or time_since_last_update >= self.ui_update_interval):
             if not self.update_timer.isActive():
                 self.update_timer.start(10)  # 10ms后批量更新
                 self.last_ui_update_time = current_time
@@ -1954,25 +2070,31 @@ class MyWidget(QWidget):
         return super().eventFilter(watched, event)
 
     def handle_scroll_event(self, event):
-        """Detect scroll direction and position"""
+        """Detect scroll direction and update current_offset"""
         scrollbar = self.received_data_textarea.verticalScrollBar()
+        scroll_value = scrollbar.value()
+        max_scroll_value = scrollbar.maximum()
 
-        # Scroll up detection
-        if event.angleDelta().y() > 0 and scrollbar.value() <= scrollbar.singleStep():
+        # 打印调试信息
+        # print(f"Scroll event: value={scroll_value}, max={max_scroll_value}, current_offset={self.current_offset}")
+
+        # 滚动到顶部时加载旧数据
+        if event.angleDelta().y() > 0 and scroll_value <= scrollbar.singleStep():
             self.load_older_data()
-        
-        # Scroll down detection
-        elif event.angleDelta().y() < 0 and scrollbar.value() >= scrollbar.maximum() - scrollbar.singleStep():
-            # When reaching the bottom, attempt to fetch more new data
+
+        # 滚动到底部时加载新数据
+        elif event.angleDelta().y() < 0 and scroll_value >= max_scroll_value - scrollbar.singleStep():
             self.fetch_new_data()
-            
-            # Reset the offset to ensure the latest content is displayed
-            self.current_offset = 0
+            self.current_offset = 0  # 重置偏移量以显示最新内容
             self.efficient_update_display()
-            
-        # Else, do nothing
+
+        # 中间滚动时同步更新 current_offset
         else:
-            pass
+            # 计算当前顶部行的索引
+            top_line_index = scroll_value // self.received_data_textarea.fontMetrics().lineSpacing()
+            # 更新 current_offset
+            self.current_offset = max(0, len(self.full_data_store) - top_line_index - self.visible_lines)
+            print(f"Updated current_offset: {self.current_offset}")
 
     def handle_left_click(self):
         if self.prompt_index >= 0 and self.prompt_index < len(self.input_fields) - 1:

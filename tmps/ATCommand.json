@@ -2,55 +2,43 @@
     "Commands": [
         {
             "selected": false,
-            "command": "1. 模块上电，设置广播名称，并查看是否设置成功",
+            "command": "AT+QBLEINIT=2",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+NAME=TestDevice",
+            "command": "AT+QBLENAME=\"TestForFish\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+NAME?",
+            "command": "AT+QBLEGATTSSRV=\"fff1\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "",
+            "command": "AT+QBLEGATTSCHAR=\"fff2\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "2. 开启广播，并查看是否开启成功",
+            "command": "AT+QBLEGATTSCHAR=\"fff3\"",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+ADV=1",
+            "command": "AT+QBLEGATTSSRVDONE",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+ADV?",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "",
-            "withEnter": true,
-            "interval": ""
-        },
-        {
-            "selected": false,
-            "command": "3. 手机端扫描所设置的广播名称，使用调试工具连接至模块，连接过程中弹出配对对话框，点击配对即可",
+            "command": "AT+QBLEADVSTART",
             "withEnter": true,
             "interval": ""
         },
@@ -62,13 +50,85 @@
         },
         {
             "selected": false,
-            "command": "4. 数据收发，手机端找到指定特征服务UUID，发送数据 \"HelloWorld\"；模块下发指令发送数据",
+            "command": "AT+QBLEADDR?",
             "withEnter": true,
             "interval": ""
         },
         {
             "selected": false,
-            "command": "AT+SEND=HelloWorld",
+            "command": "AT+QBLENAME?",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEINIT=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=0",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLECONN=0,50cf14004099",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEURC=2",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTCNTFCFG=FFF2,1",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTSNTFY=1,\"FFF2\",\"Hello World\"",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEGATTCWR=FFF2,Build a Smart World",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEDISCONN",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "",
+            "withEnter": true,
+            "interval": ""
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLETRANMODE=fff2",
             "withEnter": true,
             "interval": ""
         }

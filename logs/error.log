@@ -1,0 +1,419 @@
+2025-07-12 10:47:18,976 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:47:27,228 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:47:29,532 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:47:30,935 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:54:53,389 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:54:55,563 - INFO - Application starting...
+2025-07-12 10:54:56,692 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:54:57,027 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:54:57,127 - 尝试直接访问GitHub...
+2025-07-12 10:54:57,127 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 10:54:57,470 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 10:54:57,470 - 直接访问GitHub成功
+2025-07-12 10:54:57,470 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 10:56:50,830 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:56:52,591 - INFO - Application starting...
+2025-07-12 10:56:53,732 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:56:54,045 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:56:54,125 - 尝试直接访问GitHub...
+2025-07-12 10:56:54,130 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 10:56:54,700 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 10:56:54,700 - 直接访问GitHub成功
+2025-07-12 10:56:54,702 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 10:59:42,654 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:59:44,796 - INFO - Application starting...
+2025-07-12 10:59:45,933 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:59:46,255 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 10:59:46,360 - 尝试直接访问GitHub...
+2025-07-12 10:59:46,360 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 10:59:46,741 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 10:59:46,741 - 直接访问GitHub成功
+2025-07-12 10:59:46,746 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:00:18,317 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:02:23,093 - INFO - Application starting...
+2025-07-12 11:02:24,229 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:02:24,556 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:02:24,641 - 尝试直接访问GitHub...
+2025-07-12 11:02:24,646 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:02:25,027 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:02:25,027 - 直接访问GitHub成功
+2025-07-12 11:02:25,027 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:03:55,152 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:03:57,011 - INFO - Application starting...
+2025-07-12 11:03:58,146 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:03:58,496 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:03:58,581 - 尝试直接访问GitHub...
+2025-07-12 11:03:58,586 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:03:58,916 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:03:58,916 - 直接访问GitHub成功
+2025-07-12 11:03:58,916 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:09:13,261 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:09:15,025 - INFO - Application starting...
+2025-07-12 11:09:16,170 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:09:16,490 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:09:16,570 - 尝试直接访问GitHub...
+2025-07-12 11:09:16,575 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:09:17,274 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:09:17,274 - 直接访问GitHub成功
+2025-07-12 11:09:17,274 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:13:02,018 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:13:03,920 - INFO - Application starting...
+2025-07-12 11:13:05,075 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:13:05,440 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:13:05,522 - 尝试直接访问GitHub...
+2025-07-12 11:13:05,527 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:13:05,891 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:13:05,896 - 直接访问GitHub成功
+2025-07-12 11:13:05,896 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:14:04,553 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:15:00,205 - INFO - Application starting...
+2025-07-12 11:15:01,373 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:15:01,707 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:15:01,792 - 尝试直接访问GitHub...
+2025-07-12 11:15:01,797 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:15:02,409 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:15:02,409 - 直接访问GitHub成功
+2025-07-12 11:15:02,409 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:15:51,326 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:16:56,337 - INFO - Application starting...
+2025-07-12 11:16:57,487 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:16:57,800 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:16:57,885 - 尝试直接访问GitHub...
+2025-07-12 11:16:57,885 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:16:58,244 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:16:58,245 - 直接访问GitHub成功
+2025-07-12 11:16:58,245 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:20:03,089 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:04,854 - INFO - Application starting...
+2025-07-12 11:20:05,991 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:06,321 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:06,408 - 尝试直接访问GitHub...
+2025-07-12 11:20:06,413 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:20:06,971 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:20:06,971 - 直接访问GitHub成功
+2025-07-12 11:20:06,971 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:20:36,149 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:57,089 - INFO - Application starting...
+2025-07-12 11:20:58,227 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:58,548 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:20:58,632 - 尝试直接访问GitHub...
+2025-07-12 11:20:58,637 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:20:59,019 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:20:59,019 - 直接访问GitHub成功
+2025-07-12 11:20:59,019 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:21:45,862 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:29:55,043 - INFO - Application starting...
+2025-07-12 11:29:56,184 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:29:56,549 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:29:56,649 - 尝试直接访问GitHub...
+2025-07-12 11:29:56,654 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:29:57,282 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:29:57,282 - 直接访问GitHub成功
+2025-07-12 11:29:57,282 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:34:06,724 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:57:56,416 - INFO - Application starting...
+2025-07-12 11:57:57,552 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:59:29,892 - INFO - Application starting...
+2025-07-12 11:59:31,034 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:59:31,389 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 11:59:32,562 - 尝试直接访问GitHub...
+2025-07-12 11:59:32,567 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 11:59:32,909 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 11:59:32,909 - 直接访问GitHub成功
+2025-07-12 11:59:32,909 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 11:59:54,446 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:01:12,858 - INFO - Application starting...
+2025-07-12 12:01:14,003 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:01:14,333 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:01:14,423 - 尝试直接访问GitHub...
+2025-07-12 12:01:14,428 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 12:01:15,151 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 12:01:15,152 - 直接访问GitHub成功
+2025-07-12 12:01:15,152 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 12:01:32,909 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:02:32,759 - INFO - Application starting...
+2025-07-12 12:02:33,915 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:02:34,303 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:02:34,393 - 尝试直接访问GitHub...
+2025-07-12 12:02:34,398 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 12:02:34,980 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 12:02:34,981 - 直接访问GitHub成功
+2025-07-12 12:02:34,982 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 12:02:40,213 - Error sending command: Serial port is not initialized.
+2025-07-12 12:02:40,393 - Error sending command: Serial port is not initialized.
+2025-07-12 12:02:40,573 - Error sending command: Serial port is not initialized.
+2025-07-12 12:02:40,754 - Error sending command: Serial port is not initialized.
+2025-07-12 12:04:52,198 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:04:54,070 - INFO - Application starting...
+2025-07-12 12:04:55,222 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:04:55,537 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:04:55,622 - 尝试直接访问GitHub...
+2025-07-12 12:04:55,622 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 12:04:55,972 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 12:04:55,972 - 直接访问GitHub成功
+2025-07-12 12:04:55,972 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 12:12:22,170 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:12:23,544 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:15:25,221 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:18:23,398 - INFO - Application starting...
+2025-07-12 12:18:24,546 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:18:24,874 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 12:18:24,959 - 尝试直接访问GitHub...
+2025-07-12 12:18:24,964 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 12:18:25,732 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 12:18:25,732 - 直接访问GitHub成功
+2025-07-12 12:18:25,732 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 13:28:13,029 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:32:52,382 - INFO - Application starting...
+2025-07-12 13:32:53,545 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:32:53,900 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:32:53,990 - 尝试直接访问GitHub...
+2025-07-12 13:32:53,995 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 13:32:54,654 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 13:32:54,654 - 直接访问GitHub成功
+2025-07-12 13:32:54,654 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 13:35:14,328 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:35:16,182 - INFO - Application starting...
+2025-07-12 13:35:17,318 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:35:17,641 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:35:17,731 - 尝试直接访问GitHub...
+2025-07-12 13:35:17,736 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 13:35:18,310 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 13:35:18,310 - 直接访问GitHub成功
+2025-07-12 13:35:18,310 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 13:48:28,408 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:48:32,863 - INFO - Application starting...
+2025-07-12 13:48:34,002 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:48:34,337 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:48:34,427 - 尝试直接访问GitHub...
+2025-07-12 13:48:34,427 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 13:48:35,033 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 13:48:35,033 - 直接访问GitHub成功
+2025-07-12 13:48:35,038 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 13:49:59,632 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:52:30,657 - INFO - Application starting...
+2025-07-12 13:52:31,794 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:52:32,126 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 13:52:32,206 - 尝试直接访问GitHub...
+2025-07-12 13:52:32,211 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 13:52:32,601 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 13:52:32,601 - 直接访问GitHub成功
+2025-07-12 13:52:32,601 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 13:54:46,132 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:00:43,617 - INFO - Application starting...
+2025-07-12 14:00:44,760 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:00:45,123 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:00:45,229 - 尝试直接访问GitHub...
+2025-07-12 14:00:45,234 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:00:45,815 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:00:45,815 - 直接访问GitHub成功
+2025-07-12 14:00:45,815 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:01:14,613 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:02:14,916 - INFO - Application starting...
+2025-07-12 14:02:16,061 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:02:16,395 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:02:16,481 - 尝试直接访问GitHub...
+2025-07-12 14:02:16,486 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:02:16,836 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:02:16,836 - 直接访问GitHub成功
+2025-07-12 14:02:16,841 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:02:39,528 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:03:10,219 - INFO - Application starting...
+2025-07-12 14:03:11,367 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:03:11,713 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:03:11,793 - 尝试直接访问GitHub...
+2025-07-12 14:03:11,798 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:03:12,165 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:03:12,165 - 直接访问GitHub成功
+2025-07-12 14:03:12,165 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:05:49,884 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:05:51,562 - INFO - Application starting...
+2025-07-12 14:05:52,715 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:05:53,048 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:05:53,133 - 尝试直接访问GitHub...
+2025-07-12 14:05:53,133 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:05:53,715 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:05:53,715 - 直接访问GitHub成功
+2025-07-12 14:05:53,715 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:14:21,916 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:14:23,761 - INFO - Application starting...
+2025-07-12 14:14:24,900 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:14:25,224 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:14:25,309 - 尝试直接访问GitHub...
+2025-07-12 14:14:25,309 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:14:25,922 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:14:25,922 - 直接访问GitHub成功
+2025-07-12 14:14:25,922 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:14:50,955 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:19:21,930 - INFO - Application starting...
+2025-07-12 14:19:23,064 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:19:23,394 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:19:23,479 - 尝试直接访问GitHub...
+2025-07-12 14:19:23,484 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:19:24,055 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:19:24,055 - 直接访问GitHub成功
+2025-07-12 14:19:24,055 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:19:45,334 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:23:18,332 - INFO - Application starting...
+2025-07-12 14:23:19,481 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:23:19,837 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:23:19,936 - 尝试直接访问GitHub...
+2025-07-12 14:23:19,936 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:23:20,351 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:23:20,351 - 直接访问GitHub成功
+2025-07-12 14:23:20,356 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:23:53,220 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:27:34,420 - INFO - Application starting...
+2025-07-12 14:27:35,558 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:27:35,955 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:27:36,067 - 尝试直接访问GitHub...
+2025-07-12 14:27:36,072 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:27:36,721 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:27:36,721 - 直接访问GitHub成功
+2025-07-12 14:27:36,726 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:32:14,308 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:33:55,789 - INFO - Application starting...
+2025-07-12 14:33:56,938 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:33:57,267 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:33:57,362 - 尝试直接访问GitHub...
+2025-07-12 14:33:57,367 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:33:57,945 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:33:57,945 - 直接访问GitHub成功
+2025-07-12 14:33:57,945 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:34:02,779 - Error sending command: Serial port is not initialized.
+2025-07-12 14:40:00,514 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:02,234 - INFO - Application starting...
+2025-07-12 14:40:03,371 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:03,701 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:03,786 - 尝试直接访问GitHub...
+2025-07-12 14:40:03,791 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:40:04,498 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:40:04,498 - 直接访问GitHub成功
+2025-07-12 14:40:04,498 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:40:34,887 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:45,523 - INFO - Application starting...
+2025-07-12 14:40:46,658 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:46,983 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:40:47,088 - 尝试直接访问GitHub...
+2025-07-12 14:40:47,088 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:40:47,431 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:40:47,431 - 直接访问GitHub成功
+2025-07-12 14:40:47,431 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:41:36,608 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:41:38,356 - INFO - Application starting...
+2025-07-12 14:41:39,492 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:41:39,814 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:41:39,899 - 尝试直接访问GitHub...
+2025-07-12 14:41:39,904 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:41:40,254 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:41:40,258 - 直接访问GitHub成功
+2025-07-12 14:41:40,258 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:42:44,755 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:43:32,311 - INFO - Application starting...
+2025-07-12 14:43:33,469 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:43:33,811 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:43:33,891 - 尝试直接访问GitHub...
+2025-07-12 14:43:33,896 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:43:34,233 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:43:34,233 - 直接访问GitHub成功
+2025-07-12 14:43:34,233 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:48:06,719 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:48:09,667 - INFO - Application starting...
+2025-07-12 14:48:10,804 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:48:11,123 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:48:11,208 - 尝试直接访问GitHub...
+2025-07-12 14:48:11,213 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:48:11,928 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:48:11,928 - 直接访问GitHub成功
+2025-07-12 14:48:11,928 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:57:59,818 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:03,034 - INFO - Application starting...
+2025-07-12 14:58:04,190 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:04,525 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:04,615 - 尝试直接访问GitHub...
+2025-07-12 14:58:04,620 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:58:05,339 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:58:05,339 - 直接访问GitHub成功
+2025-07-12 14:58:05,339 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:58:20,744 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:39,604 - INFO - Application starting...
+2025-07-12 14:58:40,738 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:41,044 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 14:58:41,134 - 尝试直接访问GitHub...
+2025-07-12 14:58:41,139 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 14:58:41,730 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 14:58:41,730 - 直接访问GitHub成功
+2025-07-12 14:58:41,735 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 14:59:02,728 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:00:10,853 - INFO - Application starting...
+2025-07-12 15:00:11,979 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:00:12,334 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:00:12,441 - 尝试直接访问GitHub...
+2025-07-12 15:00:12,446 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:00:12,788 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:00:12,788 - 直接访问GitHub成功
+2025-07-12 15:00:12,788 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:01:27,427 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:01:29,180 - INFO - Application starting...
+2025-07-12 15:01:30,315 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:01:30,635 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:01:30,718 - 尝试直接访问GitHub...
+2025-07-12 15:01:30,723 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:01:31,064 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:01:31,064 - 直接访问GitHub成功
+2025-07-12 15:01:31,064 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:01:47,491 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:07:58,404 - INFO - Application starting...
+2025-07-12 15:07:59,534 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:07:59,866 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:07:59,946 - 尝试直接访问GitHub...
+2025-07-12 15:07:59,951 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:08:00,504 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:08:00,509 - 直接访问GitHub成功
+2025-07-12 15:08:00,509 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:08:03,759 - Error sending command: Serial port is not initialized.
+2025-07-12 15:08:57,065 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:08:58,831 - INFO - Application starting...
+2025-07-12 15:08:59,968 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:09:00,288 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:09:00,368 - 尝试直接访问GitHub...
+2025-07-12 15:09:00,373 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:09:00,999 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:09:00,999 - 直接访问GitHub成功
+2025-07-12 15:09:00,999 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:09:31,828 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:11,157 - INFO - Application starting...
+2025-07-12 15:10:12,298 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:12,603 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:12,688 - 尝试直接访问GitHub...
+2025-07-12 15:10:12,693 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:10:13,073 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:10:13,073 - 直接访问GitHub成功
+2025-07-12 15:10:13,073 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:10:24,483 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:33,525 - INFO - Application starting...
+2025-07-12 15:10:34,663 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:34,981 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:10:35,066 - 尝试直接访问GitHub...
+2025-07-12 15:10:35,071 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:10:35,437 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:10:35,437 - 直接访问GitHub成功
+2025-07-12 15:10:35,437 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:10:42,100 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:11:03,943 - INFO - Application starting...
+2025-07-12 15:11:05,080 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:11:05,407 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:11:05,505 - 尝试直接访问GitHub...
+2025-07-12 15:11:05,510 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:11:05,838 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:11:05,838 - 直接访问GitHub成功
+2025-07-12 15:11:05,838 - 更新信息处理完成，需要显示对话框: False
+2025-07-12 15:11:27,355 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:12:26,272 - INFO - Application starting...
+2025-07-12 15:12:27,406 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:12:27,707 - Writing config file to C:\Users\fishley.gong\SCOM\config.ini
+2025-07-12 15:12:27,787 - 尝试直接访问GitHub...
+2025-07-12 15:12:27,792 - DEBUG - Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2025-07-12 15:12:28,181 - DEBUG - https://raw.githubusercontent.com:443 "GET /iFishin/scom/refs/heads/main/CHANGELOG.md HTTP/11" 200 1840
+2025-07-12 15:12:28,181 - 直接访问GitHub成功
+2025-07-12 15:12:28,181 - 更新信息处理完成，需要显示对话框: False
