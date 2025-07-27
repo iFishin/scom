@@ -73,8 +73,12 @@ def run_nuitka(version):
 
     nuitka_command = (
         f"python -m nuitka --plugin-enable=pyside6 "
-        f"--follow-import-to=utils --follow-import-to=components "
-        f"--include-package=utils --include-package=components "
+        f"--follow-import-to=utils "
+        f"--follow-import-to=components "
+        f"--follow-import-to=middileware "
+        f"--include-package=utils "
+        f"--include-package=components "
+        f"--include-package=middileware "
         f"{' '.join(include_data_dirs)} "
         f"{' '.join(include_data_files)} "
         f"--windows-icon-from-ico={ICON_PATH} "

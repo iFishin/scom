@@ -1,8 +1,8 @@
 import os
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QObject, Signal, QUrl, QTimer
 from PySide6.QtGui import QFont
-import requests
-from utils.common import custom_print
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from middileware.Logger import Logger, init_logging
 import markdown
 from PySide6.QtWidgets import (
     QDialog,
@@ -13,102 +13,131 @@ from PySide6.QtWidgets import (
     QTextBrowser,
 )
 
+logger = init_logging().get_logger("UpdateChecker")
 
-class UpdateInfoLoader(QThread):
-    """异步加载更新信息的线程"""
+
+class UpdateChecker(QObject):
+    """更新检查器 - 在主线程中运行"""
     finished = Signal(bool, bool)  # 完成信号，传递是否成功加载和是否需要显示对话框
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        self.network_manager = QNetworkAccessManager(self)
         self.url_update_info = "https://raw.githubusercontent.com/iFishin/scom/refs/heads/main/CHANGELOG.md"
         self.proxy_list = [
             "https://gh-proxy.com/",
             "https://gh-proxy.ygxz.in/",
             "https://goppx.com/"
         ]
-        self.content = None
-        self.success = False
-        self.should_show_dialog = False
+        self.current_urls = []
+        self.current_url_index = 0
+        self.current_reply = None  # 保存当前的回复对象
+        self.timeout_timer = None  # 保存超时定时器
+        
+    def start_check(self):
+        """开始检查更新"""
+        # 准备所有要尝试的URL
+        self.current_urls = [self.url_update_info]
+        for proxy in self.proxy_list:
+            self.current_urls.append(f"{proxy}{self.url_update_info}")
+        
+        self.current_url_index = 0
+        self._try_next_url()
     
-    def run(self):
-        """在后台线程中执行网络请求"""
-        try:
-            content = None
-            max_retries = 3
-            
-            # 首先尝试直接访问
-            custom_print("尝试直接访问GitHub...")
-            for attempt in range(max_retries):
-                try:
-                    response = requests.get(self.url_update_info, timeout=5)
-                    response.raise_for_status()
-                    response.encoding = 'utf-8'
-                    content = response.text
-                    custom_print("直接访问GitHub成功")
-                    break
-                except requests.RequestException as e:
-                    custom_print(f"直接访问尝试 {attempt + 1} 失败: {e}")
-                    
-                    if attempt == max_retries - 1:
-                        custom_print("直接访问GitHub失败，尝试使用代理...")
-            
-            # 如果直接访问失败，依次尝试代理
-            if content is None:
-                for proxy in self.proxy_list:
-                    proxy_url = f"{proxy}{self.url_update_info}"
-                    custom_print(f"尝试使用代理: {proxy}")
-                    
-                    for attempt in range(max_retries):
-                        try:
-                            response = requests.get(proxy_url, timeout=8)
-                            response.raise_for_status()
-                            response.encoding = 'utf-8'
-                            content = response.text
-                            custom_print(f"使用代理 {proxy} 访问成功")
-                            break
-                        except requests.RequestException as e:
-                            custom_print(f"代理 {proxy} 尝试 {attempt + 1} 失败: {e}")
-                            
-                            if attempt == max_retries - 1:
-                                custom_print(f"代理 {proxy} 访问失败，尝试下一个代理...")
-                    
-                    if content is not None:
-                        break
-            
-            # 处理获取到的内容
-            if content is not None:
-                self.content = content
-                # 检查和保存文件
-                should_show_dialog = False
-                if not os.path.exists("CHANGELOG.md"):
-                    with open("CHANGELOG.md", "w", encoding="utf-8") as f:
-                        f.write(content)
-                    should_show_dialog = True
-                else:
-                    with open("CHANGELOG.md", "r", encoding="utf-8") as f:
-                        old_content = f.read()
-                        if content != old_content:
-                            with open("CHANGELOG.md", "w", encoding="utf-8") as f:
-                                f.write(content)
-                            should_show_dialog = True
-                
-                custom_print(f"更新信息处理完成，需要显示对话框: {should_show_dialog}")
-                self.success = True
-                self.should_show_dialog = should_show_dialog
-                self.finished.emit(True, should_show_dialog)
-            else:
-                custom_print("所有访问方式均失败，无法获取更新信息")
-                self.success = False
-                self.should_show_dialog = False
-                self.finished.emit(False, False)
-                
-        except Exception as e:
-            custom_print(f"异步加载更新信息失败: {e}")
-            self.success = False
-            self.should_show_dialog = False
+    def _try_next_url(self):
+        """尝试下一个URL"""
+        # 清理之前的请求
+        self._cleanup_current_request()
+        
+        if self.current_url_index >= len(self.current_urls):
+            logger.error("所有访问方式均失败，无法获取更新信息")
             self.finished.emit(False, False)
-
-
+            return
+            
+        url = self.current_urls[self.current_url_index]
+        logger.info(f"尝试访问: {url}")
+        
+        request = QNetworkRequest(QUrl(url))
+        request.setRawHeader(b"User-Agent", b"SCOM-App/1.0")
+        
+        self.current_reply = self.network_manager.get(request)
+        self.current_reply.finished.connect(self._handle_reply)
+        
+        # 创建超时定时器
+        self.timeout_timer = QTimer(self)
+        self.timeout_timer.setSingleShot(True)
+        self.timeout_timer.timeout.connect(self._handle_timeout)
+        self.timeout_timer.start(5000)
+    
+    def _cleanup_current_request(self):
+        """清理当前的请求和定时器"""
+        if self.timeout_timer:
+            self.timeout_timer.stop()
+            self.timeout_timer.deleteLater()
+            self.timeout_timer = None
+            
+        if self.current_reply:
+            if self.current_reply.isRunning():
+                self.current_reply.abort()
+            self.current_reply.deleteLater()
+            self.current_reply = None
+    
+    def _handle_reply(self):
+        """处理网络响应"""
+        if not self.current_reply:
+            return
+            
+        # 停止超时定时器
+        if self.timeout_timer:
+            self.timeout_timer.stop()
+            
+        if self.current_reply.error() == QNetworkReply.NetworkError.NoError:
+            content = self.current_reply.readAll().data().decode('utf-8')
+            logger.info("网络请求成功")
+            self._cleanup_current_request()
+            self._process_content(content)
+        else:
+            error_msg = self.current_reply.errorString()
+            logger.error(f"网络请求失败: {error_msg}")
+            self._cleanup_current_request()
+            # 尝试下一个URL
+            self.current_url_index += 1
+            self._try_next_url()
+    
+    def _handle_timeout(self):
+        """处理超时"""
+        logger.error("网络请求超时")
+        if self.current_reply and self.current_reply.isRunning():
+            self.current_reply.abort()
+        
+        self._cleanup_current_request()
+        # 尝试下一个URL
+        self.current_url_index += 1
+        self._try_next_url()
+    
+    def _process_content(self, content):
+        """处理获取到的内容"""
+        try:
+            should_show_dialog = False
+            if not os.path.exists("CHANGELOG.md"):
+                with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                    f.write(content)
+                should_show_dialog = True
+            else:
+                with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+                    old_content = f.read()
+                    if content != old_content:
+                        with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                            f.write(content)
+                        should_show_dialog = True
+            
+            logger.info(f"更新信息处理完成，需要显示对话框: {should_show_dialog}")
+            self.finished.emit(True, should_show_dialog)
+        except Exception as e:
+            logger.error(f"处理更新内容失败: {e}")
+            self.finished.emit(False, False)
+    
 class UpdateInfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -118,6 +147,7 @@ class UpdateInfoDialog(QDialog):
             "https://gh-proxy.ygxz.in/",
             "https://goppx.com/"
         ]
+        self.network_manager = QNetworkAccessManager()
         self.setWindowTitle("Update Information")
         self.setFixedSize(600, 400)
         self.setWindowFlag(Qt.FramelessWindowHint)
@@ -152,88 +182,35 @@ class UpdateInfoDialog(QDialog):
     
     @staticmethod
     def load_update_info_async():
-        """静态方法：异步加载更新信息，返回加载器对象"""
-        loader = UpdateInfoLoader()
-        loader.start()
-        return loader
+        """静态方法：异步加载更新信息，返回检查器对象"""
+        checker = UpdateChecker()
+        return checker
     
     def _load_update_info(self):
-        """加载更新信息的内部方法"""
-        # 尝试获取更新信息
-        content = None
-        max_retries = 3
+        """同步加载更新信息的内部方法"""
+        # 创建一个简单的网络管理器来同步获取内容
+        checker = UpdateChecker(self)
         
-        # 首先尝试直接访问
-        custom_print("尝试直接访问GitHub...")
-        for attempt in range(max_retries):
-            try:
-                response = requests.get(self.url_update_info, timeout=5)
-                response.raise_for_status()
-                response.encoding = 'utf-8'
-                content = response.text
-                custom_print("直接访问GitHub成功")
-                break
-            except requests.RequestException as e:
-                custom_print(f"直接访问尝试 {attempt + 1} 失败: {e}")
-                
-                # 最后一次尝试失败后，不要立即返回，继续尝试代理
-                if attempt == max_retries - 1:
-                    custom_print("直接访问GitHub失败，尝试使用代理...")
+        def on_content_received(success, should_show):
+            if success:
+                # 读取本地文件并显示
+                try:
+                    if os.path.exists("CHANGELOG.md"):
+                        with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+                            content = f.read()
+                        self._display_content(content)
+                    else:
+                        self._display_error("无法找到更新信息文件")
+                except Exception as e:
+                    self._display_error(f"读取更新信息失败: {e}")
+            else:
+                self._display_error("无法获取更新信息")
         
-        # 如果直接访问失败，依次尝试代理
-        if content is None:
-            for proxy in self.proxy_list:
-                proxy_url = f"{proxy}{self.url_update_info}"
-                custom_print(f"尝试使用代理: {proxy}")
-                
-                for attempt in range(max_retries):
-                    try:
-                        response = requests.get(proxy_url, timeout=8)  # 代理可能较慢，增加超时时间
-                        response.raise_for_status()
-                        response.encoding = 'utf-8'
-                        content = response.text
-                        custom_print(f"使用代理 {proxy} 访问成功")
-                        break
-                    except requests.RequestException as e:
-                        custom_print(f"代理 {proxy} 尝试 {attempt + 1} 失败: {e}")
-                        
-                        # 当前代理的所有尝试都失败
-                        if attempt == max_retries - 1:
-                            custom_print(f"代理 {proxy} 访问失败，尝试下一个代理...")
-                
-                # 如果此代理成功获取内容，不再尝试其他代理
-                if content is not None:
-                    break
-        
-        # 如果所有方法都失败
-        if content is None:
-            error_html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body {{
-                        font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
-                        font-size: 14px;
-                        line-height: 1.6;
-                        padding: 20px;
-                        background-color: white;
-                        color: #ff0000;
-                    }}
-                </style>
-            </head>
-            <body>
-                <h1>无法获取更新信息</h1>
-                <p>所有访问方式均失败，请检查网络连接或稍后再试。</p>
-            </body>
-            </html>
-            """
-            self.text_browser.setHtml(error_html)
-            custom_print("所有访问方式均失败，无法获取更新信息")
-            return
-
-        # 处理成功获取的内容
+        checker.finished.connect(on_content_received)
+        checker.start_check()
+    
+    def _display_content(self, content):
+        """显示内容"""
         # Convert Markdown to HTML
         html_content = markdown.markdown(
             content,
@@ -290,15 +267,30 @@ class UpdateInfoDialog(QDialog):
         """
         
         self.text_browser.setHtml(html_template)
-
-        if not os.path.exists("CHANGELOG.md"):
-            with open("CHANGELOG.md", "w", encoding="utf-8") as f:
-                f.write(content)
-                self.show()
-        else:
-            with open("CHANGELOG.md", "r", encoding="utf-8") as f:
-                old_content = f.read()
-                if content != old_content:
-                    with open("CHANGELOG.md", "w", encoding="utf-8") as f:
-                        f.write(content)
-                        self.show()
+    
+    def _display_error(self, error_msg):
+        """显示错误信息"""
+        error_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: "Microsoft YaHei", "SimSun", "Consolas", "Courier New", monospace;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    padding: 20px;
+                    background-color: white;
+                    color: #ff0000;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>无法获取更新信息</h1>
+            <p>{error_msg}</p>
+            <p>请检查网络连接或稍后再试。</p>
+        </body>
+        </html>
+        """
+        self.text_browser.setHtml(error_html)

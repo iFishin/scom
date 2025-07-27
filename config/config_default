@@ -56,8 +56,10 @@ Button_group = True
 [MoreSettings]
 ATCRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
 TimeStampRegex = \[20(.*?)\]
-MaxRowsOfButtonGroup = 100
+MaxRowsOfButtonGroup = 120
 ShowCommandEcho = False
+Ender = 0d0a
+SendAsHex = False
 
 [Paths]
 Path_1 = 
