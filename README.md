@@ -59,6 +59,8 @@ SCOM/
 │   └── [compenents_modules_here]
 ├── config/
 │   └── [config_files_here]
+├── middleware/
+│   └── [middleware_modules_here]
 ├── logs/
 │   └── [tool_error_logs_here]
 ├── res/
@@ -81,6 +83,7 @@ SCOM/
 
 - **components**：包含项目的组件模块，用于实现不同的功能。
 - **config**：存放项目的配置文件，用于存储一些常用的设置。
+- **middleware**：包含中间件模块，用于处理数据流或其他中间处理逻辑。
 - **logs**：存放工具的错误日志文件，方便后续分析和故障排查。
 - **res**：包含项目的资源文件。
 - **styles**：用于存储与界面样式相关的文件。

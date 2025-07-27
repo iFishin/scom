@@ -25,10 +25,10 @@ class DataReceiver(QThread):
         self.cond = QWaitCondition()
         self._last_read_time = datetime.datetime.now()
         
-        # 批处理相关配置
+        # 批处理相关配置 - 调整为更实时的处理
         self.batch_buffer = []
-        self.batch_timeout = 0.1  # 100ms批处理超时
-        self.batch_max_size = 50  # 最大批处理条目数
+        self.batch_timeout = 0.02  # 减少到20ms批处理超时，提高实时性
+        self.batch_max_size = 30   # 减少批处理最大条目数，更频繁地发送
         self.last_emit_time = time.time()
         
         # 持久化缓冲区
@@ -73,10 +73,17 @@ class DataReceiver(QThread):
                 if not self.is_paused and self.serial_port.is_open:
                     waiting_bytes = self.serial_port.in_waiting
                     if waiting_bytes > 0:
-                        raw_data = self.serial_port.read(min(waiting_bytes, 4096))
+                        # 分批读取数据，避免单次读取过多造成阻塞
+                        max_read_size = min(waiting_bytes, 2048)  # 减少到2048，更频繁地发送数据
+                        raw_data = self.serial_port.read(max_read_size)
                         if raw_data:
                             self.add_to_batch(raw_data)
                             self.update_data_rate_monitor(len(raw_data))
+                            
+                            # 如果还有数据等待，立即处理而不是等待下次循环
+                            if self.serial_port.in_waiting > 0:
+                                continue  # 继续读取剩余数据
+                                
                     self.check_and_emit_batch()
                     sleep_ms = self.calculate_optimized_sleep_interval()
                     QThread.msleep(sleep_ms)

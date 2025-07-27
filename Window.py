@@ -5,8 +5,8 @@ import time
 import datetime
 import json
 import serial
-import logging
 import configparser
+from middileware.Logger import Logger
 from PySide6.QtWidgets import (
     QMenuBar,
     QFileDialog,
@@ -60,6 +60,7 @@ from components.HotkeysConfigDialog import HotkeysConfigDialog
 from components.MoreSettingsDialog import MoreSettingsDialog
 from components.LayoutConfigDialog import LayoutConfigDialog
 from components.AboutDialog import AboutDialog
+from components.KnownIssuesDialog import KnownIssuesDialog
 from components.HelpDialog import HelpDialog
 from components.UpdateInfoDialog import UpdateInfoDialog
 from components.ConfirmExitDialog import ConfirmExitDialog
@@ -110,12 +111,17 @@ class MyWidget(QWidget):
         self.last_ui_update_time = time.time()
         self.ui_update_interval = 0.1  # 100ms最小更新间隔
         
-        ## 性能监控
+        ## 性能监控和缓冲区配置
         self.performance_stats = {
             'updates_per_second': 0,
             'last_stats_time': time.time(),
             'update_count': 0
         }
+        
+        # 增大缓冲区以减少数据丢失
+        self.buffer_size = 10000  # 从2000增加到10000
+        self.visible_lines = 500
+        self.max_pending_updates = 200  # 限制待处理更新的最大数量
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
@@ -231,7 +237,7 @@ class MyWidget(QWidget):
         self.checkbox = []
         self.buttons = []
         self.input_fields = []
-        self.checkbox_send_with_enters = []
+        self.checkbox_send_with_enders = []
         self.interVal = []
         
         # 添加列标题
@@ -266,8 +272,8 @@ class MyWidget(QWidget):
             button = QPushButton(f"Send {i}")
             input_field = QLineEdit()
             input_field.setMinimumWidth(self.screen_width * 0.08)
-            checkbox_send_with_enter = QCheckBox()
-            checkbox_send_with_enter.setChecked(True)
+            checkbox_send_with_ender = QCheckBox()
+            checkbox_send_with_ender.setChecked(True)
             input_interval = QLineEdit()
             input_interval.setMaximumWidth(self.screen_width * 0.025)
             input_interval.setValidator(QIntValidator(0, 1000))
@@ -277,13 +283,13 @@ class MyWidget(QWidget):
             button_layout.addWidget(checkbox, i+1, 0)
             button_layout.addWidget(button, i+1, 1)
             button_layout.addWidget(input_field, i+1, 2)
-            button_layout.addWidget(checkbox_send_with_enter, i+1, 3)
+            button_layout.addWidget(checkbox_send_with_ender, i+1, 3)
             button_layout.addWidget(input_interval, i+1, 4)
 
             self.checkbox.append(checkbox)
             self.buttons.append(button)
             self.input_fields.append(input_field)
-            self.checkbox_send_with_enters.append(checkbox_send_with_enter)
+            self.checkbox_send_with_enders.append(checkbox_send_with_ender)
             self.interVal.append(input_interval)
 
             button.setEnabled(isEnable)
@@ -293,7 +299,7 @@ class MyWidget(QWidget):
                     i,
                     input_field,
                     checkbox,
-                    checkbox_send_with_enter,
+                    checkbox_send_with_ender,
                     input_interval,
                 )
             )
@@ -302,7 +308,7 @@ class MyWidget(QWidget):
                     i,
                     input_field,
                     checkbox,
-                    checkbox_send_with_enter,
+                    checkbox_send_with_ender,
                     input_interval,
                 )
             )
@@ -364,7 +370,7 @@ class MyWidget(QWidget):
         self.generate_string_action.triggered.connect(self.generate_string)
         self.string_ascii_convert_action = self.tools_menu.addAction("String - ASCII Converter")
         self.string_ascii_convert_action.triggered.connect(self.string_ascii_convert)
-        self.custom_toggle_switch_action = self.tools_menu.addAction("Custom Toggle Switch")
+        self.custom_toggle_switch_action = self.tools_menu.addAction("Record MODE")
         self.custom_toggle_switch_action.triggered.connect(self.custom_toggle_switch)
         
 
@@ -378,6 +384,10 @@ class MyWidget(QWidget):
         self.update_info_action = self.about_menu.addAction("Update Info")
         self.update_info_action.setShortcut("Ctrl+U")
         self.update_info_action.triggered.connect(self.show_update_info)
+
+        self.known_issues_action = self.about_menu.addAction("Known Issues")
+        self.known_issues_action.triggered.connect(self.show_known_issues_info)
+        self.known_issues_action.setShortcut("Ctrl+K")
 
         self.about_menu_action = self.about_menu.addAction("About")
         self.about_menu_action.setShortcut("Ctrl+I")
@@ -473,13 +483,13 @@ class MyWidget(QWidget):
         self.rts_checkbox = QCheckBox()
         self.rts_checkbox.stateChanged.connect(self.rts_state_changed)
 
-        self.label_send_with_enter = QLabel("SendWithEnter:")
-        self.checkbox_send_with_enter = QCheckBox()
-        self.checkbox_send_with_enter.setChecked(True)
+        self.label_send_with_ender = QLabel("SendWithEnder:")
+        self.checkbox_send_with_ender = QCheckBox()
+        self.checkbox_send_with_ender.setChecked(True)
 
-        self.symbol_label = QLabel("Show\\r\\n:")
-        self.symbol_checkbox = QCheckBox()
-        self.symbol_checkbox.stateChanged.connect(self.symbol_state_changed)
+        self.control_char_label = QLabel("Show\\r\\n:")
+        self.control_char_checkbox = QCheckBox()
+        self.control_char_checkbox.stateChanged.connect(self.control_char_state_changed)
 
         self.timeStamp_label = QLabel("TimeStamp:")
         self.timeStamp_checkbox = QCheckBox()
@@ -617,17 +627,17 @@ class MyWidget(QWidget):
         )
         self.settings_more_layout.addWidget(self.rts_checkbox, 2, 3, 1, 1)
         self.settings_more_layout.addWidget(
-            self.symbol_label, 3, 0, 1, 1, alignment=Qt.AlignRight
+            self.control_char_label, 3, 0, 1, 1, alignment=Qt.AlignRight
         )
-        self.settings_more_layout.addWidget(self.symbol_checkbox, 3, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.control_char_checkbox, 3, 1, 1, 1)
         self.settings_more_layout.addWidget(
             self.timeStamp_label, 3, 2, 1, 1, alignment=Qt.AlignRight
         )
         self.settings_more_layout.addWidget(self.timeStamp_checkbox, 3, 3, 1, 1)
         self.settings_more_layout.addWidget(
-            self.label_send_with_enter, 4, 0, 1, 1, alignment=Qt.AlignRight
+            self.label_send_with_ender, 4, 0, 1, 1, alignment=Qt.AlignRight
         )
-        self.settings_more_layout.addWidget(self.checkbox_send_with_enter, 4, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.checkbox_send_with_ender, 4, 1, 1, 1)
         self.settings_more_layout.addWidget(
             self.received_hex_data_label, 4, 2, 1, 1, alignment=Qt.AlignRight
         )
@@ -1020,10 +1030,10 @@ class MyWidget(QWidget):
             self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
             self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
             self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
-            self.checkbox_send_with_enter.setChecked(
-                config.getboolean("Set", "SendWithEnter")
+            self.checkbox_send_with_ender.setChecked(
+                config.getboolean("Set", "SendWithEnder")
             )
-            self.symbol_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
+            self.control_char_checkbox.setChecked(config.getboolean("Set", "ShowControlChar"))
             self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
             self.received_hex_data_checkbox.setChecked(
                 config.getboolean("Set", "ReceivedHex")
@@ -1043,9 +1053,9 @@ class MyWidget(QWidget):
                         if i <= len(self.path_command_inputs):
                             self.path_command_inputs[i-1].setText(path_value)
         except configparser.NoSectionError as e:
-            logging.error(f"Error applying config: {e}")
+            logger.error(f"Error applying config: {e}")
         except configparser.NoOptionError as e:
-            logging.error(f"Error applying config: {e}")
+            logger.error(f"Error applying config: {e}")
 
         # Hotkeys
         # for i in range(1, 9):
@@ -1068,9 +1078,9 @@ class MyWidget(QWidget):
             config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
             config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
             config.set(
-                "Set", "SendWithEnter", str(self.checkbox_send_with_enter.isChecked())
+                "Set", "SendWithEnder", str(self.checkbox_send_with_ender.isChecked())
             )
-            config.set("Set", "ShowSymbol", str(self.symbol_checkbox.isChecked()))
+            config.set("Set", "ShowControlChar", str(self.control_char_checkbox.isChecked()))
             config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
             config.set(
                 "Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked())
@@ -1096,9 +1106,10 @@ class MyWidget(QWidget):
             #     config.set("Hotkeys", f"Hotkey_{i}", self.hotkey_buttons[i - 1].text())
             #     config.set("HotkeyValues", f"HotkeyValue_{i}", self.input_fields[i - 1].text())
 
+            logger.info("Saving config to config.ini")
             common.write_config(config)
         except Exception as e:
-            logging.error(f"Error saving config: {e}")
+            logger.error(f"Error saving config: {e}")
 
     def apply_style(self, data):
         text = self.received_data_textarea.toPlainText()
@@ -1181,7 +1192,7 @@ class MyWidget(QWidget):
                 shortcut = QKeySequence(hotkey_shortcut)
                 button.setShortcut(shortcut)
             except ValueError:
-                common.custom_print(f"Invalid shortcut: {hotkey_shortcut}")
+                logger.error(f"Invalid shortcut: {hotkey_shortcut}")
 
         # Ensure each button is only connected once
         for button in self.hotkey_buttons:
@@ -1289,6 +1300,10 @@ class MyWidget(QWidget):
     def show_update_info(self):
         update_dialog = UpdateInfoDialog(self)
         update_dialog.exec()
+        
+    def show_known_issues_info(self):
+        known_issues_dialog = KnownIssuesDialog(self)
+        known_issues_dialog.exec()
 
     def show_about_info(self):
         about_dialog = AboutDialog(self)
@@ -1316,14 +1331,14 @@ class MyWidget(QWidget):
         else:
             self.rts_checkbox.setChecked(state)
 
-    def symbol_state_changed(self, state):
+    def control_char_state_changed(self, state):
         if self.main_Serial:
             if state == 2:
-                self.data_receiver.is_show_symbol = True
+                self.data_receiver.is_show_control_char = True
             else:
-                self.data_receiver.is_show_symbol = False
+                self.data_receiver.is_show_control_char = False
         else:
-            self.symbol_checkbox.setChecked(state)
+            self.control_char_checkbox.setChecked(state)
 
     def timeStamp_state_changed(self, state):
         if self.main_Serial:
@@ -1372,24 +1387,24 @@ class MyWidget(QWidget):
             f"QLabel {{ color: {color}; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }}"
         )
 
-    def port_write(self, command, serial_port, send_with_enter):
+    def port_write(self, command, serial_port, send_with_ender):
         try:
-            endWithOther = self.config.get("MoreSettings", "EndWithOther", fallback="")
+            Ender = self.config.get("MoreSettings", "Ender", fallback="0D0A")
             
-            if send_with_enter:
-                common.port_write(command, serial_port, endWithEnter=True, endWithOther=endWithOther)
+            if send_with_ender:
+                common.port_write(command, serial_port, ender=Ender)
             else:
-                common.port_write(command, serial_port, endWithEnter=False, endWithOther=endWithOther)
+                common.port_write(command, serial_port, ender='')
             self.data_receiver.is_new_data_written = True
             
             # If `ShowCommandEcho` is enabled, show the command in the received data area
             if self.config.getboolean("MoreSettings", "ShowCommandEcho"):
-                command_withTimestamp = '(' + common.get_current_time() + ')--> ' + command
+                command_withTimestamp = '(' + common.get_current_time() + ')--> ' + command + '\n'
                 self.full_data_store.append(command_withTimestamp)
                 self.received_data_textarea.append(command_withTimestamp)
                 # self.apply_style(command)
         except Exception as e:
-            common.custom_print(f"Error sending command: {e}")
+            logger.error(f"Error sending command: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     def send_command(self):
@@ -1435,10 +1450,7 @@ class MyWidget(QWidget):
                 return
         
         # 普通文本发送模式
-        if self.checkbox_send_with_enter.isChecked():
-            self.port_write(command, self.main_Serial, True)
-        else:
-            self.port_write(command, self.main_Serial, False)
+        self.port_write(command, self.main_Serial, self.checkbox_send_with_ender.isChecked())
 
     def handle_data_received_checkbox(self, state):
         if state == 2:
@@ -1535,36 +1547,64 @@ class MyWidget(QWidget):
         self.serial_port_combo.addItems(current_ports)
         QComboBox.showPopup(self.serial_port_combo)
 
-    def _process_hex_data(self, data):
-        """Process hex data and return formatted HTML string"""
-        if not self.received_hex_data_checkbox.isChecked():
-            return ""  # Return empty string if checkbox is unchecked
-        
+    def _process_hex_data(self, hex_data: str) -> str:
+        """
+        将字节数据转换为两部分：
+        第一部分：十六进制值
+        第二部分：对应的字符（包括控制字符的转义形式）
+
+        Args:
+            data (bytes): 字节数据
+
+        Returns:
+            tuple[str, str]: 包含两部分的元组，第一部分是十六进制值，第二部分是对应字符
+        """
         try:
-            # Extract hex data based on timestamp checkbox
-            raw_hex = data[25:].replace(' ', '') if self.timeStamp_checkbox.isChecked() else data.replace(' ', '')
-            hex_bytes = bytes.fromhex(raw_hex)
-            
-            # Decode with error handling
-            decoded_str = hex_bytes.decode('ascii', errors='replace')
-            
-            # Add spaces between characters (except escape sequences)
-            spaced = []
-            for char in decoded_str:
-                if char == '\r':
-                    spaced.append('\\r ')
-                elif char == '\n':
-                    spaced.append('\\n ')
-                elif char == '\\':
-                    spaced.append('\\\\ ')
-                else:
-                    spaced.append(f'{char} ')
-            
-            return f'<span style="color: #198754;">{"".join(spaced).strip()}</span><br>'
-        
-        except Exception as e:
-            # Return error message as HTML instead of direct insertion
-            return f'<span style="color: #dc3545;">Invalid hex data: {e}</span><br>'
+            # 将十六进制字符串转换为字节数组
+            hex_bytes = bytes.fromhex(hex_data)
+
+            # 第一行：十六进制值
+            hex_line =  "Received: "
+            char_line = "ASCII   : "
+
+            for byte in hex_bytes:
+                # 十六进制部分，固定宽度为两位大写十六进制
+                hex_line += f"{byte:02X} "
+
+                # 字符部分，处理控制字符和可打印字符
+                if 32 <= byte <= 126:  # 可打印ASCII字符
+                    char_line += f"{chr(byte)}  "  # 每个字符后加两个空格对齐
+                elif byte == 0x0D:  # \r
+                    char_line += "\\r "
+                elif byte == 0x0A:  # \n
+                    char_line += "\\n "
+                elif byte == 0x09:  # \t
+                    char_line += "\\t "
+                elif byte == 0x08:  # \b
+                    char_line += "\\b "
+                elif byte == 0x07:  # \a
+                    char_line += "\\a "
+                elif byte == 0x0C:  # \f
+                    char_line += "\\f "
+                elif byte == 0x0B:  # \v
+                    char_line += "\\v "
+                elif byte == 0x00:  # \0
+                    char_line += "\\0 "
+                else:  # 不可打印字符
+                    char_line += f"\\x{byte:02x} "
+
+            # 确保两行长度一致（填充空格）
+            hex_line = hex_line.strip()
+            char_line = char_line.strip()
+            max_length = max(len(hex_line), len(char_line))
+            hex_line = hex_line.ljust(max_length)
+            char_line = char_line.ljust(max_length)
+
+            # 返回两行格式化结果
+            return hex_line, char_line
+
+        except ValueError as e:
+            return f"Invalid hex data: {str(e)}\n"
 
     def load_older_data(self):
         """Load previous data chunks when scrolling up"""
@@ -1603,23 +1643,46 @@ class MyWidget(QWidget):
                     # If no new data is available, do nothing
                     pass
             except Exception as e:
-                # logging.error(f"Error occurred while fetching new data: {e}")
+                # logger.error(f"Error occurred while fetching new data: {e}")
                 pass
-            
-    def _process_hex_data(self, data_bytes):
-        """将bytes数据格式化为十六进制HTML字符串"""
-        if not self.received_hex_data_checkbox.isChecked():
-            return ""
-        try:
-            hex_str = ' '.join(f'{b:02X}' for b in data_bytes)
-            return f'<span style="color: #198754;">{hex_str}</span><br>'
-        except Exception as e:
-            return f'<span style="color: #dc3545;">Invalid hex data: {e}</span><br>'
+
+    def _flush_accumulator(self):
+        """强制刷新累积缓冲区中的数据（超时处理）"""
+        if not hasattr(self, 'data_accumulator') or not self.data_accumulator:
+            return
+        
+        # 获取当前时间作为数据起始时间
+        current_time = datetime.datetime.now()
+        
+        # 将累积的数据作为一个完整的数据包处理，添加特殊标记表示这是超时数据
+        accumulated_data = bytes(self.data_accumulator)
+        self.data_accumulator = bytearray()  # 清空缓冲区
+        
+        # 添加到待处理队列，使用特殊标记 (data, time, is_timeout=True)
+        if not hasattr(self, 'pending_updates'):
+            self.pending_updates = []
+        
+        # 用三元组标记这是超时数据，需要直接处理而不是重新进入累积流程
+        self.pending_updates.append((accumulated_data, current_time, True))
+        
+        # 触发UI更新
+        if not hasattr(self, 'update_timer'):
+            self.update_timer = QTimer()
+            self.update_timer.setSingleShot(True)
+            self.update_timer.timeout.connect(self.batch_update_ui)
+        
+        if not self.update_timer.isActive():
+            self.update_timer.start(10)  # 很快就更新，因为这是强制刷新
 
     def batch_update_ui(self):
         """批量更新UI，pending_updates只存储(bytes, start_time)，每条日志都带精确时间戳。"""
         if not self.pending_updates:
             return
+
+        # 数据丢失检测
+        if len(self.pending_updates) > 100:
+            logger.warning(f"待处理数据过多 ({len(self.pending_updates)} 条)，可能存在数据丢失风险")
+
         # 性能统计
         current_time = time.time()
         self.performance_stats['update_count'] += len(self.pending_updates)
@@ -1629,57 +1692,193 @@ class MyWidget(QWidget):
             self.performance_stats['update_count'] = 0
             self.performance_stats['last_stats_time'] = current_time
             if self.performance_stats['updates_per_second'] > 50:
-                self.ui_update_interval = 0.2
+                self.ui_update_interval = 0.05  # 高速数据时更频繁更新，从0.2改为0.05
             elif self.performance_stats['updates_per_second'] > 20:
-                self.ui_update_interval = 0.15
+                self.ui_update_interval = 0.08  # 从0.15改为0.08
             else:
                 self.ui_update_interval = 0.1
-        # 处理所有待更新的数据
-        for data_bytes, start_time in self.pending_updates:
-            end_with_other = self.config.get("MoreSettings", "EndWithOther", fallback="\r\n")
-            if not end_with_other:
-                end_with_other = "\r\n"
-            end_bytes = end_with_other.encode(errors="replace")
-            baudrate = int(self.baud_rate_combo.currentText()) if self.baud_rate_combo.currentText().isdigit() else 115200
-            bits_per_byte = 10
 
-            segments = data_bytes.split(end_bytes)
-            seg_count = len(segments)
-            byte_offset = 0
-            for i, seg in enumerate(segments):
-                # 最后一段如果为空且是结尾，不处理
-                if i == seg_count - 1 and len(seg) == 0:
-                    continue
-                seg_start_time = start_time + datetime.timedelta(seconds=(byte_offset * bits_per_byte / baudrate))
-                ts = seg_start_time.strftime("%Y-%m-%d_%H:%M:%S.%f")[:-3]
-                try:
-                    text = common.force_decode(seg)
-                except Exception:
-                    text = repr(seg)
-                if self.symbol_checkbox.isChecked():
-                    text = text.replace('\r', r'<CR>').replace('\n', r'<LF>')
-                # 判断是否为完整一行（即后面跟了结尾符）
-                is_full_line = (i < seg_count - 1)
-                display_line = f"[{ts}]{text}"
-                if is_full_line:
-                    display_line += "\n"  # 结尾符分割出的完整行，加换行
-                self.full_data_store.append(display_line)
-                self.hex_buffer.append(self._process_hex_data(seg))
-                byte_offset += len(seg) + (len(end_bytes) if is_full_line else 0)
+        # 获取串口配置
+        try:
+            baudrate = int(self.baud_rate_combo.currentText())
+        except ValueError:
+            baudrate = 115200  # 默认波特率
+
+        try:
+            stop_bits = float(self.stopbits_combo.currentText())
+        except ValueError:
+            stop_bits = 1  # 默认停止位
+
+        try:
+            bytesize = int(self.bytesize_combo.currentText())
+        except ValueError:
+            bytesize = 8  # 默认数据位
+
+        parity = self.parity_combo.currentText()
+        parity_bits = 1 if parity != "None" else 0  # 如果有校验位，则加1
+
+        # 计算每字节的位数，如默认8N1配置：1起始位 + 8数据位 + 1停止位 + 0校验位 = 10位
+        bits_per_byte = 1 + bytesize + stop_bits + parity_bits
+
+        # 处理所有待更新的数据
+        for update_item in self.pending_updates:
+            # 检查是否是超时数据（三元组）还是普通数据（二元组）
+            if len(update_item) == 3:
+                data_bytes, start_time, is_timeout = update_item
+            else:
+                data_bytes, start_time = update_item
+                is_timeout = False
             
-                # 文件日志记录（异步处理以减少阻塞）
-                if self.checkbox_data_received.isChecked():
-                    file_path = self.input_path_data_received.text()
-                    self.thread_pool.start(
-                        lambda: common.print_write(display_line, file_path if file_path else None)
-                    )
+            # 获取结束符
+            ender = self.config.get("MoreSettings", "Ender", fallback="\r\n")
+            end_bytes = common.hex_to_bytes(ender) if ender else b""
+
+            # 如果是超时数据或没有结束符，直接处理整个数据
+            if is_timeout or not end_bytes:
+                segments = [data_bytes]
+                # print(f"直接处理数据: 超时={is_timeout}, 无结束符={not end_bytes}, 数据长度={len(data_bytes)}")
+            else:
+                # 使用累积缓冲区来处理跨数据包的消息
+                if not hasattr(self, 'data_accumulator'):
+                    self.data_accumulator = bytearray()
+                
+                # 初始化累积定时器（如果不存在）
+                if not hasattr(self, 'accumulator_timer'):
+                    self.accumulator_timer = QTimer()
+                    self.accumulator_timer.setSingleShot(True)
+                    self.accumulator_timer.timeout.connect(self._flush_accumulator)
+                
+                # 将新数据添加到累积缓冲区
+                self.data_accumulator.extend(data_bytes)
+                
+                # 按结束符分割数据
+                temp_data = bytes(self.data_accumulator)
+                segments = temp_data.split(end_bytes)
+                
+                # 最后一个段可能是不完整的，保留在缓冲区中
+                if len(segments) > 1:
+                    # 保留最后一个不完整的段
+                    incomplete_segment = segments[-1]
+                    segments = segments[:-1]  # 移除不完整的段
+                    
+                    # 清空累积缓冲区，保留不完整的段
+                    self.data_accumulator = bytearray(incomplete_segment)
+                    
+                    # 停止之前的定时器
+                    self.accumulator_timer.stop()
+                    
+                    # 如果有不完整的段，启动超时定时器
+                    if incomplete_segment:
+                        self.accumulator_timer.start(500)  # 500ms 超时
+                    
+                    # 为完整的段添加结束符（用于正确显示）
+                    complete_segments = []
+                    for seg in segments:
+                        # 不过滤空段，保留空行（它们可能是有意义的数据）
+                        complete_segments.append(seg + end_bytes)
+                    segments = complete_segments
+                else:
+                    # 没有找到完整的消息，启动或重启超时定时器
+                    self.accumulator_timer.stop()
+                    self.accumulator_timer.start(500)  # 500ms 超时
+                    segments = []
+                
+            # 调试信息 - 可以临时启用来诊断问题
+            # if segments:
+            #     for i, seg in enumerate(segments):
+            #         print(f"段 {i}: {repr(seg[:100])}{'...' if len(seg) > 100 else ''}")
+            # else:
+            #     if hasattr(self, 'data_accumulator') and self.data_accumulator:
+            #         print(f"累积缓冲区内容: {repr(bytes(self.data_accumulator)[:100])}")
+                
+            # print(f"Segments: {segments} | Data Bytes: {data_bytes} | End Bytes: {end_bytes}")
+            byte_offset = 0  # 字节偏移量，用于计算每段的起始时间戳
+            
+            
+            # 1. 如果要串口数据以十六进制显示
+            if self.received_hex_data_checkbox.isChecked():
+                for i, seg in enumerate(segments):
+
+                    ## 解析十六进制数据
+                    hex_line, char_line = self._process_hex_data(seg.hex())
+
+                    ## 构建显示行
+                    if self.timeStamp_checkbox.isChecked():
+                        ### 计算时间戳
+                        seg_start_time = common.calculate_timestamp(start_time, byte_offset, bits_per_byte / baudrate)
+                        ts = seg_start_time.strftime("%Y-%m-%d_%H:%M:%S.%f")[:-3]
+                        byte_offset += len(seg) + (len(end_bytes) if i < len(segments) - 1 else 0)
+
+                        display_line = f"[{ts}]{hex_line}"
+                        display_line += f"\n[{ts}]{char_line}"
+                    else:
+                        display_line = f"{hex_line}"
+                        display_line += f"\n{char_line}"
+
+                    ## 添加到缓冲区（移除直接append到UI，统一由efficient_update_display处理）
+                    self.full_data_store.append(display_line)
+
+                    ## 文件日志记录，同步写入
+                    if self.checkbox_data_received.isChecked():
+                        file_path = self.input_path_data_received.text()
+                        common.print_write(display_line, file_path)
+            
+            
+            # 2. 如果要显示控制字符
+            elif self.control_char_checkbox.isChecked():
+                for i, seg in enumerate(segments):
+                    if self.timeStamp_checkbox.isChecked():
+                        # 计算时间戳
+                        seg_start_time = common.calculate_timestamp(start_time, byte_offset, bits_per_byte / baudrate)
+                        ts = seg_start_time.strftime("%Y-%m-%d_%H:%M:%S.%f")[:-3]
+                        byte_offset += len(seg) + (len(end_bytes) if i < len(segments) - 1 else 0)
+
+                        display_line = f"[{ts}]{common.force_decode(seg, handle_control_char='escape')}"
+                    else:
+                        display_line = common.force_decode(seg, handle_control_char='escape')
+
+                    # 添加到缓冲区，不过滤空行，保留所有数据
+                    self.full_data_store.append(display_line)
+
+                    # 文件日志记录，同步写入
+                    if self.checkbox_data_received.isChecked():
+                        file_path = self.input_path_data_received.text()
+                        common.print_write(display_line, file_path)
+                
+
+            # 3. 否则，直接按照串口数据格式来显示
+            else:
+                for i, seg in enumerate(segments):
+                    if self.timeStamp_checkbox.isChecked():
+                        # 计算时间戳
+                        seg_start_time = common.calculate_timestamp(start_time, byte_offset, bits_per_byte / baudrate)
+                        ts = seg_start_time.strftime("%Y-%m-%d_%H:%M:%S.%f")[:-3]
+                        byte_offset += len(seg) + (len(end_bytes) if i < len(segments) - 1 else 0)
+
+                        display_line = f"[{ts}]{common.force_decode(seg, handle_control_char='interpret')}"
+                    else:
+                        display_line = f"{common.force_decode(seg, handle_control_char='interpret')}"
+
+                    # 添加到缓冲区，不过滤空行，保留所有数据
+                    self.full_data_store.append(display_line)
+
+                    # 文件日志记录，同步写入
+                    if self.checkbox_data_received.isChecked():
+                        file_path = self.input_path_data_received.text()
+                        common.print_write(display_line, file_path)
+
         self.pending_updates.clear()
-        
+
         # 维护缓冲区大小
         if len(self.full_data_store) > self.buffer_size:
-            excess = 10
+            excess = len(self.full_data_store) - self.buffer_size
             del self.full_data_store[:excess]
-            del self.hex_buffer[:excess]
+            
+            # 安全地删除hex_buffer，确保索引不越界
+            if hasattr(self, 'hex_buffer') and len(self.hex_buffer) > excess:
+                del self.hex_buffer[:excess]
+            elif hasattr(self, 'hex_buffer'):
+                self.hex_buffer.clear()  # 如果长度不一致，清空重建
 
             # 调整 current_offset，保持当前显示内容不被挤到后面
             self.current_offset = max(0, self.current_offset - excess)
@@ -1709,6 +1908,9 @@ class MyWidget(QWidget):
         end_idx = max(0, end_idx)
         start_idx = max(0, end_idx - min(self.visible_lines, len(self.full_data_store)))
         text_lines = self.full_data_store[start_idx:end_idx]
+        
+        # 不过滤空行，保留原始数据的完整性
+        # text_lines = [line for line in text_lines if line.strip()]
 
         # 更新滚动条范围
         # scrollbar.setMaximum(len(self.full_data_store) * self.received_data_textarea.fontMetrics().lineSpacing())
@@ -1734,9 +1936,14 @@ class MyWidget(QWidget):
             document.setDefaultFont(current_font)
             cursor = QTextCursor(document)
 
-            # 插入文本数据
-            for line in text_lines:
-                cursor.insertText(line)
+            # 插入文本数据，确保每行都不以换行符结尾（避免多余空行）
+            for i, line in enumerate(text_lines):
+                # 移除行尾的换行符，避免产生空行
+                clean_line = line.rstrip('\n\r')
+                cursor.insertText(clean_line)
+                # 如果不是最后一行，添加换行符
+                if i < len(text_lines) - 1:
+                    cursor.insertText('\n')
 
             # 设置文档
             self.received_data_textarea.setDocument(document)
@@ -1755,8 +1962,8 @@ class MyWidget(QWidget):
         if not hasattr(self, 'full_data_store'):
             self.full_data_store = []
             self.hex_buffer = []
-            self.buffer_size = 1000
-            self.visible_lines = 100
+            self.buffer_size = 10000  # 使用更大的缓冲区
+            self.visible_lines = 500
             self.current_offset = 0
         if not hasattr(self, 'pending_updates'):
             self.pending_updates = []
@@ -1785,13 +1992,18 @@ class MyWidget(QWidget):
 
         # 只存储(bytes, start_time)元组
         self.pending_updates.append((raw_data, start_dt))
+        
+        # 防止pending_updates过多导致内存问题和处理延迟
+        if len(self.pending_updates) > self.max_pending_updates:
+            # 强制处理一部分数据，避免无限累积
+            self.batch_update_ui()
 
         # 检查是否应该立即更新（基于时间或数量阈值）
         current_time = time.time()
         time_since_last_update = current_time - self.last_ui_update_time
         if (len(self.pending_updates) >= 20 or time_since_last_update >= self.ui_update_interval):
             if not self.update_timer.isActive():
-                self.update_timer.start(10)  # 10ms后批量更新
+                self.update_timer.start(5)  # 减少延迟，从10ms改为5ms
                 self.last_ui_update_time = current_time
 
     def show_search_dialog(self):
@@ -1867,12 +2079,12 @@ class MyWidget(QWidget):
             self.data_receive_thread.started.connect(self.data_receiver.run)
             self.data_receive_thread.finished.connect(self.data_receiver.deleteLater)
             self.data_receiver.exceptionOccurred.connect(self.port_off)
-            self.data_receiver.is_show_symbol = self.symbol_checkbox.isChecked()
+            self.data_receiver.is_show_control_char = self.control_char_checkbox.isChecked()
             self.data_receiver.is_show_timeStamp = self.timeStamp_checkbox.isChecked()
             self.data_receiver.is_show_hex = self.received_hex_data_checkbox.isChecked()
             self.data_receive_thread.start()
         except Exception as e:
-            common.custom_print(f"Error opening serial port: {e}")
+            logger.error(f"Error opening serial port: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     def port_off(self):
@@ -1880,6 +2092,14 @@ class MyWidget(QWidget):
         self.data_receive_thread.quit()
         # No wait for the thread to finish, it will finish itself
         # self.data_receive_thread.wait()
+
+        # 清空数据累积缓冲区
+        if hasattr(self, 'data_accumulator'):
+            self.data_accumulator = bytearray()
+            
+        # 停止累积定时器
+        if hasattr(self, 'accumulator_timer'):
+            self.accumulator_timer.stop()
 
         try:
             self.main_Serial = common.port_off(self.main_Serial)
@@ -1907,10 +2127,10 @@ class MyWidget(QWidget):
                 for input in self.input_fields:
                     input.setEnabled(False)
             else:
-                common.custom_print("⚙ Port Close Failed")
+                logger.error("Port Close Failed")
                 self.port_button.setEnabled(True)
         except Exception as e:
-            common.custom_print(f"Error closing serial port: {e}")
+            logger.error(f"Error closing serial port: {e}")
             self.set_status_label("Failed", "#dc3545")
 
     """
@@ -1922,6 +2142,14 @@ class MyWidget(QWidget):
         self.current_offset = 0
         self.full_data_store = []
         self.hex_buffer = []
+        
+        # 清空数据累积缓冲区
+        if hasattr(self, 'data_accumulator'):
+            self.data_accumulator = bytearray()
+        
+        # 停止累积定时器
+        if hasattr(self, 'accumulator_timer'):
+            self.accumulator_timer.stop()
         
         self.received_data_textarea.clear()
         if self.input_path_data_received.text():
@@ -1951,7 +2179,7 @@ class MyWidget(QWidget):
                         ATCommandFromFile[i - 1].get("command")
                     )
                     self.input_fields[i - 1].setCursorPosition(0)
-                    self.checkbox_send_with_enters[i - 1].setChecked(
+                    self.checkbox_send_with_enders[i - 1].setChecked(
                         ATCommandFromFile[i - 1].get("withEnter")
                     )
                     self.interVal[i - 1].setText(
@@ -1987,7 +2215,7 @@ class MyWidget(QWidget):
                 "interval": (
                     self.interVal[i].text() if self.interVal[i].text() else ""
                 ),
-                "withEnter": self.checkbox_send_with_enters[i].isChecked(),
+                "withEnter": self.checkbox_send_with_enders[i].isChecked(),
             }
             command_list.append(command_info)
         with open(
@@ -2009,13 +2237,12 @@ class MyWidget(QWidget):
             else:
                 self.path_ATCommand = common.get_resource_path("tmps/ATCommand.json")
         else:
-            # common.custom_print(f"Radio button {index + 1} is unchecked.")
-            pass
+            logger.warning(f"Radio button {index + 1} is unchecked.")
 
     def handle_hotkey_click(self, index: int, value: str = "", shortcut: str = ""):
         def hotkey_clicked():
             if value:
-                self.port_write(value, self.main_Serial, True)
+                self.port_write(value, self.main_Serial, self.checkbox_send_with_ender.isChecked())
             else:
                 if index == 1:
                     self.clear_log()
@@ -2094,7 +2321,7 @@ class MyWidget(QWidget):
             top_line_index = scroll_value // self.received_data_textarea.fontMetrics().lineSpacing()
             # 更新 current_offset
             self.current_offset = max(0, len(self.full_data_store) - top_line_index - self.visible_lines)
-            print(f"Updated current_offset: {self.current_offset}")
+            # print(f"Updated current_offset: {self.current_offset}")
 
     def handle_left_click(self):
         if self.prompt_index >= 0 and self.prompt_index < len(self.input_fields) - 1:
@@ -2102,7 +2329,7 @@ class MyWidget(QWidget):
             self.port_write(
                 self.input_prompt.text(),
                 self.main_Serial,
-                self.checkbox_send_with_enters[self.prompt_index].isChecked(),
+                self.checkbox_send_with_enders[self.prompt_index].isChecked(),
             )
             self.checkbox[self.prompt_index].setChecked(True)
             self.prompt_index += 1
@@ -2136,7 +2363,7 @@ class MyWidget(QWidget):
             self.input_prompt_index.setText(str(self.prompt_index + 1))
 
     def handle_right_shift_click(self):
-        common.custom_print("Right button click with Shift modifier")
+        logger.debug("Right button click with Shift modifier")
 
     def handle_middle_click(self):
         if self.prompt_index >= 0:
@@ -2159,8 +2386,8 @@ class MyWidget(QWidget):
             self.checkbox[i].setChecked(False)
 
     def set_enter_none(self):
-        status = not all(checkbox.isChecked() for checkbox in self.checkbox_send_with_enters)
-        for checkbox in self.checkbox_send_with_enters:
+        status = not all(checkbox.isChecked() for checkbox in self.checkbox_send_with_enders)
+        for checkbox in self.checkbox_send_with_enders:
             checkbox.setChecked(status)
 
     def set_interval_none(self):
@@ -2235,7 +2462,7 @@ class MyWidget(QWidget):
             # 写入配置文件
             common.write_config(self.config)
         except Exception as e:
-            logging.error(f"Error saving paths to config: {e}")
+            logger.error(f"Error saving paths to config: {e}")
 
     # Filter selected commands
     def filter_selected_command(self):
@@ -2246,7 +2473,7 @@ class MyWidget(QWidget):
                     "index": i,
                     "command": self.input_fields[i].text(),
                     "interval": self.interVal[i].text(),
-                    "withEnter": self.checkbox_send_with_enters[i].isChecked(),
+                    "withEnter": self.checkbox_send_with_enders[i].isChecked(),
                 }
                 self.selected_commands.append(command_info)
         return self.selected_commands
@@ -2319,7 +2546,7 @@ class MyWidget(QWidget):
 
     # Button Click Handler
     def handle_button_click(
-        self, index, input_field, checkbox, checkbox_send_with_enter, interVal
+        self, index, input_field, checkbox, checkbox_send_with_ender, interVal
     ):
         def button_clicked():
             if not self.last_one_click_time:
@@ -2327,7 +2554,7 @@ class MyWidget(QWidget):
             self.port_write(
                 input_field.text(),
                 self.main_Serial,
-                checkbox_send_with_enter.isChecked(),
+                checkbox_send_with_ender.isChecked(),
             )
             checkbox.setChecked(True)
             self.prompt_index = index
@@ -2353,6 +2580,11 @@ class MyWidget(QWidget):
         if confirm_exit_dialog.exec() == QDialog.Accepted:
             # Save configuration settings
             self.save_config(self.config)
+            
+            # 停止累积定时器
+            if hasattr(self, 'accumulator_timer'):
+                self.accumulator_timer.stop()
+                
             # Properly stop and wait for the data receive thread
             try:
                 if hasattr(self, "data_receiver") and self.data_receiver:
@@ -2361,7 +2593,7 @@ class MyWidget(QWidget):
                     self.data_receive_thread.quit()
                     self.data_receive_thread.wait(2000)  # Wait up to 2 seconds
             except Exception as e:
-                logging.error(f"Error stopping data receive thread: {e}")
+                logger.error(f"Error stopping data receive thread: {e}")
             # Close serial port
             if self.main_Serial:
                 self.port_off()
@@ -2377,24 +2609,9 @@ class MyWidget(QWidget):
 
 def main():
     try:
-        # 确保用户数据目录存在
-        app_data_dir = common.ensure_user_directories()
-        
-        # 设置日志
-        log_file = os.path.join(app_data_dir, "logs", "error.log")
-        logging.basicConfig(
-            filename=log_file,
-            level=logging.DEBUG,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            filemode='a'
-        )
-        
+       
         # 添加控制台输出
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        logging.getLogger().addHandler(console_handler)
-        
-        logging.info("Application starting...")
+        logger.info("Application starting...")
         
         app = QApplication([])
         
@@ -2421,7 +2638,7 @@ def main():
                     scaled_icon = icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     painter.drawPixmap(168, 80, scaled_icon)
         except Exception as e:
-            logging.warning(f"Could not load icon: {e}")
+            logger.warning(f"Could not load icon: {e}")
         
         # 绘制应用名称
         painter.setPen(QColor("#333333"))
@@ -2470,9 +2687,9 @@ def main():
             if os.path.exists(style_path):
                 widget.setStyleSheet(QSSLoader.load_stylesheet(style_path))
             else:
-                logging.warning("Style file not found, using default style")
+                logger.warning("Style file not found, using default style")
         except Exception as e:
-            logging.warning(f"Could not load stylesheet: {e}")
+            logger.warning(f"Could not load stylesheet: {e}")
         app.processEvents()
         
         update_splash_message("Configuring window...")
@@ -2484,7 +2701,7 @@ def main():
             if os.path.exists(icon_path):
                 app.setWindowIcon(QIcon(icon_path))
         except Exception as e:
-            logging.warning(f"Could not set window icon: {e}")
+            logger.warning(f"Could not set window icon: {e}")
         
         widget.resize(1000, 900)
         app.processEvents()
@@ -2494,15 +2711,18 @@ def main():
         
         # 更新检查（添加异常处理）
         try:
-            update_loader = UpdateInfoDialog.load_update_info_async()
+            from components.UpdateInfoDialog import UpdateChecker
+            update_checker = UpdateChecker()
             
             def on_update_finished(success, should_show_dialog):
                 update_splash_message("Startup complete!")
                 QTimer.singleShot(300, lambda: finish_startup(should_show_dialog))
             
-            update_loader.finished.connect(on_update_finished)
+            update_checker.finished.connect(on_update_finished)
+            update_checker.start_check()
+                
         except Exception as e:
-            logging.warning(f"Update check failed: {e}")
+            logger.warning(f"Update check failed: {e}")
             finish_startup(False)
         
         def finish_startup(should_show_dialog=False):
@@ -2516,7 +2736,7 @@ def main():
                         update_dialog = UpdateInfoDialog(widget)
                         update_dialog.show()
                     except Exception as e:
-                        logging.warning(f"显示更新信息对话框失败: {e}")
+                        logger.warning(f"显示更新信息对话框失败: {e}")
                 
                 # 延迟500毫秒后显示更新对话框，让主界面先完全显示
                 QTimer.singleShot(500, show_update_dialog)
@@ -2524,13 +2744,13 @@ def main():
         # 设置超时机制，如果10秒内没有完成就强制关闭启动画面
         def force_close_splash():
             try:
-                if 'update_loader' in locals() and update_loader.isRunning():
-                    logging.info("Update info loading timeout, force closing splash screen")
+                if 'update_checker' in locals() and hasattr(update_checker, 'isRunning') and update_checker.isRunning():
+                    logger.info("Update info loading timeout, force closing splash screen")
                 update_splash_message("Startup complete!")
                 widget.show()
                 splash.finish(widget)
             except Exception as e:
-                logging.error(f"Error in force_close_splash: {e}")
+                logger.error(f"Error in force_close_splash: {e}")
         
         QTimer.singleShot(10000, force_close_splash)  # 10秒超时
         
@@ -2543,8 +2763,8 @@ def main():
         error_msg += f"Frozen: {getattr(sys, 'frozen', False)}\n"
         error_msg += f"Sys.path: {sys.path[:3]}...\n"  # 只显示前3个路径
         
-        logging.error(error_msg)
-        print(error_msg)
+        logger.error(error_msg)
+        logger.error(error_msg)
         
         # 尝试显示错误对话框
         try:
@@ -2556,15 +2776,17 @@ def main():
             error_dialog.setWindowTitle("SCOM Startup Error")
             error_dialog.exec()
         except Exception as dialog_error:
-            print(f"Unable to display error dialog: {dialog_error}")
+            logger.error(f"Unable to display error dialog: {dialog_error}")
         
         sys.exit(1)
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        filename=common.get_resource_path("logs/error.log"),
-        level=logging.DEBUG,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-    )
+    logger = Logger(
+            app_name="Window",
+            log_dir="logs",
+            max_bytes=10 * 1024 * 1024,
+            backup_count=3
+    ).get_logger("Window")
+
     main()
 

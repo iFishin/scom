@@ -4,9 +4,13 @@ import sys
 import time
 import json
 import serial
+import threading
 import configparser
-from datetime import datetime
+import datetime
 from pathlib import Path
+from typing import Literal
+
+write_lock = threading.Lock()
 
 
 class SerialPortNotInitializedError(Exception):
@@ -117,7 +121,7 @@ def get_current_time() -> str:
     返回：
     str: 当前时间的字符串格式
     """
-    return datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")[:-3]
 
 def get_absolute_path(file_name):
     """
@@ -140,24 +144,21 @@ def get_absolute_path(file_name):
         return abs_path
     else:
         raise FileNotFoundError(f"File not found at path: {abs_path}")
-
-def escape_control_characters(s: str, ignore_crlf: bool = True) -> str:
-    r"""
-    将文本中的控制字符和扩展ASCII字符转义为\x{XX}格式
-
-    参数：
-    s (str): 输入字符串（字符的Unicode码位需在0-255范围内）
-    ignore_crlf (bool): 是否忽略 \r 和 \n 的转义（默认 False）
-
-    返回：
-    str: 转义后的字符串（如 \x00, \xFF）
+    
+def calculate_timestamp(start_time, byte_offset, time_per_byte):
     """
-    return ''.join(
-        f'\\x{ord(c):02X}' 
-        if (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n')) 
-        else c 
-        for c in s
-    )
+    计算时间戳
+
+    Args:
+        start_time (datetime): 起始时间
+        byte_offset (int): 字节偏移量
+        time_per_byte (float): 每字节传输时间（秒）
+
+    Returns:
+        datetime: 计算后的时间戳
+    """
+    return start_time + datetime.timedelta(seconds=(byte_offset * time_per_byte))
+
     
 def remove_control_characters(s: str, ignore_crlf: bool = True) -> str:
     r"""
@@ -175,31 +176,87 @@ def remove_control_characters(s: str, ignore_crlf: bool = True) -> str:
         if not (ord(c) <= 0xFF and (ord(c) < 32 or ord(c) >= 127) and not (ignore_crlf and c in '\r\n'))
     )
 
-def force_decode(bytes_data: bytes, replace_null: str = 'escape') -> str:
+def force_decode(
+    bytes_data: bytes,
+    handle_control_char: Literal['escape', 'remove', 'ignore', 'interpret'] = 'escape'
+) -> str:
     r"""
-    强制解码字节数据为字符串，并处理空字符（\x00）
+    强制解码字节数据为字符串，并提供多种控制字符处理方式
 
     参数：
     bytes_data (bytes): 要解码的字节数据
-    replace_null (str): 处理空字符的方式，可选值为 'escape'（转义为\x00）或 'remove'（删除空字符）或 'ignore'（忽略空字符）
+    handle_control_char: 控制字符处理方式，可选：
+        - 'escape': 转义为\x00等形式（默认）
+        - 'remove': 删除所有控制字符
+        - 'ignore': 保留原始控制字符
+        - 'interpret': 像终端一样解析控制字符（\r回车、\n换行等）
 
     返回：
     str: 解码后的字符串
+
+    示例：
+    >>> force_decode(b'Hello\r\nWorld\x00', 'interpret')
+    'Hello\nWorld'
     """
     encoding_list = ["utf-8", "gbk", "big5", "latin1"]
     
     for encoding in encoding_list:
         try:
             decoded_str = bytes_data.decode(encoding)
-            if replace_null == 'escape':
+            
+            if handle_control_char == 'escape':
                 decoded_str = escape_control_characters(decoded_str)
-            elif replace_null == 'remove':
+            elif handle_control_char == 'remove':
                 decoded_str = remove_control_characters(decoded_str)
-            elif replace_null == 'ignore':
-                pass
+            elif handle_control_char == 'interpret':
+                decoded_str = interpret_control_characters(decoded_str)
+            # 'ignore' 情况不做处理
+            
             return decoded_str
         except UnicodeDecodeError:
             continue
+    
+    # 所有编码尝试失败后回退到latin1并替换不可解码字符
+    return bytes_data.decode('latin1', errors='replace')
+
+def interpret_control_characters(s: str) -> str:
+    """
+    像终端一样解析控制字符
+    - \r 回车（覆盖行首）
+    - \n 换行
+    - \t 制表符（8空格）
+    - \b 退格
+    - \a 响铃（转换为[BEL]）
+    - \x00 删除（或替换为空格）
+    """
+    result = []
+    cursor = 0  # 模拟光标位置，用于处理\r和\b
+    
+    for char in s:
+        if char == '\r':  # 回车
+            cursor = 0
+        elif char == '\n':  # 换行
+            result.append('\n')
+            cursor = 0
+        elif char == '\t':  # 制表符
+            spaces = 8 - (cursor % 8)
+            result.append(' ' * spaces)
+            cursor += spaces
+        elif char == '\b':  # 退格
+            if cursor > 0:
+                cursor -= 1
+                result.pop()
+        elif char == '\a':  # 响铃
+            result.append('[BEL]')
+            cursor += 5
+        elif char == '\x00':  # 空字符
+            result.append(' ')  # 替换为空格
+            cursor += 1
+        else:
+            result.append(char)
+            cursor += 1
+    
+    return ''.join(result)
 
 def create_default_config() -> None:
     """
@@ -296,7 +353,6 @@ def write_config(config: configparser.ConfigParser, config_path: str = None) -> 
     else:
         config_path = os.path.abspath(config_path)
     try:
-        custom_print(f"Writing config file to {config_path}")
         with open(config_path, "w", encoding="utf-8") as configfile:
             config.write(configfile)
     except IOError as e:
@@ -306,7 +362,7 @@ def write_config(config: configparser.ConfigParser, config_path: str = None) -> 
 
 def log_write(res: str, log_file: str = None) -> bool:
     """
-    将结果写入临时日志文件
+    将结果写入日志文件（线程安全）
 
     参数：
     res (str): 要写入的结果
@@ -318,8 +374,9 @@ def log_write(res: str, log_file: str = None) -> bool:
     if log_file is None:
         log_file = get_resource_path("tmps/temp.log")
     try:
-        with open(os.path.join(log_file), "a", encoding="utf-8") as log_file_object:
-            log_file_object.write("{}\n".format(res.strip()))
+        with write_lock:  # 加锁，确保线程安全
+            with open(os.path.join(log_file), "a", encoding="utf-8") as log_file_object:
+                log_file_object.write("{}\n".format(res.strip()))
         return True
     except IOError as e:
         custom_print(f"Error writing to log file: {e}")
@@ -402,47 +459,103 @@ def port_off(port_serial: serial.Serial) -> None:
             custom_print(f"Error closing serial port: {e}")
             raise e
 
+def escape_control_characters(text: str, escape_extended: bool = False) -> str:
+    """
+    将字符串中的控制字符（如\r\n\t）转义并显式展示
+    
+    参数：
+    text (str): 包含控制字符的原始文本
+    escape_extended (bool): 是否转义扩展ASCII和Unicode控制字符，默认为False
+    
+    返回：
+    str: 控制字符被转义后的文本，如\r变为\\r，\n变为\\n
+    """
+    # 常见控制字符映射
+    control_chars = {
+        '\r': '\\r',
+        '\n': '\\n',
+        '\t': '\\t',
+        '\v': '\\v',
+        '\f': '\\f',
+        '\b': '\\b',
+        '\a': '\\a',
+        '\\': '\\\\',  # 防止反斜杠本身被误解
+    }
+    
+    result = ""
+    for char in text:
+        if char in control_chars:
+            result += control_chars[char]
+        elif ord(char) < 32:  # ASCII控制字符
+            result += f'\\x{ord(char):02x}'
+        elif escape_extended and (ord(char) > 126 or not char.isprintable()):
+            # 扩展ASCII或Unicode控制字符
+            if ord(char) <= 0xFF:
+                result += f'\\x{ord(char):02x}'
+            else:
+                result += f'\\u{ord(char):04x}'
+        else:
+            result += char
+    
+    return result
 
-def port_write(
-    command: str,
-    port_serial: serial.Serial,
-    endWithEnter: bool = True,
-    endWithOther: str = None,
-) -> None:
+def hex_to_bytes(hex_str: str) -> bytes:
+    """
+    将十六进制字符串转换为字节序列
+    
+    参数：
+    hex_str (str): 十六进制字符串，如 "0D0A", "0d0a"
+    
+    返回：
+    bytes: 转换后的字节序列，如 b'\r\n'
+    
+    异常：
+    ValueError: 如果输入的不是有效的十六进制字符串
+    """
+    if not hex_str:
+        return b''
+        
+    # 清理结束符字符串
+    clean_hex = hex_str.replace(" ", "").replace("0x", "").replace("\\x", "")
+    
+    # 如果长度为奇数，在前面补0
+    if len(clean_hex) % 2 != 0:
+        clean_hex = "0" + clean_hex
+        
+    try:
+        # 转换为字节序列
+        return bytes.fromhex(clean_hex)
+    except ValueError as e:
+        raise ValueError(f"Invalid hex string '{hex_str}': {e}")
+
+def port_write(command: str, port_serial: serial.Serial, ender: str = None) -> None:
     """
     向串口写入命令
 
     参数：
     command (str): 要写入的命令
     port_serial (serial.Serial): 打开的串口对象
-    endWithEnter (bool): 是否添加回车换行（默认 True）
-    endWithOther (str): 自定义的十六进制结束字符，如 "0D0A", "0A", "20" 等（默认 None）
-                       如果提供此参数，将优先使用此参数而不是 endWithEnter
+    ender (str): 结束符，十六进制字符串，如 "0D0A", "0d0a"，空字符串或 None
     """
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        try:
-            if endWithOther:
-                try:
-                    hex_string = endWithOther.replace(" ", "").replace("0x", "").replace("\\x", "")
-                    if len(hex_string) % 2 != 0:
-                        hex_string = "0" + hex_string
-                    end_bytes = bytes.fromhex(hex_string)
-                    port_serial.write(command.encode("UTF-8") + end_bytes)
-                except ValueError as e:
-                    custom_print(f"Invalid hex string '{endWithOther}': {e}")
-                    if endWithEnter:
-                        port_serial.write((command + "\r\n").encode("UTF-8"))
-                    else:
-                        port_serial.write(command.encode("UTF-8"))
-            elif endWithEnter:
-                port_serial.write((command + "\r\n").encode("UTF-8"))
-            else:
+
+    try:
+        # 如果提供了结束符且不是空字符串，尝试将其解析为十六进制字节
+        if ender is not None and ender:  # 检查不是None且不是空字符串
+            try:
+                end_bytes = hex_to_bytes(ender)
+                port_serial.write(command.encode("UTF-8") + end_bytes)
+            except ValueError as e:
+                # 如果结束符无效，记录错误并仅发送命令
+                custom_print(f"Invalid hex string '{ender}': {e}")
                 port_serial.write(command.encode("UTF-8"))
-        except Exception as e:
-            custom_print(f"Error writing to serial port: {e}")
-            raise e
+        else:
+            # 如果未提供结束符或为空字符串，仅发送命令
+            port_serial.write(command.encode("UTF-8"))
+    except Exception as e:
+        custom_print(f"Error writing to serial port: {e}")
+        raise e
 
 
 def port_read(port_serial, size=256, max_data_size=512, timeout=0.1) -> str:
@@ -612,35 +725,6 @@ def port_readline_hex(port_serial: serial.Serial) -> str:
             custom_print(f"Error reading a line from serial port as hex: {e}")
             raise e
 
-
-def echo(port_serial: serial.Serial) -> None:
-    """
-    发送 AT+QECHO=1 命令并读取响应
-
-    参数：
-    port_serial (serial.Serial): 串口对象
-    """
-    if port_serial is None:
-        raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        port_write("AT+QECHO=1\r\n", port_serial)
-        port_read(port_serial)
-
-
-def reset(port_serial: serial.Serial) -> None:
-    """
-    发送 AT+QRST 命令并读取响应
-
-    参数：
-    port_serial (serial.Serial): 串口对象
-    """
-    if port_serial is None:
-        raise SerialPortNotInitializedError("Serial port is not initialized.")
-    else:
-        port_write("AT+RESTORE\r\n", port_serial)
-        port_read(port_serial)
-
-
 def print_write(text: str, log_file=None, isPrint=False) -> None:
     """
     打印并写入文本到日志
@@ -650,10 +734,10 @@ def print_write(text: str, log_file=None, isPrint=False) -> None:
     isPrint (bool): 是否打印文本（默认 False）
     """
     for line in text.strip().split("\n"):
-        if line.strip():
-            log_write(f"{line}", log_file=log_file)
-            if isPrint:
-                custom_print(f"{line}")
+        # 保留空行，不过滤
+        log_write(f"{line}", log_file=log_file)
+        if isPrint:
+            custom_print(f"{line}")
 
 
 def custom_print(text: str, log_file: str = None, isPrint: bool = False) -> None:
@@ -668,7 +752,7 @@ def custom_print(text: str, log_file: str = None, isPrint: bool = False) -> None
     返回：
     None
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
     formatted_text = f"{timestamp} - {text}"
     if log_file is None:
         log_file = get_resource_path("logs/error.log")
