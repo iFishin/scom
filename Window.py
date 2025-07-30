@@ -121,7 +121,7 @@ class MyWidget(QWidget):
         # 增大缓冲区以减少数据丢失
         self.buffer_size = 10000  # 从2000增加到10000
         self.visible_lines = 500
-        self.max_pending_updates = 200  # 限制待处理更新的最大数量
+        self.max_pending_updates = 20  # 限制待处理更新的最大数量，从200降低到20
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
@@ -1736,7 +1736,7 @@ class MyWidget(QWidget):
             # 如果是超时数据或没有结束符，直接处理整个数据
             if is_timeout or not end_bytes:
                 segments = [data_bytes]
-                # print(f"直接处理数据: 超时={is_timeout}, 无结束符={not end_bytes}, 数据长度={len(data_bytes)}")
+                # print(f"直接处理数据:{segments} 超时={is_timeout}, 无结束符={not end_bytes}, 数据长度={len(data_bytes)}")
             else:
                 # 使用累积缓冲区来处理跨数据包的消息
                 if not hasattr(self, 'data_accumulator'):
@@ -1769,8 +1769,8 @@ class MyWidget(QWidget):
                     
                     # 如果有不完整的段，启动超时定时器
                     if incomplete_segment:
-                        self.accumulator_timer.start(500)  # 500ms 超时
-                    
+                        self.accumulator_timer.start(50)  # 50ms 超时
+
                     # 为完整的段添加结束符（用于正确显示）
                     complete_segments = []
                     for seg in segments:
@@ -1780,7 +1780,7 @@ class MyWidget(QWidget):
                 else:
                     # 没有找到完整的消息，启动或重启超时定时器
                     self.accumulator_timer.stop()
-                    self.accumulator_timer.start(500)  # 500ms 超时
+                    self.accumulator_timer.start(50)  # 50ms 超时
                     segments = []
                 
             # 调试信息 - 可以临时启用来诊断问题
@@ -1976,6 +1976,9 @@ class MyWidget(QWidget):
             self.update_timer.setSingleShot(True)
             self.update_timer.timeout.connect(self.batch_update_ui)
 
+        # 获取原始数据打印
+        # print(f"Received raw data: {raw_data}")
+
         # 计算数据起始时间戳（基于波特率和数据长度）
         baudrate = 115200  # 默认波特率
         try:
@@ -1993,18 +1996,35 @@ class MyWidget(QWidget):
         # 只存储(bytes, start_time)元组
         self.pending_updates.append((raw_data, start_dt))
         
-        # 防止pending_updates过多导致内存问题和处理延迟
-        if len(self.pending_updates) > self.max_pending_updates:
-            # 强制处理一部分数据，避免无限累积
-            self.batch_update_ui()
+        # 调试pending_updates内容
+        # print(f"Pending updates: {self.pending_updates}")
 
         # 检查是否应该立即更新（基于时间或数量阈值）
         current_time = time.time()
         time_since_last_update = current_time - self.last_ui_update_time
-        if (len(self.pending_updates) >= 20 or time_since_last_update >= self.ui_update_interval):
-            if not self.update_timer.isActive():
-                self.update_timer.start(5)  # 减少延迟，从10ms改为5ms
-                self.last_ui_update_time = current_time
+        
+        # 详细调试信息
+        # print(f"调试信息: len(pending_updates)={len(self.pending_updates)}, "
+        #       f"time_since_last_update={time_since_last_update:.3f}, "
+        #       f"ui_update_interval={self.ui_update_interval}, "
+        #       f"max_pending_updates={self.max_pending_updates}")
+        
+        # 降低触发阈值，确保数据能及时显示
+        condition1 = len(self.pending_updates) >= 1  # 改为1，有数据就更新
+        condition2 = time_since_last_update >= 0.01  # 降低到10ms
+        condition3 = len(self.pending_updates) > self.max_pending_updates
+        
+        # print(f"触发条件: 数量>=1: {condition1}, 时间间隔>=0.01: {condition2}, 超过最大缓存: {condition3}")
+        
+        should_update = condition1 or condition2 or condition3
+        
+        if should_update:
+            # 直接调用batch_update_ui，不使用定时器
+            self.batch_update_ui()
+            self.last_ui_update_time = current_time
+        else:
+            # 动态调整阈值，但保持在合理范围内
+            self.max_pending_updates = max(5, min(50, len(self.pending_updates) * 3))
 
     def show_search_dialog(self):
         if self.stacked_widget.currentIndex() == 0:
