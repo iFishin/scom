@@ -1,1 +1,58 @@
-{}
+{
+    "Commands": [
+        {
+            "selected": false,
+            "command": "AT+QSTAAPINFO=\"rgwifi2.4\",\"88888888\"",
+            "interval": "1",
+            "withEnter": true
+        },
+        {
+            "selected": true,
+            "command": "AT+QGETIP=\"station\"",
+            "interval": "6",
+            "withEnter": true
+        },
+        {
+            "selected": true,
+            "command": "AT+QIOPEN=0,\"UDP SERVICE\",\"127.0.0.1\",1233,2021,0,0",
+            "interval": "40",
+            "withEnter": true
+        },
+        {
+            "selected": true,
+            "command": "AT+QIRD=0,1500",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QISEND=0,1460,\"192.168.0.199\",10000",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QIOPEN=2,\"TCP\",\"192.168.50.2\",2021,,1",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QICLOSE=2,1",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QIOPEN=2,\"UDP\",\"192.168.50.2\",2021,,1",
+            "interval": "",
+            "withEnter": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QISEND=2,1460",
+            "interval": "",
+            "withEnter": true
+        }
+    ]
+}
