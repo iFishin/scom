@@ -32,7 +32,7 @@ class KnownIssuesDialog(QDialog):
         # Open button
         open_btn = QPushButton("View Known Issues")
         open_btn.clicked.connect(self.open_known_issues)
-        open_btn.setFixedSize(150, 40)
+        open_btn.setFixedSize(250, 40)
 
         # Close button
         close_btn = QPushButton("Close")

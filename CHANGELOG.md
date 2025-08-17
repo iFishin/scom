@@ -1,17 +1,12 @@
 # CHANGELOG
 
-## [v1.2.4-Feature/modification](https://github.com/iFishin/scom/releases)
-
-- 修复的问题
-- [x] 1. 数据积压缓冲区逻辑优化，改成50ms触发UI更新，然后设置了动态阈值，根据数据量大小来决定是否更新UI，避免了数据挤压不吐出的情况
-
 ## [v1.2.3](https://github.com/iFishin/scom/releases)
 
 - 新增功能
 - [x] 1. 新增ASCII HEX发送功能
 
 - 改进
-- [x] 1. 重写串口数据接收逻辑
+- [x] 1. 重新串口数据接收逻辑
 - [x] 2. 优化首页滚动条逻辑，上滑停止更新，下滑继续更新
 - [x] 3. 引入日志记录模块
 

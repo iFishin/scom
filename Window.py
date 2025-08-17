@@ -254,18 +254,19 @@ class MyWidget(QWidget):
             label_ender = QLabel("Ender")
             label_ender.setToolTip("Double click to Clear")
             label_ender.mouseDoubleClickEvent = lambda event: self.set_enter_none()
-            label_sec = QLabel("Sec")
-            label_sec.setToolTip("Double click to Clear")
-            label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
+            label_ms = QLabel("ms")
+            label_ms.setToolTip("Double click to Clear")
+            label_ms.setAlignment(Qt.AlignCenter)
+            label_ms.mouseDoubleClickEvent = lambda event: self.set_interval_none()
             
             button_layout.addWidget(label_sender, 1, 1, alignment=Qt.AlignCenter)
             button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
             button_layout.addWidget(label_ender, 1, 3, alignment=Qt.AlignCenter)
-            button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
+            button_layout.addWidget(label_ms, 1, 4, alignment=Qt.AlignRight)
 
         isEnable = self.main_Serial is not None
-        
-        # 创建新的按钮行
+
+        # Create new button row
         for i in range(1, max_rows + 1):
             checkbox = QCheckBox()
             checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
@@ -276,8 +277,9 @@ class MyWidget(QWidget):
             checkbox_send_with_ender.setChecked(True)
             input_interval = QLineEdit()
             input_interval.setMaximumWidth(self.screen_width * 0.025)
-            input_interval.setValidator(QIntValidator(0, 1000))
-            input_interval.setPlaceholderText("sec")
+            # Maximum of SLEEP interval is fixed to 99999, about 99s
+            input_interval.setValidator(QIntValidator(0, 99999))
+            input_interval.setPlaceholderText("ms")
             input_interval.setAlignment(Qt.AlignCenter)
 
             button_layout.addWidget(checkbox, i+1, 0)
@@ -1290,7 +1292,7 @@ class MyWidget(QWidget):
         self.string_ascii_convert_dialog.show()
 
     def custom_toggle_switch(self):
-        self.custom_toggle_switch_dialog = CustomToggleSwitchDialog()
+        self.custom_toggle_switch_dialog = CustomToggleSwitchDialog(self)
         self.custom_toggle_switch_dialog.show()
 
     def show_help_info(self):
@@ -1769,7 +1771,7 @@ class MyWidget(QWidget):
                     
                     # 如果有不完整的段，启动超时定时器
                     if incomplete_segment:
-                        self.accumulator_timer.start(50)  # 50ms 超时
+                        self.accumulator_timer.start(30)
 
                     # 为完整的段添加结束符（用于正确显示）
                     complete_segments = []
@@ -1780,7 +1782,7 @@ class MyWidget(QWidget):
                 else:
                     # 没有找到完整的消息，启动或重启超时定时器
                     self.accumulator_timer.stop()
-                    self.accumulator_timer.start(50)  # 50ms 超时
+                    self.accumulator_timer.start(30)
                     segments = []
                 
             # 调试信息 - 可以临时启用来诊断问题
@@ -1924,35 +1926,86 @@ class MyWidget(QWidget):
             end_idx == self._last_end_idx):
             return
 
+        # 保存上次索引用于增量更新判断
+        prev_start = getattr(self, '_last_start_idx', None)
+        prev_end = getattr(self, '_last_end_idx', None)
+
         self._last_start_idx = start_idx
         self._last_end_idx = end_idx
 
         # 禁用更新以提高性能
         self.received_data_textarea.setUpdatesEnabled(False)
         try:
-            # 使用 QTextDocument 进行批量更新
-            document = QTextDocument()
             current_font = self.received_data_textarea.font()
-            document.setDefaultFont(current_font)
-            cursor = QTextCursor(document)
 
-            # 插入文本数据，确保每行都不以换行符结尾（避免多余空行）
-            for i, line in enumerate(text_lines):
-                # 移除行尾的换行符，避免产生空行
-                clean_line = line.rstrip('\n\r')
-                cursor.insertText(clean_line)
-                # 如果不是最后一行，添加换行符
-                if i < len(text_lines) - 1:
-                    cursor.insertText('\n')
+            # 如果还没有持久化文档或视图范围发生了复杂变化，重建文档
+            need_rebuild = False
+            if not hasattr(self, '_display_document'):
+                need_rebuild = True
+            else:
+                # 如果请求的 start 与上次不同，或者出现回退（prev_end > end_idx），需要重建
+                if prev_start is None or start_idx != prev_start or (prev_end is not None and prev_end > end_idx):
+                    need_rebuild = True
 
-            # 设置文档
-            self.received_data_textarea.setDocument(document)
+            if need_rebuild:
+                # 重建整个文档（第一次或范围不连续时）
+                self._display_document = QTextDocument()
+                self._display_document.setDefaultFont(current_font)
+                cursor = QTextCursor(self._display_document)
+                for i, line in enumerate(text_lines):
+                    clean_line = line.rstrip('\n\r')
+                    cursor.insertText(clean_line)
+                    if i < len(text_lines) - 1:
+                        cursor.insertText('\n')
+                self.received_data_textarea.setDocument(self._display_document)
+            else:
+                # 尝试增量追加：当 start_idx 与 prev_start 相同且 end_idx > prev_end
+                if prev_end is not None and end_idx > prev_end:
+                    # 新增的行在 text_lines 中的起始位置
+                    new_from = prev_end - start_idx
+                    if new_from < 0:
+                        # 退化为重建以避免不一致
+                        self._display_document = QTextDocument()
+                        self._display_document.setDefaultFont(current_font)
+                        cursor = QTextCursor(self._display_document)
+                        for i, line in enumerate(text_lines):
+                            clean_line = line.rstrip('\n\r')
+                            cursor.insertText(clean_line)
+                            if i < len(text_lines) - 1:
+                                cursor.insertText('\n')
+                        self.received_data_textarea.setDocument(self._display_document)
+                    else:
+                        cursor = QTextCursor(self._display_document)
+                        cursor.movePosition(QTextCursor.End)
+                        new_lines = text_lines[new_from:]
+                        for idx, line in enumerate(new_lines):
+                            clean_line = line.rstrip('\n\r')
+                            # 如果文档不是空的并且当前不是首行，先插入换行
+                            if cursor.position() != 0 or (idx > 0):
+                                cursor.insertText('\n')
+                            cursor.insertText(clean_line)
+                else:
+                    # 没有新增内容可追加，或无法增量处理，安全重建
+                    self._display_document = QTextDocument()
+                    self._display_document.setDefaultFont(current_font)
+                    cursor = QTextCursor(self._display_document)
+                    for i, line in enumerate(text_lines):
+                        clean_line = line.rstrip('\n\r')
+                        cursor.insertText(clean_line)
+                        if i < len(text_lines) - 1:
+                            cursor.insertText('\n')
+                    self.received_data_textarea.setDocument(self._display_document)
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
 
         # 如果快要触底，自动滚动到底部
         if will_at_bottom:
-            scrollbar.setValue(scrollbar.maximum())
+            # 如果是增量追加情况下，document 未被替换，可以立即滚到底
+            if prev_start == start_idx and prev_end is not None and end_idx > prev_end:
+                self.received_data_textarea.verticalScrollBar().setValue(self.received_data_textarea.verticalScrollBar().maximum())
+            else:
+                # 否则延后到事件循环末尾再滚动，确保布局完成
+                QTimer.singleShot(0, lambda: self.received_data_textarea.verticalScrollBar().setValue(self.received_data_textarea.verticalScrollBar().maximum()))
 
     def update_main_textarea(self, raw_data: bytes):
         """
@@ -2498,11 +2551,25 @@ class MyWidget(QWidget):
                 self.selected_commands.append(command_info)
         return self.selected_commands
 
-    def handle_command_executed(self, index, command):
-        # self.checkbox[index].setChecked(True)
-        self.input_prompt_index.setText(str(index))
-        self.input_prompt.setText(command)
-        self.input_prompt.setCursorPosition(0)
+    def handle_command_executed(self, index):
+        # index: 1-based command index, or -1 for completion/error
+        try:
+            self.input_prompt_index.setText(str(index))
+            if index == -1:
+                # show completion marker
+                self.input_prompt.setText("")
+            else:
+                idx0 = int(index) - 1
+                if 0 <= idx0 < len(self.input_fields):
+                    cmd = self.input_fields[idx0].text()
+                    self.input_prompt.setText(cmd)
+                else:
+                    # index out of range: clear input
+                    self.input_prompt.setText("")
+            self.input_prompt.setCursorPosition(0)
+        except Exception:
+            # defensive: avoid raising from signal handler
+            pass
 
     def handle_command_executed_total_times(self, total_times):
         self.input_prompt_batch_times.setText(str(total_times))
@@ -2581,9 +2648,9 @@ class MyWidget(QWidget):
             self.input_prompt_index.setText(str(index))
             self.input_prompt.setText(input_field.text())
             now_click_time = time.time()
-            self.interVal[index - 2].setText(
-                str(min(99, int(now_click_time - self.last_one_click_time) + 1))
-            )
+            delta_ms = int((now_click_time - self.last_one_click_time) * 1000)
+            # Limit the maximum display value to avoid excessive values (adjust the upper limit here if needed)
+            self.interVal[index - 2].setText(str(min(99999, delta_ms)))
             self.last_one_click_time = now_click_time
 
         return button_clicked
