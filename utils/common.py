@@ -499,7 +499,7 @@ def escape_control_characters(text: str, escape_extended: bool = False) -> str:
     
     return result
 
-def hex_to_bytes(hex_str: str) -> bytes:
+def hex_str_to_bytes(hex_str: str) -> bytes:
     """
     将十六进制字符串转换为字节序列
     
@@ -515,8 +515,12 @@ def hex_to_bytes(hex_str: str) -> bytes:
     if not hex_str:
         return b''
         
-    # 清理结束符字符串
-    clean_hex = hex_str.replace(" ", "").replace("0x", "").replace("\\x", "")
+    # 清理结束符字符串：移除空格、换行符、回车符、"0x"、"\\x"
+    clean_hex = hex_str.replace(" ", "").replace("\n", "").replace("\r", "").replace("0x", "").replace("\\x", "")
+    
+    # 验证是否只包含有效的十六进制字符
+    if not all(c in '0123456789ABCDEFabcdef' for c in clean_hex):
+        raise ValueError(f"Invalid hex string '{hex_str}': contains non-hexadecimal characters")
     
     # 如果长度为奇数，在前面补0
     if len(clean_hex) % 2 != 0:
@@ -556,7 +560,7 @@ def port_write(command: str, port_serial: serial.Serial, ender: str = None) -> N
         # 如果提供了结束符且不是空字符串，尝试将其解析为十六进制字节
         if ender_str:
             try:
-                end_bytes = hex_to_bytes(ender_str)
+                end_bytes = hex_str_to_bytes(ender_str)
                 port_serial.write(command.encode("UTF-8") + end_bytes)
             except ValueError as e:
                 # 如果结束符无效，记录错误并仅发送命令

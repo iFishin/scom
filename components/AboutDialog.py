@@ -8,7 +8,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About SCOM")
-        self.setFixedSize(600, 500)
+        self.setFixedSize(500, 600)
         self.setWindowFlag(Qt.FramelessWindowHint)
 
         layout = QVBoxLayout()
@@ -59,6 +59,8 @@ class AboutDialog(QDialog):
         """)
         text_browser.setReadOnly(True)
         text_browser.setOpenExternalLinks(True)
+        text_browser.setMinimumHeight(120)  # 设置最小高度避免出现滚动条
+        text_browser.setMaximumHeight(150)  # 设置最大高度保持界面整洁
         layout.addWidget(text_browser)
 
         # Button layout

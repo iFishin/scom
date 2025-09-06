@@ -2,57 +2,87 @@
     "Commands": [
         {
             "selected": false,
-            "command": "AT+QSTAAPINFO=\"rgwifi2.4\",\"88888888\"",
-            "interval": "1",
-            "withEnter": true
-        },
-        {
-            "selected": true,
-            "command": "AT+QGETIP=\"station\"",
-            "interval": "6",
-            "withEnter": true
-        },
-        {
-            "selected": true,
-            "command": "AT+QIOPEN=0,\"UDP SERVICE\",\"127.0.0.1\",1233,2021,0,0",
-            "interval": "40",
-            "withEnter": true
-        },
-        {
-            "selected": true,
-            "command": "AT+QIRD=0,1500",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QRST",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
         },
         {
             "selected": false,
-            "command": "AT+QISEND=0,1460,\"192.168.0.199\",10000",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QECHO=1",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
         },
         {
             "selected": false,
-            "command": "AT+QIOPEN=2,\"TCP\",\"192.168.50.2\",2021,,1",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QVERSION",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
         },
         {
             "selected": false,
-            "command": "AT+QICLOSE=2,1",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+CSUB",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
         },
         {
             "selected": false,
-            "command": "AT+QIOPEN=2,\"UDP\",\"192.168.50.2\",2021,,1",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEADDR?",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
         },
         {
             "selected": false,
-            "command": "AT+QISEND=2,1460",
-            "interval": "",
-            "withEnter": true
+            "command": "AT+QBLEINIT=1",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=1",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=0",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QWLMAC",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QWSCAN",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+RESTORE",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "41542B514543484F3D32",
+            "interval": "0",
+            "hex": true,
+            "withEnder": true
         }
     ]
 }

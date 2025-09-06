@@ -12,9 +12,9 @@ Dark: #495057 (深色)
 Blue: #007bff (蓝色主题 - Checkbox、部分装饰)
 
 === 字体系统统一定义 ===
-UI_FONT_FAMILY: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif
+UI_FONT_FAMILY: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif
 CODE_FONT_FAMILY: "JetBrains Mono", "Consolas", "Courier New", monospace
-MIXED_FONT_FAMILY: "Consolas", "Consolas", "Courier New", monospace (仅用于注释参考)
+MIXED_FONT_FAMILY: "Consolas", "Microsoft YaHei", "Courier New", monospace (仅用于注释参考)
 
 UI_FONT_SIZE_SMALL: 11px
 UI_FONT_SIZE_NORMAL: 13px  
@@ -27,7 +27,7 @@ UI_FONT_SIZE_XL: 16px
 */
 
 * {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Consolas", "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     color: #333333;
     outline: none; /* 移除焦点轮廓 */
@@ -53,8 +53,8 @@ QToolTip {
     border: 1px solid #495057;
     border-radius: 6px;
     padding: 8px 12px;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     opacity: 230;
 }
 
@@ -63,10 +63,10 @@ QGroupBox {
     border: 2px solid #adb5bd;
     border-radius: 8px;
     margin-top: 12px;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-weight: 500;
     color: #495057;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
 }
 
 QGroupBox::title {
@@ -75,9 +75,9 @@ QGroupBox::title {
     color: #495057;
     background-color: #f8f9fa;
     border-radius: 6px;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-weight: 600;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     left: 8px;
     top: 4px;
 }
@@ -178,9 +178,9 @@ QMenuBar {
     background-color: white;
     border-bottom: 2px solid #e9ecef;
     padding: 3px 0;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-weight: 500;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
 }
 
 QMenuBar::item {
@@ -297,7 +297,7 @@ QMessageBox {
 
 QMessageBox QLabel {
     color: #495057;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 15px; /* UI_FONT_SIZE_LARGE */
     padding: 10px;
     line-height: 1.5;
@@ -343,9 +343,9 @@ QPushButton {
     border: 1px solid transparent;
     padding: 6px 12px;
     border-radius: 6px;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-weight: 500;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     min-height: 16px;
 }
 
@@ -439,14 +439,10 @@ QPushButton[buttonStyle="outline"]:pressed {
     border-color: #008c5a;
 }
 
-
-
-
-
 /* ===== 标签样式 ===== */
 QLabel {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     color: #495057;
     font-weight: 500;
     line-height: 1.4;
@@ -454,22 +450,22 @@ QLabel {
 }
 
 QLabel[labelStyle="title"] {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: 700;
     color: #333333;
 }
 
 QLabel[labelStyle="subtitle"] {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_MEDIUM */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     font-weight: 600;
     color: #495057;
 }
 
 QLabel[labelStyle="caption"] {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 11px; /* UI_FONT_SIZE_SMALL */
     color: #6c757d;
     font-weight: 400;
 }
@@ -500,7 +496,7 @@ QLineEdit, QTextEdit, QPlainTextEdit {
     padding: 6px 10px;
     border-radius: 6px;
     background-color: white;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     font-weight: 500;
     color: #495057;
@@ -563,7 +559,7 @@ QTextEdit[textStyle="log"] {
     background-color: #f8f9fa;
     color: #495057;
     font-family: "JetBrains Mono", "Consolas", "Courier New", monospace; /* CODE_FONT_FAMILY */
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
 }
 
 /* ===== 下拉框样式 ===== */
@@ -572,8 +568,8 @@ QComboBox {
     padding: 6px 10px;
     border-radius: 6px;
     background-color: white;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
     color: #495057;
     min-height: 16px;
@@ -651,7 +647,7 @@ QSpinBox, QDoubleSpinBox {
     padding: 6px 10px;
     border-radius: 6px;
     background-color: white;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
     color: #495057;
@@ -794,7 +790,7 @@ QRadioButton {
     padding: 6px;
     background-color: transparent;
     color: #495057;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
     border: none;
     spacing: 6px;
@@ -811,6 +807,7 @@ QRadioButton::indicator {
 QRadioButton::indicator:checked {
     background-color: #00a86b;
     border: 2px solid #00a86b;
+    background-image: radial-gradient(circle, white 3px, #00a86b 3px);
 }
 
 QRadioButton::indicator:hover {
@@ -821,6 +818,7 @@ QRadioButton::indicator:hover {
 QRadioButton::indicator:checked:hover {
     background-color: #008c5a;
     border: 2px solid #008c5a;
+    background-image: radial-gradient(circle, white 3px, #008c5a 3px);
 }
 
 QRadioButton::indicator:pressed {
@@ -831,6 +829,7 @@ QRadioButton::indicator:pressed {
 QRadioButton::indicator:checked:pressed {
     background-color: #006f4a;
     border: 2px solid #006f4a;
+    background-image: radial-gradient(circle, white 3px, #006f4a 3px);
 }
 
 QRadioButton::indicator:disabled {
@@ -841,6 +840,7 @@ QRadioButton::indicator:disabled {
 QRadioButton::indicator:checked:disabled {
     background-color: #adb5bd;
     border: 2px solid #adb5bd;
+    background-image: radial-gradient(circle, #f8f9fa 3px, #adb5bd 3px);
 }
 
 QRadioButton:disabled {
@@ -852,8 +852,8 @@ QCheckBox {
     padding: 6px;
     background-color: transparent;
     color: #495057;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
     border: none;
     spacing: 6px;
@@ -990,7 +990,7 @@ QListWidget {
     border-radius: 8px;
     background-color: white;
     padding: 5px;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     outline: none;
 }
 
@@ -1035,8 +1035,8 @@ QTableWidget {
     gridline-color: #f1f3f4;
     selection-background-color: #e8f5e8;
     alternate-background-color: #f8f9fa;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     outline: none;
 }
 
@@ -1044,8 +1044,8 @@ QTableWidget::item {
     padding: 10px 12px;
     border: none;
     border-bottom: 1px solid #f1f3f4;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     color: #495057;
 }
 
@@ -1070,7 +1070,7 @@ QTableWidget QLineEdit {
     border: 2px solid #ced4da;
     border-radius: 6px;
     background-color: white;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     min-height: 20px;
 }
 
@@ -1083,7 +1083,7 @@ QTableWidget QComboBox {
     border: 2px solid #ced4da;
     border-radius: 6px;
     background-color: white;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     min-height: 20px;
 }
 
@@ -1104,7 +1104,7 @@ QHeaderView::section {
     border-bottom: 2px solid #e9ecef;
     font-weight: 600;
     color: #495057;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     text-align: left;
 }
 
@@ -1165,7 +1165,7 @@ QTabBar::tab {
     margin-right: 2px;
     color: #6c757d;
     font-weight: 500;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
 }
 
 QTabBar::tab:selected {
@@ -1248,7 +1248,7 @@ QProgressBar {
     background: #f8f9fa;
     text-align: center;
     font-weight: 600;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_MEDIUM */
+    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
     color: #495057;
     height: 25px;
 }
@@ -1377,7 +1377,7 @@ QDialog QWebEngineView {
 
 /* ===== Markdown 内容样式 ===== */
 QDialog QWebEngineView {
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 15px; /* UI_FONT_SIZE_LARGE */
     line-height: 1.8;
     color: #495057;
@@ -1486,7 +1486,7 @@ QPushButton#closeButton {
     min-width: 35px;
     min-height: 35px;
     border-radius: 6px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
 }
 
@@ -1526,8 +1526,9 @@ QTextBrowser {
     border: 2px solid #e9ecef;
     border-radius: 8px;
     background-color: white;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
+    font-family: "Microsoft YaHei", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
     font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
+    color: #495057;
     line-height: 1.6;
     padding: 15px;
     selection-background-color: #80bdff;
@@ -1549,7 +1550,7 @@ QTextBrowser[textStyle="log"] {
     background-color: #f8f9fa;
     color: #495057;
     font-family: "JetBrains Mono", "Consolas", "Courier New", monospace; /* CODE_FONT_FAMILY */
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     border-color: #adb5bd;
 }
 
@@ -1558,7 +1559,7 @@ QStatusBar {
     background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
     color: #6c757d;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     padding: 5px;
 }
 
@@ -1569,7 +1570,7 @@ QStatusBar::item {
 
 QStatusBar QLabel {
     color: #6c757d;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
 }
 
@@ -1636,6 +1637,7 @@ QProgressBar[loading="true"] {
     border: 2px solid #f3f3f3;
     border-top: 2px solid #00a86b;
     border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 /* ===== 卡片样式 ===== */
@@ -1656,7 +1658,7 @@ QLabel[badgeStyle="primary"] {
     color: white;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1665,7 +1667,7 @@ QLabel[badgeStyle="secondary"] {
     color: white;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1674,7 +1676,7 @@ QLabel[badgeStyle="success"] {
     color: white;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1683,7 +1685,7 @@ QLabel[badgeStyle="danger"] {
     color: white;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1692,7 +1694,7 @@ QLabel[badgeStyle="warning"] {
     color: #333333;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1701,7 +1703,7 @@ QLabel[badgeStyle="info"] {
     color: white;
     border-radius: 12px;
     padding: 4px 12px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: 600;
 }
 
@@ -1795,7 +1797,7 @@ QPushButton#prompt_button {
     border: 3px solid white;
     border-radius: 8px;
     padding: 6px 10px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
 }
 
@@ -1818,7 +1820,7 @@ QLineEdit#input_prompt {
     border: 2px solid white;
     border-radius: 8px;
     padding: 8px 12px;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     min-height: 30px;
 }
@@ -1828,7 +1830,7 @@ QLineEdit#input_prompt_index {
     border: 2px solid white;
     border-radius: 8px;
     padding: 8px 12px;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     min-height: 30px;
 }
@@ -1838,7 +1840,7 @@ QLineEdit#input_prompt_batch_times {
     border: 2px solid white;
     border-radius: 8px;
     padding: 8px 12px;
-    font-size: 14px; /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     min-height: 30px;
 }
@@ -1850,7 +1852,7 @@ QPushButton#prompt_batch_start_button {
     border: 3px solid white;
     border-radius: 8px;
     padding: 8px 15px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     min-height: 30px;
 }
@@ -1876,7 +1878,7 @@ QPushButton#prompt_batch_stop_button {
     border: 3px solid white;
     border-radius: 8px;
     padding: 8px 15px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     min-height: 30px;
 }
@@ -1901,18 +1903,18 @@ QLabel#status_label {
     border: 2px solid white;
     border-radius: 8px;
     padding: 8px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: bold;
     background-color: white;
 }
 
 /* 其他小控件样式 */
 QGroupBox#button_groupbox QLineEdit {
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
 }
 
 QGroupBox#settings_groupbox {
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_NORMAL */
+    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
 }
 
 /* ===== 额外自定义控件样式 ===== */
@@ -1937,7 +1939,7 @@ QTextEdit#text_input_layout_4 {
 QPushButton#save_paths_button {
     background-color: transparent;
     border-radius: 5px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_SMALL+ */
+    font-size: 12px; /* UI_FONT_SIZE_SMALL+ */
     font-weight: bold;
 }
 
@@ -1970,7 +1972,7 @@ QPushButton#nav_button {
     border: none;
     border-radius: 0px;
     padding: 12px 16px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: 500;
     margin: 2px 2px 3px 2px;
     position: relative;
@@ -1993,7 +1995,7 @@ QPushButton#nav_button_active {
     border: none;
     border-radius: 0px;
     padding: 12px 16px;
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_XL */
+    font-size: 16px; /* UI_FONT_SIZE_XL */
     font-weight: 700;
     margin: 2px 2px 0px 2px;
     border-bottom: 3px solid #00a86b;
@@ -2009,34 +2011,6 @@ QPushButton#nav_button_active:pressed {
     background-color: rgba(0, 168, 107, 0.25);
     color: #006f4a;
     border-bottom: 3px solid #006f4a;
-}
-
-QPushButton#icon_button {
-    background-color: white;
-    color: #495057;
-    border: 2px solid #ced4da;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-QPushButton#icon_button:hover {
-    background-color: #f8f9fa;
-    border-color: #00a86b;
-    color: #00a86b;
-}
-
-QPushButton#icon_button:pressed {
-    background-color: #e9ecef;
-    border-color: #008c5a;
-    color: #008c5a;
-}
-
-QPushButton#icon_button:disabled {
-    background-color: #f8f9fa;
-    border-color: #e9ecef;
-    color: #adb5bd;
-    opacity: 0.6;
 }
 
 /* ===== 完结 ===== */

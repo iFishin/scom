@@ -40,9 +40,9 @@ class HotkeysConfigDialog(QDialog):
         hotkey_values_section = dict(self.config.items("HotkeyValues"))
         hotkey_shortcuts_section = dict(self.config.items("HotkeyShortcuts"))
         self.hotkeys = {
-            hotkeys_section.get(f"Hotkey_{i + 1}", ""): [
-                hotkey_values_section.get(f"HotkeyValue_{i + 1}", ""),
-                hotkey_shortcuts_section.get(f"HotkeyShortcut_{i + 1}", ""),
+            hotkeys_section.get(f"hotkey_{i + 1}", ""): [
+                hotkey_values_section.get(f"hotkeyvalue_{i + 1}", ""),
+                hotkey_shortcuts_section.get(f"hotkeyshortcut_{i + 1}", ""),
             ]
             for i in range(len(hotkeys_section))
         }
@@ -193,9 +193,9 @@ class HotkeysConfigDialog(QDialog):
         self.config.add_section("HotkeyShortcuts")
         
         for index, (name, (value, shortcut)) in enumerate(self.hotkeys.items()):
-            self.config.set("Hotkeys", f"Hotkey_{index + 1}", name)
-            self.config.set("HotkeyValues", f"HotkeyValue_{index + 1}", value)
-            self.config.set("HotkeyShortcuts", f"HotkeyShortcut_{index + 1}", shortcut)
+            self.config.set("Hotkeys", f"hotkey_{index + 1}", name)
+            self.config.set("HotkeyValues", f"hotkeyvalue_{index + 1}", value)
+            self.config.set("HotkeyShortcuts", f"hotkeyshortcut_{index + 1}", shortcut)
         
         write_config(self.config, "config.ini")
 

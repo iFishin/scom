@@ -30,7 +30,7 @@ class CommandExecutor(QThread):
             index = command_dict.get('index', 0)
             command = command_dict.get('command', '')
             interval = command_dict.get('interval', '')
-            with_enter = command_dict.get('withEnter', False)
+            with_enter = command_dict.get('withEnder', False)
             # Pause handling: lock the mutex and wait while paused
             self.mutex.lock()
             try:

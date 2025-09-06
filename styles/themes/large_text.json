@@ -1,0 +1,42 @@
+{
+  "fonts": {
+    "ui_family": "\"Microsoft YaHei\", \"SimSun\", \"Segoe UI\", \"Roboto\", sans-serif",
+    "code_family": "\"JetBrains Mono\", \"Consolas\", \"Courier New\", monospace",
+    "mixed_family": "\"Consolas\", \"Microsoft YaHei\", \"Courier New\", monospace",
+    "sizes": {
+      "small": 13,
+      "small+": 14,
+      "normal": 15,
+      "medium": 16,
+      "large": 17,
+      "xl": 18,
+      "xxl": 20,
+      "xxxl": 22,
+      "huge": 26,
+      "mega": 30
+    }
+  },
+  "colors": {
+    "primary": "#00a86b",
+    "secondary": "#6c757d",
+    "success": "#28a745",
+    "danger": "#dc3545",
+    "warning": "#ffc107",
+    "info": "#17a2b8",
+    "light": "#f8f9fa",
+    "dark": "#343a40",
+    "blue": "#007bff"
+  },
+  "spacing": {
+    "small": "4px",
+    "normal": "8px",
+    "medium": "16px",
+    "large": "24px"
+  },
+  "border_radius": {
+    "small": "6px",
+    "normal": "8px",
+    "medium": "10px",
+    "large": "14px"
+  }
+}

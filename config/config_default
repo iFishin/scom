@@ -60,6 +60,7 @@ MaxRowsOfButtonGroup = 120
 ShowCommandEcho = False
 Ender = 0d0a
 SendAsHex = False
+Clear_Log_With_File = False
 
 [Paths]
 Path_1 = 
