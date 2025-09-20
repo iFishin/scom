@@ -427,6 +427,7 @@ class StyleConfigDialog(QDialog):
         """加载配置"""
         try:
             config = configparser.ConfigParser()
+            config.optionxform = str  # 保持选项名大小写敏感
             config.read('config.ini', encoding='utf-8')
             
             if 'StyleSettings' in config:
@@ -450,6 +451,7 @@ class StyleConfigDialog(QDialog):
         """保存配置"""
         try:
             config = configparser.ConfigParser()
+            config.optionxform = str  # 保持选项名大小写敏感
             if os.path.exists('config.ini'):
                 config.read('config.ini', encoding='utf-8')
                 

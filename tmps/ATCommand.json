@@ -1,4 +1,15 @@
 {
+    "name": "ATCommand.json",
+    "description": "AT Command configuration file",
+    "version": "1.0",
+    "created": "2025-09-19T20:01:57.765125",
+    "modified": "2025-09-20T13:38:10.628762",
+    "author": "SCOM User",
+    "settings": {
+        "baudrate": "115200",
+        "timeout": 1.0,
+        "encoding": "utf-8"
+    },
     "Commands": [
         {
             "selected": false,
@@ -11,14 +22,14 @@
             "selected": false,
             "command": "AT+QECHO=1",
             "interval": "0",
-            "hex": false,
+            "hex": true,
             "withEnder": true
         },
         {
             "selected": false,
             "command": "AT+QVERSION",
             "interval": "0",
-            "hex": false,
+            "hex": true,
             "withEnder": true
         },
         {
@@ -60,7 +71,7 @@
             "selected": false,
             "command": "AT+QWLMAC",
             "interval": "0",
-            "hex": false,
+            "hex": true,
             "withEnder": true
         },
         {
@@ -79,9 +90,9 @@
         },
         {
             "selected": false,
-            "command": "41542B514543484F3D32",
+            "command": "",
             "interval": "0",
-            "hex": true,
+            "hex": false,
             "withEnder": true
         }
     ]

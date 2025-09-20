@@ -4,8 +4,65 @@ on:
     branches:
       - main
       - feature/modification
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even without trigger keywords'
+        required: false
+        default: 'false'
+        type: boolean
 jobs:
+  check_build_trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check if build should be triggered
+        id: check
+        run: |
+          # 如果是手动触发，检查force_build参数
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ github.event.inputs.force_build }}" == "true" ]]; then
+              echo "should_build=true" >> $GITHUB_OUTPUT
+              echo "✅ Manual trigger with force_build=true"
+              exit 0
+            fi
+          fi
+          
+          # 如果推送到main分支，总是构建
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "✅ Push to main branch - build triggered"
+            exit 0
+          fi
+          
+          # 如果推送到feature分支，检查commit message
+          if [[ "${{ github.ref }}" == "refs/heads/feature/modification" ]]; then
+            # 获取最新的commit message
+            COMMIT_MSG=$(git log -1 --pretty=format:"%s %b")
+            echo "Commit message: $COMMIT_MSG"
+            
+            # 检查是否包含触发构建的关键词
+            if echo "$COMMIT_MSG" | grep -iE '\[build\]|\[release\]|\[package\]|--build|--release|--package' > /dev/null; then
+              echo "should_build=true" >> $GITHUB_OUTPUT
+              echo "✅ Feature branch commit with build trigger keyword found"
+            else
+              echo "should_build=false" >> $GITHUB_OUTPUT
+              echo "⏭️  Feature branch commit without build trigger keyword - skipping build"
+            fi
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "⏭️  Branch not configured for builds"
+          fi
+
   build:
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.should_build == 'true'
     runs-on: windows-latest
     steps:
       - name: Checkout code

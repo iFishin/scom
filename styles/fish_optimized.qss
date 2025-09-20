@@ -1695,3 +1695,67 @@ QWidget[draggable="true"]:hover {
     background-color: rgba(0, 168, 107, 0.1);
     border: 2px dashed #00a86b;
 }
+
+/* ===== AT命令页面专用样式 ===== */
+QLabel[objectName="page_title"] {
+    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    color: #495057;
+    padding: 5px 0px;
+}
+
+QLabel[objectName="file_status_label"] {
+    font-family: "JetBrains Mono", "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 5px;
+}
+
+QLabel[objectName="file_status_label"][status="saved"] {
+    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+QLabel[objectName="file_status_label"][status="modified"] {
+    color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    font-weight: bold;
+}
+
+QPushButton[objectName="save_button"] {
+    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    background-color: #00a86b;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    min-width: 60px;
+    min-height: 28px;
+}
+
+QPushButton[objectName="save_button"]:hover {
+    background-color: #007d54;
+    transform: translateY(-1px);
+}
+
+QPushButton[objectName="save_button"]:pressed {
+    background-color: #006145;
+    transform: translateY(0px);
+}
+
+QPushButton[objectName="save_button"]:disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+QPushButton[objectName="save_button"]:disabled:hover {
+    background-color: #e9ecef;
+    transform: none;
+}

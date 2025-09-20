@@ -27,191 +27,196 @@ class SafeUpdateChecker(QObject):
         self.current_version = self._get_current_version()
         
     def _get_current_version(self):
-        """获取当前版本号"""
-        try:
-            # 方法1: 从.env文件读取版本
-            if os.path.exists(".env"):
-                with open(".env", "r", encoding="utf-8") as f:
-                    for line in f:
-                        if line.startswith("VERSION="):
-                            version = line.split("=", 1)[1].strip().strip('"')
-                            logger.info(f"Version obtained from .env file: {version}")
-                            return version
-            
-            # 方法2: 从version.txt文件读取
-            if os.path.exists("version.txt"):
-                with open("version.txt", "r", encoding="utf-8") as f:
-                    version = f.read().strip()
-                    logger.info(f"Version obtained from version.txt: {version}")
-                    return version
-            
-            # 方法3: 从setup.py读取版本
-            if os.path.exists("setup.py"):
-                with open("setup.py", "r", encoding="utf-8") as f:
-                    content = f.read()
-                    import re
-                    # 查找版本号模式
-                    version_patterns = [
-                        r'version\s*=\s*["\']([^"\']+)["\']',
-                        r'__version__\s*=\s*["\']([^"\']+)["\']',
-                        r'CURRENT_VERSION\s*=\s*os\.getenv\(["\']VERSION["\'],\s*["\']([^"\']+)["\']',
-                    ]
-                    for pattern in version_patterns:
-                        match = re.search(pattern, content)
-                        if match:
-                            version = match.group(1)
-                            logger.info(f"Version obtained from setup.py: {version}")
-                            return version
-            
-            # 方法4: 从package.json读取（如果有的话）
-            if os.path.exists("package.json"):
-                import json
-                with open("package.json", "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    version = data.get("version")
-                    if version:
-                        logger.info(f"Version obtained from package.json: {version}")
-                        return version
-            
-            # 默认版本（用于测试）
-            logger.warning("Unable to obtain current version, using default version 0.9.0")
-            return "0.9.0"  # 设置一个较低的版本号用于测试
-            
-        except Exception as e:
-            logger.warning(f"Unable to obtain current version: {e}")
-            return "0.9.0"
+        """获取当前版本号 - 简化版"""
+        version_sources = [
+            (".env", lambda f: next((line.split("=", 1)[1].strip().strip('"').strip("'")
+                                   for line in f if line.startswith("VERSION=")), None)),
+            ("version.txt", lambda f: f.read().strip().strip('"').strip("'")),
+            ("setup.py", lambda f: self._extract_version_from_setup(f.read())),
+            ("package.json", lambda f: json.load(f).get("version"))
+        ]
+
+        for file_path, extractor in version_sources:
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        version = extractor(f)
+                        if version:
+                            # 确保版本字符串是干净的
+                            clean_version = str(version).strip().strip('"').strip("'")
+                            logger.info(f"Version from {file_path}: {clean_version}")
+                            return clean_version
+                except Exception as e:
+                    logger.warning(f"Failed to read version from {file_path}: {e}")
+
+        logger.warning("Using default version 0.9.0")
+        return "0.9.0"
+
+    def _extract_version_from_setup(self, content):
+        """从setup.py提取版本号"""
+        import re
+        patterns = [
+            r'version\s*=\s*["\']([^"\']+)["\']',
+            r'__version__\s*=\s*["\']([^"\']+)["\']'
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, content)
+            if match:
+                return match.group(1)
+        return None
     
     def check_for_updates(self, user_initiated=True):
-        """检查更新 - 区分用户主动检查和自动检查"""
-        if not user_initiated:
-            # 自动检查时，添加更多限制
-            if not self._should_auto_check():
-                return
-        
+        """检查更新"""
+        if not user_initiated and not self._should_auto_check():
+            logger.info("Auto-check skipped due to policy restrictions")
+            return
+
         logger.info(f"Starting update check - User initiated: {user_initiated}")
-        
+
         request = QNetworkRequest(QUrl(self.api_url))
-        # 使用标准的User-Agent，避免伪装
         request.setRawHeader(b"Accept", b"application/vnd.github.v3+json")
-        
+
         reply = self.network_manager.get(request)
         reply.finished.connect(lambda: self._handle_response(reply, user_initiated))
-        
-        # 设置超时 - 使用弱引用避免对象生命周期问题
-        import weakref
-        reply_ref = weakref.ref(reply)
-        QTimer.singleShot(10000, lambda: self._handle_timeout(reply_ref))
+
+        # 简化超时处理
+        QTimer.singleShot(10000, lambda: self._handle_timeout(reply))
+    
+    def _handle_timeout(self, reply):
+        """处理请求超时"""
+        if reply and not reply.isFinished():
+            logger.warning("Update check request timed out")
+            reply.abort()
+            self.check_failed.emit("Request timed out. Please check your network connection.")
     
     def _should_auto_check(self):
-        """判断是否应该进行自动检查"""
-        try:
-            config_file = "update_config.json"
-            if os.path.exists(config_file):
-                with open(config_file, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                    
-                # 检查是否禁用了自动更新
-                if not config.get("auto_check_enabled", True):
-                    return False
-                    
-                # 检查上次检查时间（避免频繁检查）
-                import datetime
-                last_check = config.get("last_check_time")
-                if last_check:
-                    last_time = datetime.datetime.fromisoformat(last_check)
-                    if (datetime.datetime.now() - last_time).days < 1:
-                        return False
-            
-            return True
-        except Exception as e:
-            logger.error(f"Failed to check auto-update configuration: {e}")
+        """判断是否应该进行自动检查 - 简化版"""
+        config = self._load_config()
+
+        if not config.get("auto_check_enabled", True):
             return False
+
+        # 检查上次检查时间（避免频繁检查）
+        import datetime
+        last_check = config.get("last_check_time")
+        if last_check:
+            last_time = datetime.datetime.fromisoformat(last_check)
+            if (datetime.datetime.now() - last_time).days < 1:
+                return False
+
+        return True
     
     def _handle_response(self, reply, user_initiated):
-        """处理响应"""
+        """处理响应 - 简化版"""
         try:
-            if reply.error() == QNetworkReply.NetworkError.NoError:
-                data = reply.readAll().data().decode('utf-8')
-                release_info = json.loads(data)
-                
-                latest_version = release_info.get("tag_name", "").lstrip("v")
-                release_notes = release_info.get("body", "")
-                
-                if self._is_newer_version(latest_version):
-                    logger.info(f"New version found: {latest_version}")
-                    self.update_available.emit(latest_version, release_notes)
-                else:
-                    if user_initiated:
-                        # 只有用户主动检查时才显示"已是最新版本"
-                        self.check_failed.emit("Currently the latest version")
-            else:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
                 error_msg = f"Network request failed: {reply.errorString()}"
                 logger.error(error_msg)
-                if user_initiated:
-                    self.check_failed.emit(error_msg)
+                # 无论是否用户主动发起，都应该通知UI更新状态
+                self.check_failed.emit(error_msg)
+                return
+
+            data = json.loads(reply.readAll().data().decode('utf-8'))
+            latest_version = data.get("tag_name", "").lstrip("v")
+            release_notes = data.get("body", "")
+
+            if self._is_newer_version(latest_version):
+                logger.info(f"New version found: {latest_version}")
+                self.update_available.emit(latest_version, release_notes)
+            else:
+                # 无论是否用户主动发起，都应该通知UI当前是最新版本
+                self.check_failed.emit("Currently the latest version")
+
         except Exception as e:
             error_msg = f"Failed to parse update information: {e}"
             logger.error(error_msg)
-            if user_initiated:
-                self.check_failed.emit(error_msg)
+            # 无论是否用户主动发起，都应该通知UI错误状态
+            self.check_failed.emit(error_msg)
         finally:
             reply.deleteLater()
             self._update_check_time()
     
-    def _handle_timeout(self, reply_ref):
-        """处理超时"""
-        reply = reply_ref() if reply_ref else None
-        if reply and reply.isRunning():
-            logger.warning("Update check timed out, aborting request")
-            reply.abort()
-        elif reply is None:
-            logger.debug("Network request completed, no timeout handling needed")
-        else:
-            logger.debug("Network request completed, no timeout handling needed")
-    
+
     def _is_newer_version(self, latest_version):
-        """比较版本号"""
+        """比较版本号 - 简化版"""
         try:
             def version_tuple(v):
-                # 移除 'v' 前缀并分割版本号
-                clean_v = v.lstrip('v').strip()
-                # 处理版本号格式：1.0.0, 1.0.0-beta, 1.0.0.1 等
-                parts = clean_v.split('-')[0].split('.')
-                # 转换为整数元组，不足3位的补0
-                return tuple(int(x) for x in parts[:3]) + (0,) * (3 - len(parts))
-            
+                # 清理版本字符串
+                v = str(v).strip().strip('"').strip("'").lstrip('v')
+                parts = v.split('-')[0].split('.')
+                # 只取前3个部分，转换为整数
+                version_parts = []
+                for part in parts[:3]:
+                    try:
+                        version_parts.append(int(part))
+                    except ValueError:
+                        version_parts.append(0)
+                # 补齐到3个部分
+                while len(version_parts) < 3:
+                    version_parts.append(0)
+                return tuple(version_parts)
+
             current_tuple = version_tuple(self.current_version)
             latest_tuple = version_tuple(latest_version)
-            
-            logger.info(f"Version comparison: Current {self.current_version} ({current_tuple}) vs Latest {latest_version} ({latest_tuple})")
-            
-            is_newer = latest_tuple > current_tuple
-            logger.info(f"Is newer version available: {is_newer}")
-            
-            return is_newer
-            
+
+            logger.info(f"Version comparison: {current_tuple} vs {latest_tuple}")
+            return latest_tuple > current_tuple
+
         except Exception as e:
             logger.error(f"Version comparison failed: {e}")
-            # 出错时默认认为有新版本，让用户自己判断
             return True
     
-    def _update_check_time(self):
-        """更新检查时间"""
+    def _load_config(self):
+        """加载配置"""
         try:
-            import datetime
-            config = {"last_check_time": datetime.datetime.now().isoformat()}
-            
-            config_file = "update_config.json"
-            if os.path.exists(config_file):
-                with open(config_file, "r", encoding="utf-8") as f:
-                    existing_config = json.load(f)
-                    existing_config.update(config)
-                    config = existing_config
-            
-            with open(config_file, "w", encoding="utf-8") as f:
-                json.dump(config, f, indent=2)
+            if os.path.exists("update_config.json"):
+                with open("update_config.json", "r", encoding="utf-8") as f:
+                    return json.load(f)
         except Exception as e:
-            logger.warning(f"Failed to update check time: {e}")
+            logger.error(f"Failed to load config: {e}")
+        return {}
+
+    def _save_config(self, config):
+        """保存配置"""
+        try:
+            existing = self._load_config()
+            existing.update(config)
+            with open("update_config.json", "w", encoding="utf-8") as f:
+                json.dump(existing, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save config: {e}")
+
+    def _update_check_time(self):
+        """更新检查时间 - 简化版"""
+        import datetime
+        self._save_config({"last_check_time": datetime.datetime.now().isoformat()})
+    
+    @staticmethod
+    def check_updates_on_startup():
+        """启动时检查更新（静态方法）- 检查用户设置"""
+        try:
+            # 使用update_config.json中的设置
+            checker = SafeUpdateChecker()
+            config = checker._load_config()
+            
+            # 获取启动时检查更新的设置，默认值为True
+            check_on_startup = config.get("check_on_startup_enabled", True)
+
+            if not check_on_startup:
+                logger.info("Update check on startup is disabled by user setting")
+                return None
+
+            logger.info("Update check on startup is enabled, starting check...")
+            checker.check_for_updates(user_initiated=False)
+            return checker
+
+        except Exception as e:
+            logger.warning(f"Failed to read startup update check setting: {e}")
+            # 如果读取失败，默认执行检查
+            logger.info("Defaulting to check updates on startup due to config read error")
+            checker = SafeUpdateChecker()
+            checker.check_for_updates(user_initiated=False)
+            return checker
 
 
 class SafeUpdateDialog(QDialog):
@@ -228,11 +233,32 @@ class SafeUpdateDialog(QDialog):
         self.checker.check_failed.connect(self._show_check_failed)
         
         self._init_ui()
+        
+        # 对话框打开时自动开始检查
+        QTimer.singleShot(500, self._auto_check_on_open)
+    
+    def _auto_check_on_open(self):
+        """对话框打开时自动检查更新"""
+        logger.info("Auto-checking for updates when dialog opens")
+        
+        # 首先显示正在检查的状态
+        self.content_area.setHtml("""
+        <div style='text-align: center; padding: 20px;'>
+            <h3>Checking for updates...</h3>
+            <p>Please wait while we check for the latest version</p>
+        </div>
+        """)
+        
+        self.check_button.setText("Checking...")
+        self.check_button.setEnabled(False)
+        
+        # 对话框打开时的检查应该被视为用户主动操作，不受时间限制
+        self.checker.check_for_updates(user_initiated=True)
     
     def _init_ui(self):
-        """初始化UI"""
+        """初始化UI - 简化版"""
         layout = QVBoxLayout()
-        
+
         # 标题
         title_label = QLabel("Update Check")
         title_font = QFont()
@@ -241,68 +267,80 @@ class SafeUpdateDialog(QDialog):
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
-        
+
         # 内容区域
         self.content_area = QTextBrowser()
         self.content_area.setHtml("""
         <div style='text-align: center; padding: 20px;'>
-            <h3>Checking for updates...</h3>
-            <p>Please wait</p>
+            <h3>Initializing...</h3>
+            <p>Preparing update check</p>
         </div>
         """)
         layout.addWidget(self.content_area)
+
+        # 按钮区域 - 分为两行
+        button_section = QVBoxLayout()
         
-        # 按钮区域
-        button_layout = QHBoxLayout()
+        # 第一行：操作按钮
+        action_layout = QHBoxLayout()
         
         self.check_button = QPushButton("Manual Check")
         self.check_button.clicked.connect(self._manual_check)
-        button_layout.addWidget(self.check_button)
+        action_layout.addWidget(self.check_button)
         
-        button_layout.addStretch()
-        
-        # 自动检查设置
-        self.auto_check_box = QCheckBox("Enable automatic update checks")
-        self.auto_check_box.setChecked(self._get_auto_check_setting())
-        self.auto_check_box.toggled.connect(self._save_auto_check_setting)
-        button_layout.addWidget(self.auto_check_box)
-        
-        button_layout.addStretch()
+        action_layout.addStretch()
         
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.close)
-        button_layout.addWidget(close_button)
+        action_layout.addWidget(close_button)
         
-        layout.addLayout(button_layout)
+        # 第二行：设置选项
+        settings_layout = QHBoxLayout()
+        
+        # 启动时检查设置 - 简化标签
+        self.startup_check_box = QCheckBox("Check on startup")
+        self.startup_check_box.setChecked(self._get_startup_check_setting())
+        self.startup_check_box.toggled.connect(self._save_startup_check_setting)
+        self.startup_check_box.setToolTip("Enable automatic update check when application starts")
+        settings_layout.addWidget(self.startup_check_box)
+
+        settings_layout.addStretch()
+
+        # 自动检查设置 - 简化标签
+        self.auto_check_box = QCheckBox("Auto check")
+        self.auto_check_box.setChecked(self._get_auto_check_setting())
+        self.auto_check_box.toggled.connect(self._save_auto_check_setting)
+        self.auto_check_box.setToolTip("Enable automatic periodic update checks")
+        settings_layout.addWidget(self.auto_check_box)
+
+        # 组装按钮区域
+        button_section.addLayout(action_layout)
+        button_section.addLayout(settings_layout)
+        
+        layout.addLayout(button_section)
         self.setLayout(layout)
     
     def _manual_check(self):
-        """手动检查更新"""
+        """手动检查更新 - 简化版"""
         self.content_area.setHtml("""
         <div style='text-align: center; padding: 20px;'>
             <h3>Checking for updates...</h3>
             <p>Please wait</p>
         </div>
         """)
-        
-        # 重新启用检查按钮的文本
+
         self.check_button.setText("Checking...")
         self.check_button.setEnabled(False)
-        
-        # 强制刷新checker实例
-        self.checker = SafeUpdateChecker(self)
-        self.checker.update_available.connect(self._show_update_available)
-        self.checker.check_failed.connect(self._show_check_failed)
-        
-        # 开始检查
+
+        # 使用现有的checker实例进行用户主动检查
         self.checker.check_for_updates(user_initiated=True)
     
     def _show_update_available(self, version, notes):
-        """显示有可用更新"""
-        # 重新启用按钮
+        """显示有可用更新 - 简化版"""
+        # 重置按钮状态
         self.check_button.setText("Manual Check")
         self.check_button.setEnabled(True)
-        
+
         html_content = f"""
         <div style='padding: 20px;'>
             <h3 style='color: #0066cc;'>🎉 New version available: v{version}</h3>
@@ -323,23 +361,24 @@ class SafeUpdateDialog(QDialog):
         </div>
         """
         self.content_area.setHtml(html_content)
-        
-        # 添加下载按钮
+
+        # 将手动检查按钮替换为下载按钮
         download_button = QPushButton("🌐 Open Download Page")
         download_button.clicked.connect(self._open_download_page)
-        
-        # 替换检查按钮
-        button_layout = self.layout().itemAt(2).layout()
-        button_layout.replaceWidget(self.check_button, download_button)
+
+        # 找到按钮布局并替换
+        button_section = self.layout().itemAt(2).layout()  # 获取按钮区域
+        action_layout = button_section.itemAt(0).layout()  # 获取第一行（操作按钮）
+        action_layout.replaceWidget(self.check_button, download_button)
         self.check_button.deleteLater()
         self.check_button = download_button
     
     def _show_check_failed(self, error_msg):
-        """显示检查失败"""
-        # 重新启用按钮
+        """显示检查失败 - 简化版"""
+        # 重置按钮状态
         self.check_button.setText("Retry Check")
         self.check_button.setEnabled(True)
-        
+
         if "Currently the latest version" in error_msg:
             html_content = f"""
             <div style='text-align: center; padding: 20px;'>
@@ -353,6 +392,8 @@ class SafeUpdateDialog(QDialog):
                 </p>
             </div>
             """
+            # 对于最新版本，将按钮改为"Check Again"
+            self.check_button.setText("Check Again")
         else:
             html_content = f"""
             <div style='text-align: center; padding: 20px;'>
@@ -381,40 +422,22 @@ class SafeUpdateDialog(QDialog):
         QDesktopServices.openUrl(QUrl("https://github.com/iFishin/scom/releases"))
     
     def _get_auto_check_setting(self):
-        """获取自动检查设置"""
-        try:
-            if os.path.exists("update_config.json"):
-                with open("update_config.json", "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                    return config.get("auto_check_enabled", True)
-            return True
-        except Exception:
-            return True
-    
+        """获取自动检查设置 - 简化版"""
+        return self.checker._load_config().get("auto_check_enabled", True)
+
     def _save_auto_check_setting(self, enabled):
-        """保存自动检查设置"""
-        try:
-            config = {"auto_check_enabled": enabled}
-            
-            if os.path.exists("update_config.json"):
-                with open("update_config.json", "r", encoding="utf-8") as f:
-                    existing_config = json.load(f)
-                    existing_config.update(config)
-                    config = existing_config
-            
-            with open("update_config.json", "w", encoding="utf-8") as f:
-                json.dump(config, f, indent=2)
-                
-            logger.info(f"Automatic update check {'enabled' if enabled else 'disabled'}")
-        except Exception as e:
-            logger.error(f"Failed to save automatic check setting: {e}")
-    
-    @staticmethod
-    def check_updates_on_startup():
-        """启动时检查更新（静态方法）"""
-        checker = SafeUpdateChecker()
-        checker.check_for_updates(user_initiated=False)
-        return checker
+        """保存自动检查设置 - 简化版"""
+        self.checker._save_config({"auto_check_enabled": enabled})
+        logger.info(f"Automatic update check {'enabled' if enabled else 'disabled'}")
+
+    def _get_startup_check_setting(self):
+        """获取启动时检查设置"""
+        return self.checker._load_config().get("check_on_startup_enabled", True)
+
+    def _save_startup_check_setting(self, enabled):
+        """保存启动时检查设置"""
+        self.checker._save_config({"check_on_startup_enabled": enabled})
+        logger.info(f"Startup update check {'enabled' if enabled else 'disabled'}")
 
 
 # 向后兼容的类名
