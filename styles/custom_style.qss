@@ -1,0 +1,117 @@
+
+/* ===== 自定义样式配置 ===== */
+* {
+    font-family: "Microsoft YaHei";
+    font-size: 14px;
+    color: #333333;
+    outline: none;
+}
+
+QWidget {
+    background-color: #f8f9fa;
+    color: #333333;
+    selection-background-color: #007bff;
+    selection-color: white;
+}
+
+/* 按钮样式 */
+QPushButton {
+    background-color: #00a86b;
+    color: white;
+    border: 2px solid transparent;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    min-height: 16px;
+}
+
+QPushButton:hover {
+    background-color: #00945e;
+}
+
+QPushButton:pressed {
+    background-color: #008051;
+}
+
+/* 输入框样式 */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    border: 2px solid #ced4da;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background-color: white;
+    color: #333333;
+    selection-background-color: #007bff;
+    selection-color: white;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border-color: #007bff;
+}
+
+/* 复选框样式 */
+QCheckBox::indicator:checked {
+    background-color: #007bff;
+    border: 2px solid #007bff;
+}
+
+/* 分组框样式 */
+QGroupBox {
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    padding: 18px 8px 8px 8px;
+    margin-top: 12px;
+    background-color: white;
+    font-weight: 500;
+    color: #333333;
+}
+
+QGroupBox::title {
+    color: #333333;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 3px 10px;
+    left: 8px;
+    top: 4px;
+}
+
+/* 下拉框样式 */
+QComboBox {
+    border: 2px solid #ced4da;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background-color: white;
+    color: #333333;
+}
+
+QComboBox:focus {
+    border-color: #007bff;
+}
+
+/* 特殊按钮样式 */
+QPushButton[buttonStyle="danger"] {
+    background-color: #dc3545;
+}
+
+QPushButton[buttonStyle="warning"] {
+    background-color: #ffc107;
+    color: #333333;
+}
+
+QPushButton[buttonStyle="secondary"] {
+    background-color: #6c757d;
+}
+
+/* 导航按钮样式 */
+QPushButton#nav_button_active {
+    color: #00a86b;
+    border-bottom: 3px solid #00a86b;
+}
+
+QPushButton#nav_button {
+    color: #6c757d;
+}
+
+QPushButton#nav_button:hover {
+    color: #00a86b;
+}

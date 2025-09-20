@@ -1,1 +1,99 @@
-{}
+{
+    "name": "ATCommand.json",
+    "description": "AT Command configuration file",
+    "version": "1.0",
+    "created": "2025-09-19T20:01:57.765125",
+    "modified": "2025-09-20T13:38:10.628762",
+    "author": "SCOM User",
+    "settings": {
+        "baudrate": "115200",
+        "timeout": 1.0,
+        "encoding": "utf-8"
+    },
+    "Commands": [
+        {
+            "selected": false,
+            "command": "AT+QRST",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QECHO=1",
+            "interval": "0",
+            "hex": true,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QVERSION",
+            "interval": "0",
+            "hex": true,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+CSUB",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEADDR?",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLEINIT=1",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=1",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QBLESCAN=0",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QWLMAC",
+            "interval": "0",
+            "hex": true,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+QWSCAN",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "AT+RESTORE",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        },
+        {
+            "selected": false,
+            "command": "",
+            "interval": "0",
+            "hex": false,
+            "withEnder": true
+        }
+    ]
+}

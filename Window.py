@@ -59,10 +59,11 @@ from components.SearchReplaceDialog import SearchReplaceDialog
 from components.HotkeysConfigDialog import HotkeysConfigDialog
 from components.MoreSettingsDialog import MoreSettingsDialog
 from components.LayoutConfigDialog import LayoutConfigDialog
+from components.StyleConfigDialog import StyleConfigDialog
 from components.AboutDialog import AboutDialog
 from components.KnownIssuesDialog import KnownIssuesDialog
 from components.HelpDialog import HelpDialog
-from components.UpdateInfoDialog import UpdateInfoDialog
+from components.SafeUpdateChecker import SafeUpdateDialog, SafeUpdateChecker
 from components.ConfirmExitDialog import ConfirmExitDialog
 from components.LengthCalculateDialog import LengthCalculateDialog
 from components.StringAsciiConvertDialog import StringAsciiConvertDialog
@@ -70,8 +71,18 @@ from components.StringGenerateDialog import StringGenerateDialog
 from components.CustomToggleSwitchDialog import CustomToggleSwitchDialog
 from components.DictRecorder import DictRecorderWindow
 from components.DraggableGroupBox import DraggableGroupBox
+from components.ErrorDialog import ErrorDialog
+from components.ATCommandManager import ATCommandManager
 from dotenv import load_dotenv
 import os
+
+# 创建全局logger实例
+logger = Logger(
+    app_name="Window",
+    log_dir="logs",
+    max_bytes=10 * 1024 * 1024,
+    backup_count=3
+).get_logger("Window")
 
 
 class MyWidget(QWidget):
@@ -91,6 +102,9 @@ class MyWidget(QWidget):
         self.last_one_click_time = None
         self.path_ATCommand = os.path.join(self.app_data_dir, "tmps", "ATCommand.json")
         self.received_data_textarea_scrollBottom = True
+        
+        # 初始化AT命令管理器
+        self.at_command_manager = ATCommandManager(self)
         self.thread_pool = QThreadPool()
         self.data_receiver = None
         self.command_executor = None
@@ -121,7 +135,7 @@ class MyWidget(QWidget):
         # 增大缓冲区以减少数据丢失
         self.buffer_size = 10000  # 从2000增加到10000
         self.visible_lines = 500
-        self.max_pending_updates = 200  # 限制待处理更新的最大数量
+        self.max_pending_updates = 20  # 限制待处理更新的最大数量，从200降低到20
 
         # Before init the UI, read the Configurations of SCOM from the config.ini
         self.config = common.read_config("config.ini")
@@ -158,26 +172,17 @@ class MyWidget(QWidget):
         self.prompt_button.setToolTip(
             "Left button clicked to Execute; Right button clicked to Switch Next"
         )
-        self.prompt_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #0d6e3f; }"
-            "QPushButton:pressed { background-color: #0a4c2b; }"
-        )
         self.prompt_button.installEventFilter(self)
         self.prompt_button.setEnabled(False)
 
         self.input_prompt = QLineEdit()
+        self.input_prompt.setObjectName("input_prompt")
         self.input_prompt.setPlaceholderText("COMMAND: click the LEFT BUTTON to start")
-        self.input_prompt.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
 
         self.input_prompt_index = QLineEdit()
+        self.input_prompt_index.setObjectName("input_prompt_index")
         self.input_prompt_index.setPlaceholderText("Idx")
         self.input_prompt_index.setToolTip("Double click to edit")
-        self.input_prompt_index.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
         self.input_prompt_index.setReadOnly(True)
         self.input_prompt_index.setMaximumWidth(self.width() * 0.1)
         self.input_prompt_index.mouseDoubleClickEvent = (
@@ -186,28 +191,18 @@ class MyWidget(QWidget):
         self.input_prompt_index.editingFinished.connect(self.set_prompt_index)
 
         self.prompt_batch_start_button = QPushButton("Start")
-        self.prompt_batch_start_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #198754; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #0d6e3f; }"
-            "QPushButton:pressed { background-color: #0a4c2b; }"
-        )
+        self.prompt_batch_start_button.setObjectName("prompt_batch_start_button")
         self.prompt_batch_start_button.setEnabled(False)
         self.prompt_batch_start_button.clicked.connect(self.handle_prompt_batch_start)
 
         self.prompt_batch_stop_button = QPushButton("Stop")
-        self.prompt_batch_stop_button.setStyleSheet(
-            "QPushButton { width: 100%; color: white; background-color: #dc3545; border: 4px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #a71d2a; }"
-            "QPushButton:pressed { background-color: #7b1520; }"
-        )
+        self.prompt_batch_stop_button.setObjectName("prompt_batch_stop_button")
         self.prompt_batch_stop_button.setEnabled(False)
         self.prompt_batch_stop_button.clicked.connect(self.handle_prompt_batch_stop)
 
         self.input_prompt_batch_times = QLineEdit()
+        self.input_prompt_batch_times.setObjectName("input_prompt_batch_times")
         self.input_prompt_batch_times.setPlaceholderText("Total Times")
-        self.input_prompt_batch_times.setStyleSheet(
-            "QLineEdit { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
 
         settings_button_layout.addWidget(self.prompt_button, 0, 0, 1, 1)
         settings_button_layout.addWidget(self.input_prompt, 0, 1, 1, 4)
@@ -237,6 +232,7 @@ class MyWidget(QWidget):
         self.checkbox = []
         self.buttons = []
         self.input_fields = []
+        self.checkbox_hex = []  # 新增：十六进制复选框列表
         self.checkbox_send_with_enders = []
         self.interVal = []
         
@@ -251,44 +247,60 @@ class MyWidget(QWidget):
             label_input_field = QLabel("Input")
             label_input_field.setToolTip("Double click to Clear")
             label_input_field.mouseDoubleClickEvent = lambda event: self.set_input_none()
+            label_hex = QLabel("Hex")
+            label_hex.setToolTip("Send as hexadecimal data")
+            label_hex.setAlignment(Qt.AlignCenter)
+            label_hex.mouseDoubleClickEvent = lambda event: self.set_hex_none()
+            label_hex.mouseDoubleClickEvent = lambda event: self.set_hex_none()
             label_ender = QLabel("Ender")
             label_ender.setToolTip("Double click to Clear")
             label_ender.mouseDoubleClickEvent = lambda event: self.set_enter_none()
-            label_sec = QLabel("Sec")
-            label_sec.setToolTip("Double click to Clear")
-            label_sec.mouseDoubleClickEvent = lambda event: self.set_interval_none()
+            label_ms = QLabel("ms")
+            label_ms.setToolTip("Double click to Clear")
+            label_ms.setAlignment(Qt.AlignCenter)
+            label_ms.mouseDoubleClickEvent = lambda event: self.set_interval_none()
             
             button_layout.addWidget(label_sender, 1, 1, alignment=Qt.AlignCenter)
             button_layout.addWidget(label_input_field, 1, 2, alignment=Qt.AlignCenter)
-            button_layout.addWidget(label_ender, 1, 3, alignment=Qt.AlignCenter)
-            button_layout.addWidget(label_sec, 1, 4, alignment=Qt.AlignRight)
+            button_layout.addWidget(label_hex, 1, 3, alignment=Qt.AlignCenter)
+            button_layout.addWidget(label_ender, 1, 4, alignment=Qt.AlignCenter)
+            button_layout.addWidget(label_ms, 1, 5, alignment=Qt.AlignRight)
 
         isEnable = self.main_Serial is not None
-        
-        # 创建新的按钮行
+
+        # Create new button row
         for i in range(1, max_rows + 1):
             checkbox = QCheckBox()
             checkbox.mouseDoubleClickEvent = lambda event: self.set_checkbox_none()
             button = QPushButton(f"Send {i}")
             input_field = QLineEdit()
             input_field.setMinimumWidth(self.screen_width * 0.08)
+            checkbox_hex = QCheckBox()
+            checkbox_hex.setChecked(False)
+            checkbox_hex.setToolTip("Send data as hexadecimal")
             checkbox_send_with_ender = QCheckBox()
             checkbox_send_with_ender.setChecked(True)
             input_interval = QLineEdit()
             input_interval.setMaximumWidth(self.screen_width * 0.025)
-            input_interval.setValidator(QIntValidator(0, 1000))
-            input_interval.setPlaceholderText("sec")
+            # Maximum of SLEEP interval is fixed to 99999, about 99s
+            input_interval.setValidator(QIntValidator(0, 99999))
+            input_interval.setPlaceholderText("ms")
             input_interval.setAlignment(Qt.AlignCenter)
+
+            # 为输入框添加键盘导航功能
+            input_field.keyPressEvent = self.create_input_field_key_handler(input_field, i-1)
 
             button_layout.addWidget(checkbox, i+1, 0)
             button_layout.addWidget(button, i+1, 1)
             button_layout.addWidget(input_field, i+1, 2)
-            button_layout.addWidget(checkbox_send_with_ender, i+1, 3)
-            button_layout.addWidget(input_interval, i+1, 4)
+            button_layout.addWidget(checkbox_hex, i+1, 3)
+            button_layout.addWidget(checkbox_send_with_ender, i+1, 4)
+            button_layout.addWidget(input_interval, i+1, 5)
 
             self.checkbox.append(checkbox)
             self.buttons.append(button)
             self.input_fields.append(input_field)
+            self.checkbox_hex.append(checkbox_hex)
             self.checkbox_send_with_enders.append(checkbox_send_with_ender)
             self.interVal.append(input_interval)
 
@@ -299,6 +311,7 @@ class MyWidget(QWidget):
                     i,
                     input_field,
                     checkbox,
+                    checkbox_hex,
                     checkbox_send_with_ender,
                     input_interval,
                 )
@@ -308,10 +321,43 @@ class MyWidget(QWidget):
                     i,
                     input_field,
                     checkbox,
+                    checkbox_hex,
                     checkbox_send_with_ender,
                     input_interval,
                 )
             )
+
+    def create_input_field_key_handler(self, input_field, index):
+        """为输入框创建键盘事件处理器"""
+        def key_press_handler(event):
+            if event.key() == Qt.Key_Right:
+                # 右方向键：聚焦到第一行输入框
+                if len(self.input_fields) > 0:
+                    self.input_fields[0].setFocus()
+                    self.input_fields[0].selectAll()
+                return
+            elif event.key() == Qt.Key_Up:
+                # 上方向键：聚焦到上一个输入框
+                if index > 0:
+                    self.input_fields[index - 1].setFocus()
+                    self.input_fields[index - 1].selectAll()
+                return
+            elif event.key() == Qt.Key_Down:
+                # 下方向键：聚焦到下一个输入框
+                if index < len(self.input_fields) - 1:
+                    self.input_fields[index + 1].setFocus()
+                    self.input_fields[index + 1].selectAll()
+                return
+            else:
+                # 其他按键使用默认处理
+                QLineEdit.keyPressEvent(input_field, event)
+        return key_press_handler
+
+    def setup_input_navigation(self):
+        """设置输入框导航功能（也可以从外部调用来激活第一个输入框）"""
+        if len(self.input_fields) > 0:
+            self.input_fields[0].setFocus()
+            self.input_fields[0].selectAll()
 
     def clear_dynamic_controls(self):
         """安全地清理动态创建的控件（保留第一行的settings_button_group）"""
@@ -349,7 +395,7 @@ class MyWidget(QWidget):
         self.settings_menu = self.menu_bar.addMenu("Settings")
 
         self.save_settings_action = self.settings_menu.addAction("Save Config")
-        self.save_settings_action.setShortcut("Ctrl+S")
+        self.save_settings_action.setShortcut("Ctrl+Shift+S")
         self.save_settings_action.triggered.connect(self.config_save)
         self.layout_config_action = self.settings_menu.addAction("Layout Config")
         self.layout_config_action.setShortcut("Ctrl+L")
@@ -360,6 +406,9 @@ class MyWidget(QWidget):
         self.more_settings_action = self.settings_menu.addAction("More Settings")
         self.more_settings_action.setShortcut("Ctrl+M")
         self.more_settings_action.triggered.connect(self.more_settings)
+        self.style_config_action = self.settings_menu.addAction("Style Configuration")
+        self.style_config_action.setShortcut("Ctrl+T")
+        self.style_config_action.triggered.connect(self.show_style_config)
         
         # Crete Tools menu
         self.tools_menu = self.menu_bar.addMenu("Tools")
@@ -373,7 +422,6 @@ class MyWidget(QWidget):
         self.custom_toggle_switch_action = self.tools_menu.addAction("Record MODE")
         self.custom_toggle_switch_action.triggered.connect(self.custom_toggle_switch)
         
-
         # Create About menu
         self.about_menu = self.menu_bar.addMenu("About")
 
@@ -397,127 +445,104 @@ class MyWidget(QWidget):
         self.stop_ports_update_thread = False
         self.stop_textarea_update_thread = True
 
+        # 重新设计的简洁ComboBox - 使用占位符和标签设计
         self.serial_port_label = QLabel("Port:")
         self.serial_port_combo = QComboBox()
         self.serial_port_combo.addItems([port.device for port in list_ports.comports()])
+        if self.serial_port_combo.count() == 0:
+            self.serial_port_combo.addItem("No devices found")
+        self.serial_port_combo.setObjectName("clean_settings_combo")
+        self.serial_port_combo.setToolTip("Select serial communication port")
         # Use the default showPopup method
         self.serial_port_combo.showPopup = self.port_update
 
         self.baud_rate_label = QLabel("BaudRate:")
         self.baud_rate_combo = QComboBox()
-        self.baud_rate_combo.addItems(
-            [
-            "50",
-            "75",
-            "110",
-            "134",
-            "150",
-            "200",
-            "300",
-            "600",
-            "1200",
-            "1800",
-            "2400",
-            "4800",
-            "7200",
-            "9600",
-            "14400",
-            "19200",
-            "28800",
-            "38400",
-            "57600",
-            "76800",
-            "115200",
-            "128000",
-            "153600",
-            "230400",
-            "256000",
-            "460800",
-            "500000",
-            "576000",
-            "921600",
-            "1000000",
-            "1152000",
-            "1500000",
-            "2000000",
-            "2500000",
-            "3000000",
-            "3500000",
-            "4000000",
-            "4500000",
-            "5000000",
-            "5500000",
-            "6000000",
-            "6500000",
-            "7000000",
-            "7500000",
-            "8000000",
-            ]
-        )
+        baud_rates = [
+            "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800",
+            "2400", "4800", "7200", "9600", "14400", "19200", "28800", "38400",
+            "57600", "76800", "115200", "128000", "153600", "230400", "256000",
+            "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000",
+            "2000000", "2500000", "3000000", "3500000", "4000000", "4500000",
+            "5000000", "5500000", "6000000", "6500000", "7000000", "7500000", "8000000"
+        ]
+        self.baud_rate_combo.addItems(baud_rates)
         self.baud_rate_combo.setCurrentText("115200")
-        self.stopbits_label = QLabel("StopBits:")
+        self.baud_rate_combo.setObjectName("clean_settings_combo")
+        self.baud_rate_combo.setToolTip("Select baud rate for serial communication")
+        
+        # 更多设置的ComboBox - 集成标签到选项中
         self.stopbits_combo = QComboBox()
-        self.stopbits_combo.addItems(["1", "1.5", "2"])
-        self.stopbits_combo.setCurrentText("1")
+        self.stopbits_combo.addItems(["StopBits: 1", "StopBits: 1.5", "StopBits: 2"])
+        self.stopbits_combo.setCurrentText("StopBits: 1")
+        self.stopbits_combo.setObjectName("more_settings_combo")
+        self.stopbits_combo.setToolTip("Configure stop bits for serial communication")
 
-        self.parity_label = QLabel("Parity:")
         self.parity_combo = QComboBox()
-        self.parity_combo.addItems(["None", "Even", "Odd", "Mark", "Space"])
-        self.parity_combo.setCurrentText("None")
+        self.parity_combo.addItems(["Parity: None", "Parity: Even", "Parity: Odd", "Parity: Mark", "Parity: Space"])
+        self.parity_combo.setCurrentText("Parity: None")
+        self.parity_combo.setObjectName("more_settings_combo")
+        self.parity_combo.setToolTip("Configure parity checking for serial communication")
 
-        self.bytesize_label = QLabel("ByteSize:")
         self.bytesize_combo = QComboBox()
-        self.bytesize_combo.addItems(["5", "6", "7", "8"])
-        self.bytesize_combo.setCurrentText("8")
+        self.bytesize_combo.addItems(["ByteSize: 5", "ByteSize: 6", "ByteSize: 7", "ByteSize: 8"])
+        self.bytesize_combo.setCurrentText("ByteSize: 8")
+        self.bytesize_combo.setObjectName("more_settings_combo")
+        self.bytesize_combo.setToolTip("Configure data bits per byte for serial communication")
 
-        self.flowcontrol_label = QLabel("FlowControl:")
-        self.flowcontrol_checkbox = QComboBox()
-        self.flowcontrol_checkbox.addItems(["None", "RTS/CTS", "XON/XOFF", "DSR/DTR"])
-        self.flowcontrol_checkbox.setCurrentText("None")
+        self.flowcontrol_combo = QComboBox()
+        self.flowcontrol_combo.addItems(["FlowControl: None", "FlowControl: RTS/CTS", "FlowControl: XON/XOFF", "FlowControl: DSR/DTR"])
+        self.flowcontrol_combo.setCurrentText("FlowControl: None")
+        self.flowcontrol_combo.setObjectName("more_settings_combo")
+        self.flowcontrol_combo.setToolTip("Configure flow control for serial communication")
 
-        self.dtr_label = QLabel("DTR:")
-        self.dtr_checkbox = QCheckBox()
+        self.dtr_checkbox = QCheckBox("DTR")
+        self.dtr_checkbox.setObjectName("settings_checkbox")
+        self.dtr_checkbox.setToolTip("Data Terminal Ready - Control DTR pin state")
         self.dtr_checkbox.stateChanged.connect(self.dtr_state_changed)
 
-        self.rts_label = QLabel("RTS:")
-        self.rts_checkbox = QCheckBox()
+        self.rts_checkbox = QCheckBox("RTS")
+        self.rts_checkbox.setObjectName("settings_checkbox")
+        self.rts_checkbox.setToolTip("Request To Send - Control RTS pin state")
         self.rts_checkbox.stateChanged.connect(self.rts_state_changed)
 
-        self.label_send_with_ender = QLabel("SendWithEnder:")
-        self.checkbox_send_with_ender = QCheckBox()
+        self.checkbox_send_with_ender = QCheckBox("SendWithEnder")
+        self.checkbox_send_with_ender.setObjectName("settings_checkbox")
+        self.checkbox_send_with_ender.setToolTip("Automatically append line ending characters")
         self.checkbox_send_with_ender.setChecked(True)
 
-        self.control_char_label = QLabel("Show\\r\\n:")
-        self.control_char_checkbox = QCheckBox()
+        self.control_char_checkbox = QCheckBox("Show\\r\\n")
+        self.control_char_checkbox.setObjectName("settings_checkbox")
+        self.control_char_checkbox.setToolTip("Display control characters (carriage return and line feed)")
         self.control_char_checkbox.stateChanged.connect(self.control_char_state_changed)
 
-        self.timeStamp_label = QLabel("TimeStamp:")
-        self.timeStamp_checkbox = QCheckBox()
+        self.timeStamp_checkbox = QCheckBox("TimeStamp")
+        self.timeStamp_checkbox.setObjectName("settings_checkbox")
+        self.timeStamp_checkbox.setToolTip("Add timestamp to received data")
         self.timeStamp_checkbox.stateChanged.connect(self.timeStamp_state_changed)
 
-        self.received_hex_data_label = QLabel("ReceivedHexData:")
-        self.received_hex_data_checkbox = QCheckBox()
+        self.received_hex_data_checkbox = QCheckBox("RecvHex")
+        self.received_hex_data_checkbox.setObjectName("settings_checkbox")
+        self.received_hex_data_checkbox.setToolTip("Display received data in hexadecimal format")
         self.received_hex_data_checkbox.stateChanged.connect(
             self.received_hex_data_state_changed
         )
 
-        self.label_data_received = QLabel("Data Received:", Alignment=Qt.AlignRight)
         self.input_path_data_received = QLineEdit()
         self.input_path_data_received.setText(
             common.safe_resource_path("tmps/temp.log")
         )
+        self.input_path_data_received.setPlaceholderText("Log file path - double click to select")
         self.input_path_data_received.setReadOnly(True)
         self.input_path_data_received.mouseDoubleClickEvent = (
-            self.set_default_received_file
+            self.select_received_file
         )
-        self.checkbox_data_received = QCheckBox()
+        self.checkbox_data_received = QCheckBox("Save Log")
+        self.checkbox_data_received.setObjectName("settings_checkbox")
+        self.checkbox_data_received.setToolTip("Save received data to file")
         self.checkbox_data_received.stateChanged.connect(
             self.handle_data_received_checkbox
         )
-        self.button_data_received_select = QPushButton("Select Log File")
-        self.button_data_received_select.clicked.connect(self.select_received_file)
-        self.button_data_received_save = QPushButton("Save Log File")
-        self.button_data_received_save.clicked.connect(self.save_received_file)
 
         self.port_button = QPushButton("Open Port")
         self.port_button.clicked.connect(self.port_on)
@@ -525,16 +550,16 @@ class MyWidget(QWidget):
         self.port_button.setToolTip("Shortcut: Ctrl+O")
 
         self.toggle_button = QPushButton()
+        self.toggle_button.setObjectName("icon_button")
         self.toggle_button.setToolTip("Show More Options")
         self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/expander-down.png")))
         self.toggle_button_is_expanded = False
         self.toggle_button.clicked.connect(self.show_more_options)
 
-        self.status_label = QLabel("Closed")
+        self.status_label = QLabel()
         self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet(
-            "QLabel { color: #198754; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }"
-        )
+        self.status_label.setObjectName("status_label")
+        self.set_status_label("Closed", "disconnected")
 
         self.command_input = QTextEdit()
         self.command_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
@@ -562,6 +587,7 @@ class MyWidget(QWidget):
 
         # Create a button for expanding/collapsing the input field
         self.expand_button = QPushButton()
+        self.expand_button.setObjectName("icon_button")
         self.expand_button.setIcon(
             QIcon(common.safe_resource_path("res/expand.png"))
         )  # You need to have an icon for this
@@ -572,6 +598,12 @@ class MyWidget(QWidget):
         self.send_button = QPushButton("Send")
         self.send_button.setEnabled(False)
         self.send_button.clicked.connect(self.send_command)
+
+        # Add SendAsHex checkbox for command input
+        self.command_send_as_hex_checkbox = QCheckBox("Hex")
+        self.command_send_as_hex_checkbox.setObjectName("command_hex_checkbox")
+        self.command_send_as_hex_checkbox.setChecked(False)
+        self.command_send_as_hex_checkbox.setToolTip("Send command as hexadecimal data")
 
         self.received_data_textarea = QTextEdit()
         self.received_data_textarea.setAcceptRichText(True)
@@ -587,75 +619,64 @@ class MyWidget(QWidget):
             lambda event: self.set_settings_groupbox_visible()
         )
         self.settings_layout = QGridLayout(self.settings_groupbox)
-        self.settings_layout.addWidget(
-            self.serial_port_label, 0, 0, 1, 1, alignment=Qt.AlignRight
-        )
+        
+        # 重新设计的清晰布局 - 标签+控件的经典设计
+        self.settings_layout.addWidget(self.serial_port_label, 0, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_layout.addWidget(self.serial_port_combo, 0, 1, 1, 1)
-        self.settings_layout.addWidget(
-            self.baud_rate_label, 1, 0, 1, 1, alignment=Qt.AlignRight
-        )
+        self.settings_layout.addWidget(self.baud_rate_label, 1, 0, 1, 1, alignment=Qt.AlignRight)
         self.settings_layout.addWidget(self.baud_rate_combo, 1, 1, 1, 1)
         self.settings_layout.addWidget(self.port_button, 0, 2, 1, 2)
         self.settings_layout.addWidget(self.status_label, 1, 2, 1, 1)
-        self.settings_layout.addWidget(self.toggle_button, 1, 3, 1, 1)
+        self.settings_layout.addWidget(self.toggle_button, 1, 3, 1, 1) 
+        
+        # 设置列拉伸比例，使布局更协调
+        self.settings_layout.setColumnStretch(0, 0)  # 标签列固定宽度
+        self.settings_layout.setColumnStretch(1, 2)  # ComboBox列可拉伸
+        self.settings_layout.setColumnStretch(2, 1)  # 按钮列固定宽度
+        self.settings_layout.setColumnStretch(3, 0)  # 切换按钮列固定宽度
 
-        self.settings_more_layout = QGridLayout()
+        # 创建可折叠的配置区域容器
+        self.settings_more_widget = QWidget()
+        self.settings_more_widget.setObjectName("settings_more_widget")
+        self.settings_more_layout = QGridLayout(self.settings_more_widget)
+        self.settings_more_layout.setContentsMargins(12, 12, 12, 12)
+        self.settings_more_layout.setSpacing(15)
 
-        self.settings_more_layout.addWidget(
-            self.stopbits_label, 0, 0, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.stopbits_combo, 0, 1, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.parity_label, 0, 2, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.parity_combo, 0, 3, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.bytesize_label, 1, 0, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.bytesize_combo, 1, 1, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.flowcontrol_label, 1, 2, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.flowcontrol_checkbox, 1, 3, 1, 1)
+        # 设置更大的行间距和列间距，避免重叠
+        self.settings_more_layout.setVerticalSpacing(18)
+        self.settings_more_layout.setHorizontalSpacing(25)
 
-        self.settings_more_layout.addWidget(
-            self.dtr_label, 2, 0, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.dtr_checkbox, 2, 1, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.rts_label, 2, 2, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.rts_checkbox, 2, 3, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.control_char_label, 3, 0, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.control_char_checkbox, 3, 1, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.timeStamp_label, 3, 2, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.timeStamp_checkbox, 3, 3, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.label_send_with_ender, 4, 0, 1, 1, alignment=Qt.AlignRight
-        )
+        # 设置列的拉伸比例 - 简洁的3列设计
+        self.settings_more_layout.setColumnStretch(0, 1)  # 第1列
+        self.settings_more_layout.setColumnStretch(1, 1)  # 第2列  
+        self.settings_more_layout.setColumnStretch(2, 1)  # 第3列
+        
+        # 串口配置参数 - 直接使用ComboBox，无需标签
+        # 第一行：3个主要串口参数ComboBox
+        self.settings_more_layout.addWidget(self.stopbits_combo, 1, 0, 1, 1)
+        self.settings_more_layout.addWidget(self.parity_combo, 1, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.bytesize_combo, 1, 2, 1, 1)
+        
+        # 第二行：FlowControl ComboBox 跨前两列
+        self.settings_more_layout.addWidget(self.flowcontrol_combo, 2, 0, 1, 2)
+
+        # 第三行和第四行：复选框 - 3列布局，2行排列
+        self.settings_more_layout.addWidget(self.dtr_checkbox, 3, 0, 1, 1)
+        self.settings_more_layout.addWidget(self.rts_checkbox, 3, 1, 1, 1)
+        self.settings_more_layout.addWidget(self.control_char_checkbox, 3, 2, 1, 1)
+        self.settings_more_layout.addWidget(self.timeStamp_checkbox, 4, 0, 1, 1)
         self.settings_more_layout.addWidget(self.checkbox_send_with_ender, 4, 1, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.received_hex_data_label, 4, 2, 1, 1, alignment=Qt.AlignRight
-        )
-        self.settings_more_layout.addWidget(self.received_hex_data_checkbox, 4, 3, 1, 1)
+        self.settings_more_layout.addWidget(self.received_hex_data_checkbox, 4, 2, 1, 1)
 
-        self.settings_more_layout.addWidget(self.label_data_received, 5, 0, 1, 1)
-        self.settings_more_layout.addWidget(self.input_path_data_received, 5, 1, 1, 2)
-        self.settings_more_layout.addWidget(self.checkbox_data_received, 5, 3, 1, 1)
-        self.settings_more_layout.addWidget(
-            self.button_data_received_select, 6, 0, 1, 2
-        )
-        self.settings_more_layout.addWidget(self.button_data_received_save, 6, 2, 1, 2)
+        # 文件保存区域布局 - 重新排列，去掉QLabel
+        self.settings_more_layout.addWidget(self.input_path_data_received, 5, 0, 1, 2)  # 跨两列
+        self.settings_more_layout.addWidget(self.checkbox_data_received, 5, 2, 1, 1)
 
-        self.settings_layout.addLayout(self.settings_more_layout, 2, 0, 1, 4)
-
-        # Set the button to be invisible
-        for i in range(self.settings_more_layout.count()):
-            self.settings_more_layout.itemAt(i).widget().setVisible(False)
+        # 调整固定高度适应优化的布局，增加高度避免重叠
+        self.settings_more_widget.setFixedHeight(240)  # 进一步增加高度以适应新的边距和内边距
+        self.settings_more_widget.setVisible(False)
+        
+        self.settings_layout.addWidget(self.settings_more_widget, 2, 0, 1, 4)  # 跨越所有列
 
         # Create a group box for the command section
         self.command_groupbox = QGroupBox("Command")
@@ -665,6 +686,7 @@ class MyWidget(QWidget):
         self.command_layout = QHBoxLayout(self.command_groupbox)
         self.command_layout.addWidget(self.command_input)
         self.command_layout.addWidget(self.expand_button)
+        self.command_layout.addWidget(self.command_send_as_hex_checkbox)
         self.command_layout.addWidget(self.send_button)
 
         # Create a group box for the file section
@@ -734,17 +756,43 @@ class MyWidget(QWidget):
         layout_1.addLayout(self.right_layout)
 
         layout_2 = QVBoxLayout()
+        
+        # 创建ATCommand页面的标题栏，包含状态和保存按钮
+        at_command_header = QHBoxLayout()
         self.label_layout_2 = QLabel("ATCommand")
+        self.label_layout_2.setObjectName("page_title")
+        
+        # 文件状态标签
+        self.at_file_status_label = QLabel("")
+        self.at_file_status_label.setObjectName("file_status_label")
+        
+        # 整合的保存按钮（同时保存路径配置和AT命令文件）
+        self.integrated_save_button = QPushButton()
+        self.integrated_save_button.setObjectName("icon_button")
+        self.integrated_save_button.setFixedSize(30, 30)
+        self.integrated_save_button.setIcon(QIcon(common.safe_resource_path("res/save.png")))
+        self.integrated_save_button.setToolTip("Save path configuration and AT command file (Ctrl+S)")
+        self.integrated_save_button.clicked.connect(self.save_integrated_function)
+        self.integrated_save_button.setEnabled(False)
+        
+        at_command_header.addWidget(self.label_layout_2)
+        at_command_header.addStretch()
+        at_command_header.addWidget(self.at_file_status_label)
+        at_command_header.addWidget(self.integrated_save_button)
+        
+        layout_2.addLayout(at_command_header)
+        
         self.text_input_layout_2 = QTextEdit()
         self.text_input_layout_2.setDocument(QTextDocument(None))
         self.text_input_layout_2.setLineWrapMode(QTextEdit.WidgetWidth)
-        layout_2.addWidget(self.label_layout_2)
+        self.text_input_layout_2.setObjectName("text_input_layout_2")
+        self.text_input_layout_2.setAcceptRichText(False)
+        
+        # 监听文本变化
+        self.text_input_layout_2.textChanged.connect(self.on_at_command_text_changed)
+        
         layout_2_main = QHBoxLayout()
         layout_2_main.addWidget(self.text_input_layout_2)
-        self.text_input_layout_2.setStyleSheet(
-            "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: 600; }"
-        )
-        self.text_input_layout_2.setAcceptRichText(False)
         
         # Create a group box for the radio buttons
         self.radio_groupbox = QGroupBox()
@@ -770,39 +818,16 @@ class MyWidget(QWidget):
         left_buttons_container = QWidget()
         left_buttons_layout = QVBoxLayout(left_buttons_container)
         left_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        left_buttons_layout.setSpacing(2)
-
-        # 创建存储按钮
-        self.save_paths_button = QPushButton()
-        self.save_paths_button.setFixedSize(30, 30)
-        self.save_paths_button.setIcon(QIcon(common.safe_resource_path("res/save.png")))
-        self.save_paths_button.setStyleSheet(
-            "QPushButton { "
-            "background-color: transparent; "
-            "border-radius: 5px; "
-            "font-size: 12px; "
-            "font-weight: bold; "
-            "}"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
-        self.save_paths_button.setToolTip("Save current path configuration")
-        self.save_paths_button.clicked.connect(self.save_paths_to_config)
 
         # 展开/收起按钮保持原有设置
         self.expand_left_button = QPushButton()
         self.expand_left_button.setFixedWidth(30)
         self.expand_left_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-        self.expand_left_button.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B; border-radius: 5px; padding: 5px; font-size: 16px; font-weight: bold; }"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
+        self.expand_left_button.setObjectName("icon_button")
         self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
 
         # 将按钮添加到左侧容器
-        left_buttons_layout.addWidget(self.save_paths_button)
         left_buttons_layout.addWidget(self.expand_left_button)
 
         # 设置左侧按钮容器的固定宽度
@@ -834,7 +859,7 @@ class MyWidget(QWidget):
                 self.select_json_file(pi) if event else None
             )
             path_input.setPlaceholderText("Path, double click to select")
-            path_input.setVisible(False)  # 默认隐藏路径输入框
+            path_input.setVisible(False)
             
             # 设置初始值
             if i == 0 and not self.path_configs[0]:
@@ -858,9 +883,7 @@ class MyWidget(QWidget):
         self.text_input_layout_3.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_3.addWidget(self.label_layout_3)
         layout_3.addWidget(self.text_input_layout_3)
-        self.text_input_layout_3.setStyleSheet(
-            "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: bold; }"
-        )
+        self.text_input_layout_3.setObjectName("text_input_layout_3")
         self.text_input_layout_3.setAcceptRichText(False)
 
         layout_4 = QVBoxLayout()
@@ -870,9 +893,7 @@ class MyWidget(QWidget):
         self.text_input_layout_4.setLineWrapMode(QTextEdit.WidgetWidth)
         layout_4.addWidget(self.label_layout_4)
         layout_4.addWidget(self.text_input_layout_4)
-        self.text_input_layout_4.setStyleSheet(
-            "QTextEdit { height: 100%; width: 100%; font-size: 24px; font-weight: bold; }"
-        )
+        self.text_input_layout_4.setObjectName("text_input_layout_4")
         self.text_input_layout_4.setAcceptRichText(False)
         
         layout_5 = QVBoxLayout()
@@ -882,53 +903,33 @@ class MyWidget(QWidget):
         # Create a button section for switching other layouts
         self.button1 = QPushButton("Main")
         self.button1.setToolTip("Shortcut: F1")
-        self.button1.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #00A86B; border-top: 2px solid transparent; }"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
+        self.button1.setObjectName("nav_button_active")
         self.button1.setDefault(True)
         self.button1.clicked.connect(lambda: self.show_page(0))
 
         self.button2 = QPushButton("ATCommand")
         self.button2.setToolTip("Shortcut: F2")
-        self.button2.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
+        self.button2.setObjectName("nav_button")
         self.button2.clicked.connect(lambda: self.show_page(1))
 
         self.button3 = QPushButton("Log")
         self.button3.setToolTip("Shortcut: F3")
-        self.button3.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
+        self.button3.setObjectName("nav_button")
         self.button3.clicked.connect(lambda: self.show_page(2))
 
         self.button4 = QPushButton("NoTimeStamp")
         self.button4.setToolTip("Shortcut: F4")
-        self.button4.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-            "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-            "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-        )
+        self.button4.setObjectName("nav_button")
         self.button4.clicked.connect(lambda: self.show_page(3))
         
         self.button5 = QPushButton("DictRecorder")
         self.button5.setToolTip("Shortcut: F5")
-        self.button5.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-        )
+        self.button5.setObjectName("nav_button")
         self.button5.clicked.connect(lambda: self.show_page(4))
         
         self.button6 = QPushButton("DictExecuter")
         self.button6.setToolTip("Shortcut: F6")
-        self.button6.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-        )
+        self.button6.setObjectName("nav_button")
         self.button6.clicked.connect(lambda: self.show_page(5))
               
         button_switch_layout = QHBoxLayout()
@@ -965,9 +966,27 @@ class MyWidget(QWidget):
         main_layout.addLayout(button_switch_layout)
         main_layout.addWidget(self.stacked_widget)
         
-        # 设置初始状态 - 路径选项框收起
-        self.radio_scroll_area.setMaximumWidth(50)
+        # 设置初始状态 - 路径选项框收起，宽度调整为100以显示更多内容
+        self.radio_scroll_area.setMaximumWidth(100)
         self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
+        
+        # 初始化AT命令文件状态
+        self.at_command_manager.set_file_path(self.path_ATCommand)
+        # 尝试加载现有文件内容，如果文件不存在则设置为空
+        if os.path.exists(self.path_ATCommand):
+            content, error_msg = self.at_command_manager.load_file(self.path_ATCommand)
+            if not error_msg:
+                # 文件加载成功，但不更新UI（UI此时可能还没准备好）
+                pass
+            else:
+                # 文件加载失败，设置为空状态
+                self.at_command_manager.original_content = ""
+                self.at_command_manager.current_content = ""
+        else:
+            # 文件不存在，设置为空状态
+            self.at_command_manager.original_content = ""
+            self.at_command_manager.current_content = ""
+        self.update_at_command_status()
         
         # Post actions after the initialization of the UI.
         self.post_init_UI()
@@ -1022,18 +1041,26 @@ class MyWidget(QWidget):
     def apply_config(self, config):
         # Set
         try:
-            self.serial_port_combo.setCurrentText(config.get("Set", "Port"))
-            self.baud_rate_combo.setCurrentText(config.get("Set", "BaudRate"))
-            self.stopbits_combo.setCurrentText(config.get("Set", "StopBits"))
-            self.parity_combo.setCurrentText(config.get("Set", "Parity"))
-            self.bytesize_combo.setCurrentText(config.get("Set", "ByteSize"))
-            self.flowcontrol_checkbox.setCurrentText(config.get("Set", "FlowControl"))
+            # 设置主要ComboBox值（直接值，无需标签前缀）
+            port_value = config.get("Set", "Port")
+            self.serial_port_combo.setCurrentText(port_value)
+            baudrate_value = config.get("Set", "BaudRate")
+            self.baud_rate_combo.setCurrentText(baudrate_value)
+            # 设置更多设置ComboBox值 - 使用带标签的格式
+            stopbits_value = config.get("Set", "StopBits")
+            self.stopbits_combo.setCurrentText(f"StopBits: {stopbits_value}")
+            parity_value = config.get("Set", "Parity")
+            self.parity_combo.setCurrentText(f"Parity: {parity_value}")
+            bytesize_value = config.get("Set", "ByteSize")
+            self.bytesize_combo.setCurrentText(f"ByteSize: {bytesize_value}")
+            flowcontrol_value = config.get("Set", "FlowControl")
+            self.flowcontrol_combo.setCurrentText(f"FlowControl: {flowcontrol_value}")
             self.dtr_checkbox.setChecked(config.getboolean("Set", "DTR"))
             self.rts_checkbox.setChecked(config.getboolean("Set", "RTS"))
             self.checkbox_send_with_ender.setChecked(
-                config.getboolean("Set", "SendWithEnder")
+                config.getboolean("Set", "SendWithEnter")
             )
-            self.control_char_checkbox.setChecked(config.getboolean("Set", "ShowControlChar"))
+            self.control_char_checkbox.setChecked(config.getboolean("Set", "ShowSymbol"))
             self.timeStamp_checkbox.setChecked(config.getboolean("Set", "TimeStamp"))
             self.received_hex_data_checkbox.setChecked(
                 config.getboolean("Set", "ReceivedHex")
@@ -1043,6 +1070,14 @@ class MyWidget(QWidget):
                 config.getboolean("Set", "IsSaveDataReceived")
             )
             self.file_input.setText(config.get("Set", "PathFileSend"))
+            
+            # 加载命令发送hex模式配置
+            try:
+                self.command_send_as_hex_checkbox.setChecked(
+                    config.getboolean("Set", "CommandSendAsHex")
+                )
+            except (configparser.NoSectionError, configparser.NoOptionError):
+                self.command_send_as_hex_checkbox.setChecked(False)
             
             # 加载路径配置
             if "Paths" in config:
@@ -1066,21 +1101,50 @@ class MyWidget(QWidget):
         #         self.handle_hotkey_click(i, hotkey_value)
         #     )
 
+    # 辅助方法：从集成标签的ComboBox中提取实际值
+    def get_stopbits_value(self):
+        """从StopBits ComboBox中提取实际的停止位值"""
+        text = self.stopbits_combo.currentText()
+        return text.split(": ")[1] if ": " in text else text
+
+    def get_parity_value(self):
+        """从Parity ComboBox中提取实际的校验位值"""
+        text = self.parity_combo.currentText()
+        return text.split(": ")[1] if ": " in text else text
+
+    def get_bytesize_value(self):
+        """从ByteSize ComboBox中提取实际的字节大小值"""
+        text = self.bytesize_combo.currentText()
+        return text.split(": ")[1] if ": " in text else text
+
+    def get_flowcontrol_value(self):
+        """从FlowControl ComboBox中提取实际的流控制值"""
+        text = self.flowcontrol_combo.currentText()
+        return text.split(": ")[1] if ": " in text else text
+
+    def get_serial_port_value(self):
+        """从Port ComboBox中获取端口值"""
+        return self.serial_port_combo.currentText()
+
+    def get_baud_rate_value(self):
+        """从BaudRate ComboBox中获取波特率值"""
+        return self.baud_rate_combo.currentText()
+
     def save_config(self, config):
         try:
             # Set
-            config.set("Set", "Port", self.serial_port_combo.currentText())
-            config.set("Set", "BaudRate", self.baud_rate_combo.currentText())
-            config.set("Set", "StopBits", self.stopbits_combo.currentText())
-            config.set("Set", "Parity", self.parity_combo.currentText())
-            config.set("Set", "ByteSize", self.bytesize_combo.currentText())
-            config.set("Set", "FlowControl", self.flowcontrol_checkbox.currentText())
+            config.set("Set", "Port", self.get_serial_port_value())
+            config.set("Set", "BaudRate", self.get_baud_rate_value())
+            config.set("Set", "StopBits", self.get_stopbits_value())
+            config.set("Set", "Parity", self.get_parity_value())
+            config.set("Set", "ByteSize", self.get_bytesize_value())
+            config.set("Set", "FlowControl", self.get_flowcontrol_value())
             config.set("Set", "DTR", str(self.dtr_checkbox.isChecked()))
             config.set("Set", "RTS", str(self.rts_checkbox.isChecked()))
             config.set(
-                "Set", "SendWithEnder", str(self.checkbox_send_with_ender.isChecked())
+                "Set", "SendWithEnter", str(self.checkbox_send_with_ender.isChecked())
             )
-            config.set("Set", "ShowControlChar", str(self.control_char_checkbox.isChecked()))
+            config.set("Set", "ShowSymbol", str(self.control_char_checkbox.isChecked()))
             config.set("Set", "TimeStamp", str(self.timeStamp_checkbox.isChecked()))
             config.set(
                 "Set", "ReceivedHex", str(self.received_hex_data_checkbox.isChecked())
@@ -1092,6 +1156,9 @@ class MyWidget(QWidget):
                 str(self.checkbox_data_received.isChecked()),
             )
             config.set("Set", "PathFileSend", self.file_input.text())
+            
+            # 保存命令发送hex模式配置
+            config.set("Set", "CommandSendAsHex", str(self.command_send_as_hex_checkbox.isChecked()))
             
             # 保存路径配置
             if "Paths" not in config:
@@ -1200,52 +1267,223 @@ class MyWidget(QWidget):
             button.clicked.connect(self.handle_hotkey_click(self.hotkey_buttons.index(button) + 1, hotkey_value))
 
     def show_page(self, index):
-        if index == 1 or self.stacked_widget.currentIndex() == 1:
-            if self.text_input_layout_2.toPlainText() == "":
-                self.text_input_layout_2.setPlainText(
-                    common.join_text(common.read_ATCommand(self.path_ATCommand))
-                )
-            else:
-                common.write_ATCommand(
-                    self.path_ATCommand,
-                    common.split_text(self.text_input_layout_2.toPlainText()),
-                )
-                # 保存路径到配置文件
-                self.save_paths_to_config()
-        elif index == 2 or self.stacked_widget.currentIndex() == 2:
+        # 如果正在切换到或从ATCommand页面，处理保存逻辑
+        current_index = self.stacked_widget.currentIndex()
+        
+        # 从ATCommand页面切换出去时的处理
+        if current_index == 1 and index != 1:
+            if self.handle_at_command_page_leave():
+                return  # 用户取消了切换
+        
+        # 切换到ATCommand页面时的处理
+        if index == 1:
+            self.handle_at_command_page_enter()
+        elif index == 2 or current_index == 2:
+            # Log页面 - 直接从接收数据复制
             self.text_input_layout_3.setPlainText(
                 self.received_data_textarea.toPlainText()
             )
-        elif index == 3 or self.stacked_widget.currentIndex() == 3:
+        elif index == 3 or current_index == 3:
+            # NoTimeStamp页面 - 移除时间戳后复制
             self.text_input_layout_4.setPlainText(
                 common.remove_TimeStamp(
                     self.received_data_textarea.toPlainText(),
-                    self.config["MoreSettings"]["TimeStampRegex"]
+                    self.config["MoreSettings"]["TimestampRegex"]
                 )
             )
-        elif index == 4 or self.stacked_widget.currentIndex() == 4:
+        elif index == 4 or current_index == 4:
             pass
+            
         self.stacked_widget.setCurrentIndex(index)
         self.update_button_style(index)
+    
+    def handle_at_command_page_enter(self):
+        """处理进入ATCommand页面的逻辑"""
+        try:
+            # 更新AT命令管理器的文件路径
+            self.at_command_manager.set_file_path(self.path_ATCommand)
+            
+            # 如果文本框为空，尝试加载文件
+            if self.text_input_layout_2.toPlainText() == "":
+                content, error_msg = self.at_command_manager.load_file(self.path_ATCommand)
+                if error_msg:
+                    # 显示错误对话框
+                    ErrorDialog.show_error(
+                        parent=self,
+                        title="Failed to Read AT Command File",
+                        message=f"Unable to read AT command file: {self.path_ATCommand}",
+                        details=error_msg
+                    )
+                    # 如果文件不存在，询问是否创建默认文件
+                    if "File does not exist" in error_msg or "文件不存在" in error_msg:
+                        self.offer_create_default_file()
+                else:
+                    self.text_input_layout_2.setPlainText(content)
+            else:
+                # 如果文本框有内容，同步更新管理器的原始内容和当前内容
+                current_content = self.text_input_layout_2.toPlainText()
+                self.at_command_manager.original_content = current_content
+                self.at_command_manager.current_content = current_content
+                self.at_command_manager.is_modified = False
+        except Exception as e:
+            logger.error(f"Error handling AT command page enter: {e}")
+    
+    def handle_at_command_page_leave(self) -> bool:
+        """
+        处理离开ATCommand页面的逻辑
+        
+        Returns:
+            bool: True表示用户取消了切换，False表示可以继续切换
+        """
+        try:
+            # 更新当前内容到管理器
+            current_content = self.text_input_layout_2.toPlainText()
+            self.at_command_manager.update_content(current_content)
+            
+            # 检查是否有未保存的更改
+            if self.at_command_manager.has_unsaved_changes():
+                choice = self.at_command_manager.prompt_save_changes()
+                
+                if choice == "cancel":
+                    return True  # 用户取消，不切换页面
+                elif choice == "save":
+                    # 保存文件
+                    success, error_msg = self.at_command_manager.save_file()
+                    if not success:
+                        ErrorDialog.show_error(
+                            parent=self,
+                            title="Save Failed",
+                            message="Failed to save AT command file",
+                            details=error_msg
+                        )
+                        return True  # 保存失败，不切换页面
+                    else:
+                        # 保存成功，更新配置
+                        self.save_paths_to_config()
+                elif choice == "discard":
+                    # 丢弃更改，重新加载原始内容
+                    original_content, _ = self.at_command_manager.load_file(self.path_ATCommand)
+                    self.text_input_layout_2.setPlainText(original_content)
+                # choice == "no_changes" 时不需要处理
+            
+            return False  # 可以继续切换页面
+            
+        except Exception as e:
+            logger.error(f"Error handling AT command page leave: {e}")
+            return False
+    
+    def offer_create_default_file(self):
+        """询问用户是否创建默认文件"""
+        from PySide6.QtWidgets import QMessageBox
+        
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("File Not Found")
+        msg_box.setText(f"AT command file does not exist: {self.path_ATCommand}")
+        msg_box.setInformativeText("Would you like to create a new file with default commands?")
+        
+        create_button = msg_box.addButton("Create Default File", QMessageBox.AcceptRole)
+        skip_button = msg_box.addButton("Skip", QMessageBox.RejectRole)
+        
+        msg_box.setDefaultButton(create_button)
+        msg_box.exec()
+        
+        if msg_box.clickedButton() == create_button:
+            success, error_msg = self.at_command_manager.create_default_file(self.path_ATCommand)
+            if success:
+                # 加载新创建的文件内容
+                content, _ = self.at_command_manager.load_file(self.path_ATCommand)
+                self.text_input_layout_2.setPlainText(content)
+                
+                # 显示成功信息
+                ErrorDialog.show_info(
+                    parent=self,
+                    title="File Created Successfully",
+                    message=f"Default AT command file created: {self.path_ATCommand}",
+                    details="The file contains some basic AT command examples that you can modify as needed."
+                )
+            else:
+                ErrorDialog.show_error(
+                    parent=self,
+                    title="File Creation Failed",
+                    message="Unable to create default AT command file",
+                    details=error_msg
+                )
+    
+    def save_at_command_file(self):
+        """手动保存AT命令文件"""
+        try:
+            current_content = self.text_input_layout_2.toPlainText()
+            self.at_command_manager.update_content(current_content)
+            
+            success, error_msg = self.at_command_manager.save_file()
+            if success:
+                # 保存配置
+                self.save_paths_to_config()
+                # 更新状态显示
+                self.update_at_command_status()
+            else:
+                ErrorDialog.show_error(
+                    parent=self,
+                    title="Save Failed",
+                    message="Failed to save AT command file",
+                    details=error_msg
+                )
+        except Exception as e:
+            logger.error(f"Error saving AT command file manually: {e}")
+    
+    def on_at_command_text_changed(self):
+        """AT命令文本变化时的处理"""
+        try:
+            if hasattr(self, 'at_command_manager'):
+                current_content = self.text_input_layout_2.toPlainText()
+                self.at_command_manager.update_content(current_content)
+                self.update_at_command_status()
+        except Exception as e:
+            logger.error(f"Error handling AT command text change: {e}")
+    
+    def update_at_command_status(self):
+        """更新AT命令文件状态显示"""
+        try:
+            if hasattr(self, 'at_command_manager'):
+                file_info = self.at_command_manager.get_file_info()
+                
+                # 更新状态标签
+                if file_info["is_modified"]:
+                    self.at_file_status_label.setText("● Unsaved")
+                    self.at_file_status_label.setProperty("status", "modified")
+                    self.integrated_save_button.setEnabled(True)
+                else:
+                    self.at_file_status_label.setText("Saved")
+                    self.at_file_status_label.setProperty("status", "saved")
+                    self.integrated_save_button.setEnabled(False)
+                
+                # 刷新样式
+                self.at_file_status_label.style().unpolish(self.at_file_status_label)
+                self.at_file_status_label.style().polish(self.at_file_status_label)
+                
+        except Exception as e:
+            logger.error(f"Error updating AT command status: {e}")
 
     def update_button_style(self, index):
         buttons = [self.button1, self.button2, self.button3, self.button4, self.button5, self.button6]
         for i, button in enumerate(buttons):
             if i == index:
-                button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; border-bottom: 2px solid #00A86B; }"
-                    "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-                    "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-                )
+                button.setObjectName("nav_button_active")
             else:
-                button.setStyleSheet(
-                    "QPushButton { background-color: transparent; color: #00A86B;; border-radius: 5px; padding: 10px; font-size: 16px; font-weight: bold; border-top: 2px solid transparent; }"
-                    "QPushButton:hover { background-color: rgba(76, 175, 80, 0.5); }"
-                    "QPushButton:pressed { background-color: rgba(68, 138, 72, 0.5); }"
-                )
+                button.setObjectName("nav_button")
+            # 强制刷新样式
+            button.style().unpolish(button)
+            button.style().polish(button)
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_F1:
+        # 处理全局快捷键
+        if event.key() == Qt.Key_S and event.modifiers() == Qt.ControlModifier:
+            # Ctrl+S 保存AT命令文件（只在ATCommand页面有效）
+            if self.stacked_widget.currentIndex() == 1:
+                self.save_integrated_function()
+                return
+        elif event.key() == Qt.Key_F1:
             self.show_page(0)
         elif event.key() == Qt.Key_F2:
             self.show_page(1)
@@ -1253,6 +1491,16 @@ class MyWidget(QWidget):
             self.show_page(2)
         elif event.key() == Qt.Key_F4:
             self.show_page(3)
+        elif event.key() == Qt.Key_Right:
+            # 右方向键：聚焦到第一个输入框（仅在主页面且没有其他控件聚焦时）
+            if (self.stacked_widget.currentIndex() == 0 and 
+                hasattr(self, 'input_fields') and 
+                len(self.input_fields) > 0 and
+                not any(field.hasFocus() for field in self.input_fields)):
+                self.setup_input_navigation()
+        else:
+            # 调用父类的keyPressEvent来处理其他按键
+            super().keyPressEvent(event)
 
     def config_save(self):
         self.save_config(self.config)
@@ -1277,6 +1525,10 @@ class MyWidget(QWidget):
         self.more_settings_dialog = MoreSettingsDialog(self)
         self.more_settings_dialog.show()
         
+    def show_style_config(self):
+        self.style_config_dialog = StyleConfigDialog(self)
+        self.style_config_dialog.show()
+        
     def calculate_length(self):
         self.length_caculate_dialog = LengthCalculateDialog(self)
         self.length_caculate_dialog.show()
@@ -1290,7 +1542,7 @@ class MyWidget(QWidget):
         self.string_ascii_convert_dialog.show()
 
     def custom_toggle_switch(self):
-        self.custom_toggle_switch_dialog = CustomToggleSwitchDialog()
+        self.custom_toggle_switch_dialog = CustomToggleSwitchDialog(self)
         self.custom_toggle_switch_dialog.show()
 
     def show_help_info(self):
@@ -1298,7 +1550,7 @@ class MyWidget(QWidget):
         help_dialog.exec()
 
     def show_update_info(self):
-        update_dialog = UpdateInfoDialog(self)
+        update_dialog = SafeUpdateDialog(self)
         update_dialog.exec()
         
     def show_known_issues_info(self):
@@ -1357,15 +1609,19 @@ class MyWidget(QWidget):
                 self.data_receiver.is_show_hex = False
 
     def show_more_options(self):
-        for i in range(self.settings_more_layout.count()):
-            widget = self.settings_more_layout.itemAt(i).widget()
-            if widget:
-                widget.setVisible(not widget.isVisible())
-        if self.toggle_button_is_expanded:
+        # 切换更多设置区域的可见性
+        is_visible = self.settings_more_widget.isVisible()
+        self.settings_more_widget.setVisible(not is_visible)
+        
+        # 更新按钮图标和状态
+        if is_visible:
+            # 当前可见，即将隐藏
             self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/expander-down.png")))
+            self.toggle_button_is_expanded = False
         else:
+            # 当前隐藏，即将显示
             self.toggle_button.setIcon(QIcon(common.safe_resource_path("res/fork.png")))
-        self.toggle_button_is_expanded = not self.toggle_button_is_expanded
+            self.toggle_button_is_expanded = True
 
     def expand_command_input(self):
         self.command_input.setFixedHeight(100)
@@ -1383,14 +1639,33 @@ class MyWidget(QWidget):
 
     def set_status_label(self, text, color):
         self.status_label.setText(text)
-        self.status_label.setStyleSheet(
-            f"QLabel {{ color: {color}; border: 2px solid white; border-radius: 10px; padding: 10px; font-size: 20px; font-weight: bold; }}"
-        )
+        
+        # 根据颜色设置状态属性，使用QSS中定义的样式
+        color_to_status = {
+            "#198754": "connected",   # 绿色 - 已连接
+            "#6c757d": "disconnected", # 灰色 - 已断开
+            "#dc3545": "error",       # 红色 - 错误状态
+            "#ffc107": "warning",     # 黄色 - 警告状态
+            "#17a2b8": "info"         # 青色 - 信息状态
+        }
+        
+        # 如果传入的是状态字符串，直接使用；如果是颜色值，转换为状态
+        if color in ["connected", "disconnected", "error", "warning", "info"]:
+            status = color
+        else:
+            status = color_to_status.get(color, "disconnected")
+        
+        logger.debug(f"Setting status label color to: {color}")
+        self.status_label.setProperty("status", status)
+        
+        # 强制刷新样式
+        self.status_label.style().unpolish(self.status_label)
+        self.status_label.style().polish(self.status_label)
 
     def port_write(self, command, serial_port, send_with_ender):
         try:
             Ender = self.config.get("MoreSettings", "Ender", fallback="0D0A")
-            
+
             if send_with_ender:
                 common.port_write(command, serial_port, ender=Ender)
             else:
@@ -1399,47 +1674,90 @@ class MyWidget(QWidget):
             
             # If `ShowCommandEcho` is enabled, show the command in the received data area
             if self.config.getboolean("MoreSettings", "ShowCommandEcho"):
-                command_withTimestamp = '(' + common.get_current_time() + ')--> ' + command + '\n'
-                self.full_data_store.append(command_withTimestamp)
+                command_withTimestamp = '(' + common.get_current_time() + ')--> ' + command
+                # 只直接添加到显示区域，不加到 full_data_store 避免重复
                 self.received_data_textarea.append(command_withTimestamp)
                 # self.apply_style(command)
         except Exception as e:
             logger.error(f"Error sending command: {e}")
-            self.set_status_label("Failed", "#dc3545")
+            self.set_status_label("Failed", "error")
+
+    def port_write_hex(self, hex_command, serial_port, send_with_ender):
+        """发送十六进制数据到串口"""
+        try:
+            # 检查串口是否可用
+            if not serial_port or not serial_port.is_open:
+                logger.error("Serial port is not available or not open")
+                self.set_status_label("Port Error", "error")
+                return
+            
+            # 将十六进制字符串转换为字节
+            try:
+                hex_bytes = common.hex_str_to_bytes(hex_command)
+            except ValueError as e:
+                # 如果十六进制格式无效，记录错误并返回
+                logger.error(f"Invalid hex format: {hex_command}, error: {e}")
+                self.set_status_label("Hex Error", "error")
+                return
+            
+            # 处理结束符
+            Ender = self.config.get("MoreSettings", "Ender", fallback="0D0A")
+
+            if send_with_ender and Ender:
+                try:
+                    ender_bytes = common.hex_str_to_bytes(Ender)
+                    serial_port.write(hex_bytes + ender_bytes)
+                except ValueError:
+                    # 如果结束符格式无效，仅发送数据
+                    serial_port.write(hex_bytes)
+            else:
+                serial_port.write(hex_bytes)
+            
+            # 标记有新数据写入
+            if hasattr(self, 'data_receiver') and self.data_receiver:
+                self.data_receiver.is_new_data_written = True
+            
+            # 处理命令回显 - 支持不同的显示格式
+            if self.config.getboolean("MoreSettings", "ShowCommandEcho"):
+                # 创建格式化的十六进制显示
+                hex_display = ' '.join([f'{b:02X}' for b in hex_bytes])
+                
+                # 如果包含结束符，也显示结束符
+                if send_with_ender and Ender:
+                    try:
+                        ender_bytes = common.hex_str_to_bytes(Ender)
+                        ender_display = ' '.join([f'{b:02X}' for b in ender_bytes])
+                        hex_display += f" {ender_display}"
+                    except ValueError:
+                        pass  # 忽略无效的结束符
+                
+                # 构造回显消息
+                command_withTimestamp = f'({common.get_current_time()})-->[HEX] {hex_display}'
+                
+                # 只直接添加到显示区域，不加到 full_data_store 避免重复
+                if hasattr(self, 'received_data_textarea'):
+                    self.received_data_textarea.append(command_withTimestamp)
+                
+        except Exception as e:
+            logger.error(f"Error sending hex command: {e}")
+            self.set_status_label("Failed", "error")
 
     def send_command(self):
         command = self.command_input.toPlainText()
         if not command:
             return
         
-        try:
-            send_as_hex = self.config.getboolean("MoreSettings", "SendAsHex")
-        except (configparser.NoOptionError, ValueError):
-            send_as_hex = False  # 默认值为False
+        # 使用新的hex复选框状态
+        send_as_hex = self.command_send_as_hex_checkbox.isChecked()
         
         if send_as_hex:
             try:
-                # 移除空格并验证HEX格式
-                hex_command = command.replace(' ', '').replace('\n', '').replace('\r', '')
-                if not all(c in '0123456789ABCDEFabcdef' for c in hex_command):
-                    QMessageBox.warning(self, "Invalid HEX", "Please enter valid hexadecimal characters (0-9, A-F)")
-                    return
-                if len(hex_command) % 2 != 0:
-                    QMessageBox.warning(self, "Invalid HEX", "Hexadecimal string must have even number of characters")
-                    return
-                
-                # 转换为字节数组
-                command_bytes = bytes.fromhex(hex_command)
-                
-                # 直接发送字节数据
-                if self.main_Serial and self.main_Serial.is_open:
-                    self.main_Serial.write(command_bytes)
-                    self.data_receiver.is_new_data_written = True
-                    
-                    # 默认显示HEX命令回显
-                    hex_display = ' '.join([f'{b:02X}' for b in command_bytes])
-                    command_echo = f'({common.get_current_time()})--> HEX: {hex_display}'
-                    self.full_data_store.append(command_echo)
+                # 使用统一的 port_write_hex 方法
+                self.port_write_hex(
+                    command,
+                    self.main_Serial,
+                    self.checkbox_send_with_ender.isChecked()
+                )
                 return
                 
             except ValueError as e:
@@ -1471,40 +1789,133 @@ class MyWidget(QWidget):
         except PermissionError:
             QMessageBox.warning(self, "Warning", "Permission denied to save the file.")
 
-    def set_default_received_file(self, event):
-        self.input_path_data_received.setText(
-            common.get_absolute_path("tmps\\temp.log")
-        )
+    def create_json_template(self, file_path, file_name):
+        """创建JSON文件模板"""
+        template = {
+            "name": file_name,
+            "description": "AT Command configuration file",
+            "version": "1.0",
+            "created": datetime.datetime.now().isoformat(),
+            "author": "SCOM User",
+            "settings": {
+                "baudrate": "115200",
+                "timeout": 1.0,
+                "encoding": "utf-8"
+            },
+            "Commands": [
+                {
+                    "name": "Reset Device",
+                    "command": "AT+QRST",
+                    "description": "Reset the device",
+                    "expected_response": "OK",
+                    "timeout": 5
+                },
+                {
+                    "name": "Get Version",
+                    "command": "AT+QVERSION",
+                    "description": "Get firmware version",
+                    "expected_response": "OK",
+                    "timeout": 3
+                }
+            ]
+        }
+        return template
 
-    def select_received_file(self):
+    def select_received_file(self, event=None):
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.AnyFile)
-        file_dialog.setNameFilter("Files (*)")
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
+        file_dialog.setNameFilter("Text Files (*.txt *.log);;JSON Files (*.json);;All Files (*)")
+        file_dialog.setDefaultSuffix("log")  # 默认后缀
+        file_dialog.setWindowTitle("Select or Create Log File")
+        
+        # 设置默认文件名
+        import datetime
+        default_name = f"received_data_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        file_dialog.selectFile(default_name)
+        
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
+                # 确保文件目录存在
+                import os
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                
+                # 如果文件不存在，创建一个空文件
+                if not os.path.exists(file_path):
+                    try:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write("")  # 创建空文件
+                        
+                        # 显示创建成功消息
+                        QMessageBox.information(self, "File Created", 
+                            f"New log file created:\n{file_path}")
+                    except Exception as e:
+                        QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
+                        return
+                
                 self.input_path_data_received.setText(file_path)
 
     def select_file(self):
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("Files (*)")
+        file_dialog.setNameFilter("Text Files (*.txt *.log *.csv);;Binary Files (*.bin *.hex *.dat);;JSON Files (*.json);;All Files (*)")
+        file_dialog.setWindowTitle("Select File to Send")
+        
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
                 self.file_input.setText(file_path)
-                file_size = os.path.getsize(file_path)
-                self.progress_bar.setMaximum(100)
-                self.progress_bar.setValue(0)
-                self.progress_bar.setFormat(f"File size: {file_size} bytes")
+                try:
+                    file_size = os.path.getsize(file_path)
+                    self.progress_bar.setMaximum(100)
+                    self.progress_bar.setValue(0)
+                    self.progress_bar.setFormat(f"File size: {file_size} bytes")
+                except OSError as e:
+                    QMessageBox.warning(self, "Warning", f"Cannot get file size: {str(e)}")
+                    self.progress_bar.setFormat("File size: Unknown")
 
     def select_json_file(self, path_input):
         file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("Files (*.json)")
+        file_dialog.setFileMode(QFileDialog.AnyFile)
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
+        file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt);;All Files (*)")
+        file_dialog.setDefaultSuffix("json")  # 默认后缀
+        file_dialog.setWindowTitle("Select or Create JSON Configuration File")
+        
+        # 设置默认文件名
+        import datetime
+        default_name = f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        file_dialog.selectFile(default_name)
+        
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
+                # 确保文件目录存在
+                import os
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                
+                # 如果文件不存在，创建一个空JSON文件
+                if not os.path.exists(file_path):
+                    try:
+                        import json
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            if file_path.lower().endswith('.json'):
+                                # 创建基本的JSON结构
+                                file_name = os.path.basename(file_path).replace('.json', '')
+                                template = self.create_json_template(file_path, file_name)
+                                json.dump(template, f, indent=2, ensure_ascii=False)
+                            else:
+                                # 创建空文本文件
+                                f.write("")
+                        
+                        # 显示创建成功消息
+                        QMessageBox.information(self, "File Created", 
+                            f"New {'JSON configuration' if file_path.lower().endswith('.json') else 'text'} file created:\n{file_path}")
+                    except Exception as e:
+                        QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
+                        return
+                
                 path_input.setText(file_path)
                 
     def send_file(self):
@@ -1544,7 +1955,10 @@ class MyWidget(QWidget):
     def port_update(self):
         current_ports = [port.device for port in list_ports.comports()]
         self.serial_port_combo.clear()
-        self.serial_port_combo.addItems(current_ports)
+        if current_ports:
+            self.serial_port_combo.addItems(current_ports)
+        else:
+            self.serial_port_combo.addItem("No devices found")
         QComboBox.showPopup(self.serial_port_combo)
 
     def _process_hex_data(self, hex_data: str) -> str:
@@ -1681,7 +2095,7 @@ class MyWidget(QWidget):
 
         # 数据丢失检测
         if len(self.pending_updates) > 100:
-            logger.warning(f"待处理数据过多 ({len(self.pending_updates)} 条)，可能存在数据丢失风险")
+            logger.warning(f"Too many pending updates ({len(self.pending_updates)} items), potential data loss risk")
 
         # 性能统计
         current_time = time.time()
@@ -1705,16 +2119,16 @@ class MyWidget(QWidget):
             baudrate = 115200  # 默认波特率
 
         try:
-            stop_bits = float(self.stopbits_combo.currentText())
+            stop_bits = float(self.get_stopbits_value())
         except ValueError:
             stop_bits = 1  # 默认停止位
 
         try:
-            bytesize = int(self.bytesize_combo.currentText())
+            bytesize = int(self.get_bytesize_value())
         except ValueError:
             bytesize = 8  # 默认数据位
 
-        parity = self.parity_combo.currentText()
+        parity = self.get_parity_value()
         parity_bits = 1 if parity != "None" else 0  # 如果有校验位，则加1
 
         # 计算每字节的位数，如默认8N1配置：1起始位 + 8数据位 + 1停止位 + 0校验位 = 10位
@@ -1731,12 +2145,12 @@ class MyWidget(QWidget):
             
             # 获取结束符
             ender = self.config.get("MoreSettings", "Ender", fallback="\r\n")
-            end_bytes = common.hex_to_bytes(ender) if ender else b""
+            end_bytes = common.hex_str_to_bytes(ender) if ender else b""
 
             # 如果是超时数据或没有结束符，直接处理整个数据
             if is_timeout or not end_bytes:
                 segments = [data_bytes]
-                # print(f"直接处理数据: 超时={is_timeout}, 无结束符={not end_bytes}, 数据长度={len(data_bytes)}")
+                # print(f"直接处理数据:{segments} 超时={is_timeout}, 无结束符={not end_bytes}, 数据长度={len(data_bytes)}")
             else:
                 # 使用累积缓冲区来处理跨数据包的消息
                 if not hasattr(self, 'data_accumulator'):
@@ -1769,8 +2183,8 @@ class MyWidget(QWidget):
                     
                     # 如果有不完整的段，启动超时定时器
                     if incomplete_segment:
-                        self.accumulator_timer.start(500)  # 500ms 超时
-                    
+                        self.accumulator_timer.start(30)
+
                     # 为完整的段添加结束符（用于正确显示）
                     complete_segments = []
                     for seg in segments:
@@ -1780,7 +2194,7 @@ class MyWidget(QWidget):
                 else:
                     # 没有找到完整的消息，启动或重启超时定时器
                     self.accumulator_timer.stop()
-                    self.accumulator_timer.start(500)  # 500ms 超时
+                    self.accumulator_timer.start(30)
                     segments = []
                 
             # 调试信息 - 可以临时启用来诊断问题
@@ -1924,35 +2338,86 @@ class MyWidget(QWidget):
             end_idx == self._last_end_idx):
             return
 
+        # 保存上次索引用于增量更新判断
+        prev_start = getattr(self, '_last_start_idx', None)
+        prev_end = getattr(self, '_last_end_idx', None)
+
         self._last_start_idx = start_idx
         self._last_end_idx = end_idx
 
         # 禁用更新以提高性能
         self.received_data_textarea.setUpdatesEnabled(False)
         try:
-            # 使用 QTextDocument 进行批量更新
-            document = QTextDocument()
             current_font = self.received_data_textarea.font()
-            document.setDefaultFont(current_font)
-            cursor = QTextCursor(document)
 
-            # 插入文本数据，确保每行都不以换行符结尾（避免多余空行）
-            for i, line in enumerate(text_lines):
-                # 移除行尾的换行符，避免产生空行
-                clean_line = line.rstrip('\n\r')
-                cursor.insertText(clean_line)
-                # 如果不是最后一行，添加换行符
-                if i < len(text_lines) - 1:
-                    cursor.insertText('\n')
+            # 如果还没有持久化文档或视图范围发生了复杂变化，重建文档
+            need_rebuild = False
+            if not hasattr(self, '_display_document'):
+                need_rebuild = True
+            else:
+                # 如果请求的 start 与上次不同，或者出现回退（prev_end > end_idx），需要重建
+                if prev_start is None or start_idx != prev_start or (prev_end is not None and prev_end > end_idx):
+                    need_rebuild = True
 
-            # 设置文档
-            self.received_data_textarea.setDocument(document)
+            if need_rebuild:
+                # 重建整个文档（第一次或范围不连续时）
+                self._display_document = QTextDocument()
+                self._display_document.setDefaultFont(current_font)
+                cursor = QTextCursor(self._display_document)
+                for i, line in enumerate(text_lines):
+                    clean_line = line.rstrip('\n\r')
+                    cursor.insertText(clean_line)
+                    if i < len(text_lines) - 1:
+                        cursor.insertText('\n')
+                self.received_data_textarea.setDocument(self._display_document)
+            else:
+                # 尝试增量追加：当 start_idx 与 prev_start 相同且 end_idx > prev_end
+                if prev_end is not None and end_idx > prev_end:
+                    # 新增的行在 text_lines 中的起始位置
+                    new_from = prev_end - start_idx
+                    if new_from < 0:
+                        # 退化为重建以避免不一致
+                        self._display_document = QTextDocument()
+                        self._display_document.setDefaultFont(current_font)
+                        cursor = QTextCursor(self._display_document)
+                        for i, line in enumerate(text_lines):
+                            clean_line = line.rstrip('\n\r')
+                            cursor.insertText(clean_line)
+                            if i < len(text_lines) - 1:
+                                cursor.insertText('\n')
+                        self.received_data_textarea.setDocument(self._display_document)
+                    else:
+                        cursor = QTextCursor(self._display_document)
+                        cursor.movePosition(QTextCursor.End)
+                        new_lines = text_lines[new_from:]
+                        for idx, line in enumerate(new_lines):
+                            clean_line = line.rstrip('\n\r')
+                            # 如果文档不是空的并且当前不是首行，先插入换行
+                            if cursor.position() != 0 or (idx > 0):
+                                cursor.insertText('\n')
+                            cursor.insertText(clean_line)
+                else:
+                    # 没有新增内容可追加，或无法增量处理，安全重建
+                    self._display_document = QTextDocument()
+                    self._display_document.setDefaultFont(current_font)
+                    cursor = QTextCursor(self._display_document)
+                    for i, line in enumerate(text_lines):
+                        clean_line = line.rstrip('\n\r')
+                        cursor.insertText(clean_line)
+                        if i < len(text_lines) - 1:
+                            cursor.insertText('\n')
+                    self.received_data_textarea.setDocument(self._display_document)
         finally:
             self.received_data_textarea.setUpdatesEnabled(True)
 
         # 如果快要触底，自动滚动到底部
         if will_at_bottom:
-            scrollbar.setValue(scrollbar.maximum())
+            # 如果是增量追加情况下，document 未被替换，可以立即滚到底
+            if prev_start == start_idx and prev_end is not None and end_idx > prev_end:
+                self.received_data_textarea.verticalScrollBar().setValue(self.received_data_textarea.verticalScrollBar().maximum())
+            else:
+                # 否则延后到事件循环末尾再滚动，确保布局完成
+                QTimer.singleShot(0, lambda: self.received_data_textarea.verticalScrollBar().setValue(self.received_data_textarea.verticalScrollBar().maximum()))
 
     def update_main_textarea(self, raw_data: bytes):
         """
@@ -1976,6 +2441,9 @@ class MyWidget(QWidget):
             self.update_timer.setSingleShot(True)
             self.update_timer.timeout.connect(self.batch_update_ui)
 
+        # 获取原始数据打印
+        # print(f"Received raw data: {raw_data}")
+
         # 计算数据起始时间戳（基于波特率和数据长度）
         baudrate = 115200  # 默认波特率
         try:
@@ -1993,18 +2461,35 @@ class MyWidget(QWidget):
         # 只存储(bytes, start_time)元组
         self.pending_updates.append((raw_data, start_dt))
         
-        # 防止pending_updates过多导致内存问题和处理延迟
-        if len(self.pending_updates) > self.max_pending_updates:
-            # 强制处理一部分数据，避免无限累积
-            self.batch_update_ui()
+        # 调试pending_updates内容
+        # print(f"Pending updates: {self.pending_updates}")
 
         # 检查是否应该立即更新（基于时间或数量阈值）
         current_time = time.time()
         time_since_last_update = current_time - self.last_ui_update_time
-        if (len(self.pending_updates) >= 20 or time_since_last_update >= self.ui_update_interval):
-            if not self.update_timer.isActive():
-                self.update_timer.start(5)  # 减少延迟，从10ms改为5ms
-                self.last_ui_update_time = current_time
+        
+        # 详细调试信息
+        # print(f"调试信息: len(pending_updates)={len(self.pending_updates)}, "
+        #       f"time_since_last_update={time_since_last_update:.3f}, "
+        #       f"ui_update_interval={self.ui_update_interval}, "
+        #       f"max_pending_updates={self.max_pending_updates}")
+        
+        # 降低触发阈值，确保数据能及时显示
+        condition1 = len(self.pending_updates) >= 1  # 改为1，有数据就更新
+        condition2 = time_since_last_update >= 0.01  # 降低到10ms
+        condition3 = len(self.pending_updates) > self.max_pending_updates
+        
+        # print(f"触发条件: 数量>=1: {condition1}, 时间间隔>=0.01: {condition2}, 超过最大缓存: {condition3}")
+        
+        should_update = condition1 or condition2 or condition3
+        
+        if should_update:
+            # 直接调用batch_update_ui，不使用定时器
+            self.batch_update_ui()
+            self.last_ui_update_time = current_time
+        else:
+            # 动态调整阈值，但保持在合理范围内
+            self.max_pending_updates = max(5, min(50, len(self.pending_updates) * 3))
 
     def show_search_dialog(self):
         if self.stacked_widget.currentIndex() == 0:
@@ -2018,10 +2503,10 @@ class MyWidget(QWidget):
         dialog.show()
 
     def port_on(self):
-        serial_port = self.serial_port_combo.currentText()
-        baud_rate = int(self.baud_rate_combo.currentText())
-        stop_bits = float(self.stopbits_combo.currentText())
-        parity = self.parity_combo.currentText()
+        serial_port = self.get_serial_port_value()
+        baud_rate = int(self.get_baud_rate_value())
+        stop_bits = float(self.get_stopbits_value())
+        parity = self.get_parity_value()
         if parity == "None":
             parity = serial.PARITY_NONE
         elif parity == "Even":
@@ -2034,8 +2519,8 @@ class MyWidget(QWidget):
             parity = serial.PARITY_SPACE
         else:
             raise ValueError("Not a valid parity: {!r}".format(parity))
-        byte_size = int(self.bytesize_combo.currentText())
-        flow_control = self.flowcontrol_checkbox.currentText()
+        byte_size = int(self.get_bytesize_value())
+        flow_control = self.get_flowcontrol_value()
 
         try:
             self.main_Serial = common.port_on(
@@ -2052,7 +2537,7 @@ class MyWidget(QWidget):
                 self.port_button.setText("Close Port")
                 self.port_button.setShortcut("Ctrl+O")
                 self.port_button.setToolTip("Shortcut: Ctrl+O")
-                self.set_status_label("Open", "#198754")
+                self.set_status_label("Open", "connected")
                 self.port_button.clicked.disconnect(self.port_on)
                 self.port_button.clicked.connect(self.port_off)
                 # Disable the serial port and baud rate combo boxes
@@ -2061,7 +2546,7 @@ class MyWidget(QWidget):
                 self.stopbits_combo.setEnabled(False)
                 self.parity_combo.setEnabled(False)
                 self.bytesize_combo.setEnabled(False)
-                self.flowcontrol_checkbox.setEnabled(False)
+                self.flowcontrol_combo.setEnabled(False)
                 self.command_input.setEnabled(True)
                 self.send_button.setEnabled(True)
                 self.prompt_button.setEnabled(True)
@@ -2085,7 +2570,7 @@ class MyWidget(QWidget):
             self.data_receive_thread.start()
         except Exception as e:
             logger.error(f"Error opening serial port: {e}")
-            self.set_status_label("Failed", "#dc3545")
+            self.set_status_label("Failed", "error")
 
     def port_off(self):
         self.data_receiver.stop_thread()
@@ -2107,7 +2592,7 @@ class MyWidget(QWidget):
                 self.port_button.setText("Open Port")
                 self.port_button.setShortcut("Ctrl+O")
                 self.port_button.setToolTip("Shortcut: Ctrl+O")
-                self.set_status_label("Closed", "#198754")
+                self.set_status_label("Closed", "disconnected")
                 self.port_button.clicked.disconnect()
                 self.port_button.clicked.connect(self.port_on)
 
@@ -2116,7 +2601,7 @@ class MyWidget(QWidget):
                 self.stopbits_combo.setEnabled(True)
                 self.parity_combo.setEnabled(True)
                 self.bytesize_combo.setEnabled(True)
-                self.flowcontrol_checkbox.setEnabled(True)
+                self.flowcontrol_combo.setEnabled(True)
                 self.command_input.setEnabled(False)
                 self.send_button.setEnabled(False)
                 self.prompt_button.setEnabled(False)
@@ -2131,7 +2616,7 @@ class MyWidget(QWidget):
                 self.port_button.setEnabled(True)
         except Exception as e:
             logger.error(f"Error closing serial port: {e}")
-            self.set_status_label("Failed", "#dc3545")
+            self.set_status_label("Failed", "error")
 
     """
     Summary:
@@ -2152,46 +2637,86 @@ class MyWidget(QWidget):
             self.accumulator_timer.stop()
         
         self.received_data_textarea.clear()
-        if self.input_path_data_received.text():
-            with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
-                f.write("")
-        else:
-            with open(
-                common.get_resource_path("tmps/temp.log"),
-                "w",
-                encoding="utf-8",
-            ) as f:
-                f.write("")
+        
+        # 清除日志文件逻辑，改为如果在moresettings中选中了Clear_Log_With_File则一并清除文件
+        if self.config.getboolean("MoreSettings", "Clear_Log_With_File", fallback=False):
+            if self.input_path_data_received.text():
+                with open(self.input_path_data_received.text(), "w", encoding="utf-8") as f:
+                    f.write("")
+            else:
+                with open(
+                    common.get_resource_path("tmps/temp.log"),
+                    "w",
+                    encoding="utf-8",
+                ) as f:
+                    f.write("")
 
     def read_ATCommand(self):
-        with open(
-            self.path_ATCommand,
-            "r",
-            encoding="utf-8",
-        ) as f:
-            ATCommandFromFile = json.load(f).get("Commands")
-            for i in range(1, len(self.input_fields) + 1):
-                if i <= len(ATCommandFromFile):
-                    self.checkbox[i - 1].setChecked(
-                        ATCommandFromFile[i - 1].get("selected")
-                    )
-                    self.input_fields[i - 1].setText(
-                        ATCommandFromFile[i - 1].get("command")
-                    )
-                    self.input_fields[i - 1].setCursorPosition(0)
-                    self.checkbox_send_with_enders[i - 1].setChecked(
-                        ATCommandFromFile[i - 1].get("withEnter")
-                    )
-                    self.interVal[i - 1].setText(
-                        str(ATCommandFromFile[i - 1].get("interval"))
-                    )
-                else:
-                    self.input_fields[i - 1].setText("")
+        try:
+            if not os.path.exists(self.path_ATCommand):
+                ErrorDialog.show_error(
+                    parent=self,
+                    title="文件不存在",
+                    message=f"AT命令文件不存在: {self.path_ATCommand}",
+                    details="请检查文件路径是否正确，或者创建一个新的AT命令文件。"
+                )
+                return
+                
+            with open(
+                self.path_ATCommand,
+                "r",
+                encoding="utf-8",
+            ) as f:
+                data = json.load(f)
+                ATCommandFromFile = data.get("Commands", [])
+                
+                for i in range(1, len(self.input_fields) + 1):
+                    if i <= len(ATCommandFromFile):
+                        self.checkbox[i - 1].setChecked(
+                            bool(ATCommandFromFile[i - 1].get("selected"))
+                        )
+                        self.input_fields[i - 1].setText(
+                            ATCommandFromFile[i - 1].get("command") or ""
+                        )
+                        self.input_fields[i - 1].setCursorPosition(0)
+                        self.checkbox_send_with_enders[i - 1].setChecked(
+                            ATCommandFromFile[i - 1].get("withEnder", True)
+                        )
+                        self.checkbox_hex[i - 1].setChecked(
+                            ATCommandFromFile[i - 1].get("hex", False)
+                        )
+                        self.interVal[i - 1].setText(
+                            str(ATCommandFromFile[i - 1].get("interval") or 0)
+                        )
+                    else:
+                        self.input_fields[i - 1].setText("")
+                        
+        except json.JSONDecodeError as e:
+            ErrorDialog.show_error(
+                parent=self,
+                title="JSON格式错误",
+                message=f"AT命令文件格式错误: {self.path_ATCommand}",
+                details=f"JSON解析错误: {str(e)}"
+            )
+        except UnicodeDecodeError as e:
+            ErrorDialog.show_error(
+                parent=self,
+                title="文件编码错误",
+                message=f"无法读取AT命令文件: {self.path_ATCommand}",
+                details=f"文件编码错误: {str(e)}\n请确保文件使用UTF-8编码保存。"
+            )
+        except Exception as e:
+            ErrorDialog.show_error(
+                parent=self,
+                title="读取文件失败",
+                message=f"读取AT命令文件时发生错误: {self.path_ATCommand}",
+                details=f"错误详情: {str(e)}"
+            )
 
     def update_ATCommand(self):
         result = common.update_AT_command(
             self.path_ATCommand, 
-            self.config["MoreSettings"]["ATCRegex"])
+            self.config["MoreSettings"]["AtCommandRegex"])
         self.text_input_layout_2.setPlainText(result)
 
     def restore_ATCommand(self):
@@ -2215,7 +2740,8 @@ class MyWidget(QWidget):
                 "interval": (
                     self.interVal[i].text() if self.interVal[i].text() else ""
                 ),
-                "withEnter": self.checkbox_send_with_enders[i].isChecked(),
+                "hex": self.checkbox_hex[i].isChecked(),
+                "withEnder": self.checkbox_send_with_enders[i].isChecked(),
             }
             command_list.append(command_info)
         with open(
@@ -2228,14 +2754,56 @@ class MyWidget(QWidget):
     def handle_radio_button_click(self, index):
         if self.radio_path_command_buttons[index].isChecked():
             if self.path_command_inputs[index].text():
-                self.path_ATCommand = self.path_command_inputs[index].text()
-                self.text_input_layout_2.setPlainText(
-                    common.join_text(common.read_ATCommand(self.path_ATCommand))
-                )
-                # 保存当前选中的路径到配置文件
-                self.save_paths_to_config()
+                new_path = self.path_command_inputs[index].text()
+                
+                # 检查是否切换到了不同的文件
+                if new_path != self.path_ATCommand:
+                    # 处理当前文件的未保存更改
+                    if hasattr(self, 'at_command_manager') and self.at_command_manager.has_unsaved_changes():
+                        choice = self.at_command_manager.prompt_save_changes()
+                        
+                        if choice == "cancel":
+                            # 用户取消，恢复原来的选择
+                            for i, button in enumerate(self.radio_path_command_buttons):
+                                if self.path_command_inputs[i].text() == self.path_ATCommand:
+                                    button.setChecked(True)
+                                    return
+                        elif choice == "save":
+                            # 保存当前文件
+                            success, error_msg = self.at_command_manager.save_file()
+                            if not success:
+                                ErrorDialog.show_error(
+                                    parent=self,
+                                    title="保存失败",
+                                    message="保存当前AT命令文件失败",
+                                    details=error_msg
+                                )
+                                return
+                    
+                    # 切换到新文件
+                    self.path_ATCommand = new_path
+                    self.at_command_manager.set_file_path(new_path)
+                    
+                    # 加载新文件内容
+                    content, error_msg = self.at_command_manager.load_file(new_path)
+                    if error_msg:
+                        # 显示错误对话框
+                        ErrorDialog.show_error(
+                            parent=self,
+                            title="读取AT命令文件失败",
+                            message=f"无法读取选择的AT命令文件: {new_path}",
+                            details=error_msg
+                        )
+                        # 清空文本框
+                        self.text_input_layout_2.clear()
+                    else:
+                        self.text_input_layout_2.setPlainText(content)
+                    
+                    # 保存当前选中的路径到配置文件
+                    self.save_paths_to_config()
             else:
                 self.path_ATCommand = common.get_resource_path("tmps/ATCommand.json")
+                self.at_command_manager.set_file_path(self.path_ATCommand)
         else:
             logger.warning(f"Radio button {index + 1} is unchecked.")
 
@@ -2390,6 +2958,13 @@ class MyWidget(QWidget):
         for checkbox in self.checkbox_send_with_enders:
             checkbox.setChecked(status)
 
+    def set_hex_none(self):
+        """切换所有十六进制复选框的状态"""
+        if hasattr(self, 'checkbox_hex'):
+            status = not all(checkbox.isChecked() for checkbox in self.checkbox_hex)
+            for checkbox in self.checkbox_hex:
+                checkbox.setChecked(status)
+
     def set_interval_none(self):
         interVal = self.interVal[0].text()
         for i in range(len(self.interVal)):
@@ -2435,8 +3010,8 @@ class MyWidget(QWidget):
             # 隐藏所有路径输入框
             for path_input in self.path_command_inputs:
                 path_input.setVisible(False)
-            # 设置最大宽度为50
-            self.radio_scroll_area.setMaximumWidth(50)
+            # 设置收缩时的宽度为120，能显示更多内容
+            self.radio_scroll_area.setMaximumWidth(100)
         else:
             # 展开状态
             self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_right.png")))
@@ -2463,6 +3038,32 @@ class MyWidget(QWidget):
             common.write_config(self.config)
         except Exception as e:
             logger.error(f"Error saving paths to config: {e}")
+    
+    def save_integrated_function(self):
+        """整合的保存功能：同时保存路径配置和AT命令文件"""
+        try:
+            # 1. 保存路径配置
+            self.save_paths_to_config()
+            
+            # 2. 保存AT命令文件
+            current_content = self.text_input_layout_2.toPlainText()
+            self.at_command_manager.update_content(current_content)
+            success, message = self.at_command_manager.save_file()
+            
+            if success:
+                # 更新状态显示
+                self.update_at_command_status()
+                logger.info("Integrated save completed successfully")
+            else:
+                logger.error(f"Failed to save AT command file: {message}")
+                # 可以考虑显示错误消息给用户
+                from components.ErrorDialog import ErrorDialog
+                ErrorDialog.show_error(self, "Save Failed", f"Failed to save AT command file: {message}")
+                
+        except Exception as e:
+            logger.error(f"Error in integrated save function: {e}")
+            from components.ErrorDialog import ErrorDialog
+            ErrorDialog.show_error(self, "Save Error", f"An error occurred while saving: {str(e)}")
 
     # Filter selected commands
     def filter_selected_command(self):
@@ -2473,16 +3074,30 @@ class MyWidget(QWidget):
                     "index": i,
                     "command": self.input_fields[i].text(),
                     "interval": self.interVal[i].text(),
-                    "withEnter": self.checkbox_send_with_enders[i].isChecked(),
+                    "withEnder": self.checkbox_send_with_enders[i].isChecked(),
                 }
                 self.selected_commands.append(command_info)
         return self.selected_commands
 
-    def handle_command_executed(self, index, command):
-        # self.checkbox[index].setChecked(True)
-        self.input_prompt_index.setText(str(index))
-        self.input_prompt.setText(command)
-        self.input_prompt.setCursorPosition(0)
+    def handle_command_executed(self, index):
+        # index: 1-based command index, or -1 for completion/error
+        try:
+            self.input_prompt_index.setText(str(index))
+            if index == -1:
+                # show completion marker
+                self.input_prompt.setText("")
+            else:
+                idx0 = int(index) - 1
+                if 0 <= idx0 < len(self.input_fields):
+                    cmd = self.input_fields[idx0].text()
+                    self.input_prompt.setText(cmd)
+                else:
+                    # index out of range: clear input
+                    self.input_prompt.setText("")
+            self.input_prompt.setCursorPosition(0)
+        except Exception:
+            # defensive: avoid raising from signal handler
+            pass
 
     def handle_command_executed_total_times(self, total_times):
         self.input_prompt_batch_times.setText(str(total_times))
@@ -2546,24 +3161,34 @@ class MyWidget(QWidget):
 
     # Button Click Handler
     def handle_button_click(
-        self, index, input_field, checkbox, checkbox_send_with_ender, interVal
+        self, index, input_field, checkbox, checkbox_hex, checkbox_send_with_ender, interVal
     ):
         def button_clicked():
             if not self.last_one_click_time:
                 self.last_one_click_time = time.time()
-            self.port_write(
-                input_field.text(),
-                self.main_Serial,
-                checkbox_send_with_ender.isChecked(),
-            )
+            
+            # 根据 checkbox_hex 的状态决定发送方式
+            if checkbox_hex.isChecked():
+                self.port_write_hex(
+                    input_field.text(),
+                    self.main_Serial,
+                    checkbox_send_with_ender.isChecked(),
+                )
+            else:
+                self.port_write(
+                    input_field.text(),
+                    self.main_Serial,
+                    checkbox_send_with_ender.isChecked(),
+                )
+            
             checkbox.setChecked(True)
             self.prompt_index = index
             self.input_prompt_index.setText(str(index))
             self.input_prompt.setText(input_field.text())
             now_click_time = time.time()
-            self.interVal[index - 2].setText(
-                str(min(99, int(now_click_time - self.last_one_click_time) + 1))
-            )
+            delta_ms = int((now_click_time - self.last_one_click_time) * 1000)
+            # Limit the maximum display value to avoid excessive values (adjust the upper limit here if needed)
+            self.interVal[index - 2].setText(str(min(99999, delta_ms)))
             self.last_one_click_time = now_click_time
 
         return button_clicked
@@ -2575,35 +3200,63 @@ class MyWidget(QWidget):
     """
 
     def closeEvent(self, event):
+        logger.info("Application close event triggered")
+        
         # Confirm exit dialog
         confirm_exit_dialog = ConfirmExitDialog(self)
         if confirm_exit_dialog.exec() == QDialog.Accepted:
+            logger.info("User confirmed application exit")
+            
             # Save configuration settings
+            logger.info("Saving configuration settings...")
             self.save_config(self.config)
+            logger.info("Configuration settings saved successfully")
             
             # 停止累积定时器
             if hasattr(self, 'accumulator_timer'):
+                logger.info("Stopping accumulator timer...")
                 self.accumulator_timer.stop()
+                logger.info("Accumulator timer stopped")
                 
             # Properly stop and wait for the data receive thread
             try:
                 if hasattr(self, "data_receiver") and self.data_receiver:
+                    logger.info("Stopping data receiver thread...")
                     self.data_receiver.stop_thread()
+                    logger.info("Data receiver thread stop signal sent")
                 if hasattr(self, "data_receive_thread") and self.data_receive_thread:
+                    logger.info("Waiting for data receive thread to finish...")
                     self.data_receive_thread.quit()
-                    self.data_receive_thread.wait(2000)  # Wait up to 2 seconds
+                    if self.data_receive_thread.wait(2000):  # Wait up to 2 seconds
+                        logger.info("Data receive thread finished successfully")
+                    else:
+                        logger.warning("Data receive thread did not finish within timeout")
             except Exception as e:
                 logger.error(f"Error stopping data receive thread: {e}")
+                
             # Close serial port
             if self.main_Serial:
+                logger.info("Closing serial port...")
                 self.port_off()
+                logger.info("Serial port closed")
+            else:
+                logger.info("No serial port to close")
+                
             # Signal all running threads to stop
             active_threads = self.thread_pool.activeThreadCount()
-            while active_threads > 0:
-                self.thread_pool.waitForDone(100)
-                active_threads = self.thread_pool.activeThreadCount()
+            if active_threads > 0:
+                logger.info(f"Waiting for {active_threads} active threads to finish...")
+                while active_threads > 0:
+                    self.thread_pool.waitForDone(100)
+                    active_threads = self.thread_pool.activeThreadCount()
+                logger.info("All threads finished successfully")
+            else:
+                logger.info("No active threads to wait for")
+                
+            logger.info("Application exit completed successfully")
             event.accept()
         else:
+            logger.info("User cancelled application exit")
             event.ignore()
 
 
@@ -2711,36 +3364,47 @@ def main():
         
         # 更新检查（添加异常处理）
         try:
-            from components.UpdateInfoDialog import UpdateChecker
-            update_checker = UpdateChecker()
-            
-            def on_update_finished(success, should_show_dialog):
+            from components.SafeUpdateChecker import SafeUpdateChecker
+            update_checker = SafeUpdateChecker.check_updates_on_startup()
+
+            if update_checker:  # 如果返回了检查器实例，说明启用了启动时检查
+                def on_update_finished(version, notes):
+                    update_splash_message("Startup complete!")
+                    QTimer.singleShot(300, lambda: finish_startup(True, version, notes))
+
+                def on_check_failed(error_msg):
+                    update_splash_message("Startup complete!")
+                    QTimer.singleShot(300, lambda: finish_startup(False))
+
+                update_checker.update_available.connect(on_update_finished)
+                update_checker.check_failed.connect(on_check_failed)
+            else:
+                # 用户禁用了启动时检查
                 update_splash_message("Startup complete!")
-                QTimer.singleShot(300, lambda: finish_startup(should_show_dialog))
-            
-            update_checker.finished.connect(on_update_finished)
-            update_checker.start_check()
-                
+                QTimer.singleShot(300, lambda: finish_startup(False))
+
         except Exception as e:
             logger.warning(f"Update check failed: {e}")
-            finish_startup(False)
-        
-        def finish_startup(should_show_dialog=False):
+            update_splash_message("Startup complete!")
+            QTimer.singleShot(300, lambda: finish_startup(False))
+
+        def finish_startup(has_update=False, version=None, notes=None):
             widget.show()
             splash.finish(widget)
-            
-            # 如果检测到更新信息有变化，显示更新信息对话框
-            if should_show_dialog:
+
+            # 如果检测到更新，显示更新信息对话框
+            if has_update:
                 def show_update_dialog():
                     try:
-                        update_dialog = UpdateInfoDialog(widget)
+                        update_dialog = SafeUpdateDialog(widget)
+                        update_dialog._show_update_available(version, notes)
                         update_dialog.show()
                     except Exception as e:
-                        logger.warning(f"显示更新信息对话框失败: {e}")
-                
+                        logger.warning(f"Failed to show update dialog: {e}")
+
                 # 延迟500毫秒后显示更新对话框，让主界面先完全显示
                 QTimer.singleShot(500, show_update_dialog)
-        
+
         # 设置超时机制，如果10秒内没有完成就强制关闭启动画面
         def force_close_splash():
             try:
@@ -2751,7 +3415,7 @@ def main():
                 splash.finish(widget)
             except Exception as e:
                 logger.error(f"Error in force_close_splash: {e}")
-        
+
         QTimer.singleShot(10000, force_close_splash)  # 10秒超时
         
         sys.exit(app.exec())

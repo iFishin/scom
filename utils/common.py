@@ -8,7 +8,7 @@ import threading
 import configparser
 import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Tuple
 
 write_lock = threading.Lock()
 
@@ -298,8 +298,15 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.ini")
     else:
         config_path = os.path.abspath(config_path)
+    
+    # 获取默认配置文件路径
+    default_config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", "config_default")
+    
     config = configparser.ConfigParser()
-    config.optionxform = str
+    config.optionxform = str  # 保持选项名大小写敏感
+    
+    default_config = configparser.ConfigParser()
+    default_config.optionxform = str  # 保持选项名大小写敏感
 
     if not os.path.exists(config_path):
         create_default_config()
@@ -334,6 +341,31 @@ def read_config(config_path: str = None) -> configparser.ConfigParser:
             create_default_config()
             config.read(config_path, encoding="utf-8")
     
+    # 读取默认配置文件
+    if os.path.exists(default_config_path):
+        try:
+            default_config.read(default_config_path, encoding="utf-8")
+        except Exception as e:
+            custom_print(f"Error reading default config file: {e}")
+            return config
+    
+    # 合并缺失的配置项从默认配置文件
+    for section_name in default_config.sections():
+        if not config.has_section(section_name):
+            config.add_section(section_name)
+        
+        for option_name, option_value in default_config.items(section_name):
+            if not config.has_option(section_name, option_name):
+                config.set(section_name, option_name, option_value)
+                custom_print(f"Added missing config option: [{section_name}]{option_name} = {option_value}")
+    
+    # 保存更新后的配置
+    try:
+        with open(config_path, "w", encoding="utf-8") as configfile:
+            config.write(configfile)
+    except IOError as e:
+        custom_print(f"Error writing updated config file: {e}")
+    
     return config
 
 
@@ -353,8 +385,28 @@ def write_config(config: configparser.ConfigParser, config_path: str = None) -> 
     else:
         config_path = os.path.abspath(config_path)
     try:
+        # 创建一个新的配置对象来清理重复项
+        clean_config = configparser.ConfigParser()
+        clean_config.optionxform = str  # 保持键的大小写
+
+        # 复制所有配置项，合并重复项
+        for section_name in config.sections():
+            if not clean_config.has_section(section_name):
+                clean_config.add_section(section_name)
+
+            # 使用字典来合并重复的键
+            section_items = {}
+            for key, value in config.items(section_name):
+                # 将键转换为小写作为合并的依据
+                lower_key = key.lower()
+                section_items[lower_key] = (key, value)
+
+            # 写入合并后的配置项
+            for lower_key, (original_key, value) in section_items.items():
+                clean_config.set(section_name, original_key, value)
+
         with open(config_path, "w", encoding="utf-8") as configfile:
-            config.write(configfile)
+            clean_config.write(configfile)
     except IOError as e:
         custom_print(f"Error writing config file: {e}")
         raise e
@@ -499,7 +551,7 @@ def escape_control_characters(text: str, escape_extended: bool = False) -> str:
     
     return result
 
-def hex_to_bytes(hex_str: str) -> bytes:
+def hex_str_to_bytes(hex_str: str) -> bytes:
     """
     将十六进制字符串转换为字节序列
     
@@ -515,8 +567,12 @@ def hex_to_bytes(hex_str: str) -> bytes:
     if not hex_str:
         return b''
         
-    # 清理结束符字符串
-    clean_hex = hex_str.replace(" ", "").replace("0x", "").replace("\\x", "")
+    # 清理结束符字符串：移除空格、换行符、回车符、"0x"、"\\x"
+    clean_hex = hex_str.replace(" ", "").replace("\n", "").replace("\r", "").replace("0x", "").replace("\\x", "")
+    
+    # 验证是否只包含有效的十六进制字符
+    if not all(c in '0123456789ABCDEFabcdef' for c in clean_hex):
+        raise ValueError(f"Invalid hex string '{hex_str}': contains non-hexadecimal characters")
     
     # 如果长度为奇数，在前面补0
     if len(clean_hex) % 2 != 0:
@@ -541,14 +597,26 @@ def port_write(command: str, port_serial: serial.Serial, ender: str = None) -> N
         raise SerialPortNotInitializedError("Serial port is not initialized.")
 
     try:
+        # 兼容不同类型的 ender 参数：bool / bytes / bytearray / str / None
+        # 布尔值：True 表示使用默认结束符 0D0A，False 表示不使用结束符
+        if isinstance(ender, bool):
+            ender_str = "0D0A" if ender else ""
+        elif isinstance(ender, (bytes, bytearray)):
+            # 直接写入字节类型的 ender
+            port_serial.write(command.encode("UTF-8") + bytes(ender))
+            return
+        else:
+            # 对于 str 或 None，保持原有语义
+            ender_str = ender if ender is not None else ""
+
         # 如果提供了结束符且不是空字符串，尝试将其解析为十六进制字节
-        if ender is not None and ender:  # 检查不是None且不是空字符串
+        if ender_str:
             try:
-                end_bytes = hex_to_bytes(ender)
+                end_bytes = hex_str_to_bytes(ender_str)
                 port_serial.write(command.encode("UTF-8") + end_bytes)
             except ValueError as e:
                 # 如果结束符无效，记录错误并仅发送命令
-                custom_print(f"Invalid hex string '{ender}': {e}")
+                custom_print(f"Invalid hex string '{ender_str}': {e}")
                 port_serial.write(command.encode("UTF-8"))
         else:
             # 如果未提供结束符或为空字符串，仅发送命令
@@ -798,7 +866,7 @@ def split_text(text: str) -> list:
     return text.split("\n")
 
 
-def read_ATCommand(path_command_json: str) -> list:
+def read_ATCommand(path_command_json: str) -> Tuple[list, str]:
     """
     读取 AT 命令文件
 
@@ -806,34 +874,49 @@ def read_ATCommand(path_command_json: str) -> list:
     path_command_json (str): AT 命令文件路径
 
     返回：
-    list: AT 命令列表
+    tuple[list, str]: (AT 命令列表, 错误信息)
+    如果成功读取，返回 (commands, "")
+    如果失败，返回 ([], error_message)
     """
     try:
+        # 检查文件是否存在
+        if not os.path.exists(path_command_json):
+            error_msg = f"File does not exist: {path_command_json}"
+            custom_print(f"AT command file not found: {path_command_json}")
+            return [], error_msg
+        
         # 尝试使用UTF-8编码读取
         with open(path_command_json, "r", encoding="utf-8") as f:
             data = json.load(f)
             commands = [item["command"] for item in data.get("Commands", [])]
-            return commands
+            return commands, ""
+            
     except UnicodeDecodeError:
         # 如果UTF-8失败，尝试使用其他编码
         try:
             with open(path_command_json, "r", encoding="gbk") as f:
                 data = json.load(f)
                 commands = [item["command"] for item in data.get("Commands", [])]
-                return commands
+                return commands, ""
         except Exception as e:
+            error_msg = f"File encoding error, unable to read: {str(e)}"
             custom_print(f"Error reading AT command file with GBK encoding: {e}")
-            # 如果仍然失败，返回空列表
-            return []
+            return [], error_msg
+            
     except IOError as e:
+        error_msg = f"File read error: {str(e)}"
         custom_print(f"Error reading AT command file: {e}")
-        return []
+        return [], error_msg
+        
     except json.JSONDecodeError as e:
+        error_msg = f"JSON format error: {str(e)}"
         custom_print(f"Error decoding JSON from AT command file: {e}")
-        return []
+        return [], error_msg
+        
     except Exception as e:
+        error_msg = f"Unknown error: {str(e)}"
         custom_print(f"Unexpected error reading AT command file: {e}")
-        return []
+        return [], error_msg
 
 
 def write_ATCommand(path_command_json: str, commands: list) -> None:
@@ -856,6 +939,7 @@ def write_ATCommand(path_command_json: str, commands: list) -> None:
                             "selected": False,
                             "command": command,
                             "withEnter": True,
+                            "hex": False,
                             "interval": "",
                         }
                         for command in commands
@@ -899,7 +983,12 @@ def update_AT_command(path_command_json: str, regex: str = r"(?i)(AT\+[^（）<>
     str: 更新后的 AT 命令内容
     """
     try:
-        text = "\n".join(read_ATCommand(path_command_json))
+        commands, error_msg = read_ATCommand(path_command_json)
+        if error_msg:
+            custom_print(f"Error reading AT command file: {error_msg}")
+            return ""
+            
+        text = "\n".join(commands)
         if not text:
             custom_print("ATCommand.txt is empty. Exiting...")
             return ""
@@ -910,6 +999,7 @@ def update_AT_command(path_command_json: str, regex: str = r"(?i)(AT\+[^（）<>
                 return result
     except IOError as e:
         custom_print(f"Error updating AT command file: {e}")
+        return ""
 
 
 def remove_TimeStamp(text: str, regex: str = r"\[20(.*?)\]") -> str:

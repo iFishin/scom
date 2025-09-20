@@ -33,7 +33,8 @@ class FileSender(QThread):
                         formatted_chunk = chunk.decode('utf-8')
                     else:
                         formatted_chunk = chunk.decode('utf-8')
-                    common.port_write(formatted_chunk, self.serial_port, endWithEnter=False)
+                    # pass empty string as ender when no ender is desired
+                    common.port_write(formatted_chunk, self.serial_port, ender='')
                     sent_bytes += len(chunk)
                     # 发送进度信号
                     self.progressUpdated.emit(int(sent_bytes / file_size * 100))

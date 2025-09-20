@@ -3,3 +3,4 @@
 tmps/*
 !tmps/temp.log
 !tmps/ATCommand.json
+AGENTS.md

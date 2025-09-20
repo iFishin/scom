@@ -1,5 +1,5 @@
 [Set]
-Port = COM65
+Port = COM1
 BaudRate = 115200
 StopBits = 1
 Parity = None
@@ -54,12 +54,12 @@ Data_received = True
 Button_group = True
 
 [MoreSettings]
-ATCRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
+AtCommandRegex = (?i)(AT\+[^（）<>\n\t\\\r\u4e00-\u9fa5]+)
 TimeStampRegex = \[20(.*?)\]
 MaxRowsOfButtonGroup = 120
 ShowCommandEcho = False
-Ender = 0d0a
-SendAsHex = False
+Ender = 0D0A
+Clear_Log_With_File = False
 
 [Paths]
 Path_1 = 
@@ -77,3 +77,19 @@ Path_12 =
 Path_13 = 
 Path_14 = 
 Path_15 = 
+
+[StyleSettings]
+font_family = Microsoft YaHei
+font_size = 19
+primary_color = #00a86b
+secondary_color = #6c757d
+background_color = #f8f9fa
+text_color = #333333
+accent_color = #007bff
+success_color = #28a745
+warning_color = #ffc107
+danger_color = #dc3545
+border_radius = 6
+theme_mode = dark
+animation_enabled = True
+shadow_enabled = False
