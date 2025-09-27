@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QGridLayout, QLabel, QCheckBox, QPushButton
 from PySide6.QtCore import Qt, Signal
-from utils.common import read_config, write_config
+from components.ConfigManager import read_config, write_config
 
 
 class LayoutConfigDialog(QDialog):

@@ -1,4 +1,4 @@
-from utils.common import read_config, write_config
+from components.ConfigManager import read_config, write_config
 import os
 import sys
 from PySide6.QtWidgets import (

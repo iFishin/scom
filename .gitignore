@@ -1,6 +1,6 @@
 *.log
 *.pyc
+__pycache__/
+config.ini
 tmps/*
-!tmps/temp.log
-!tmps/ATCommand.json
 AGENTS.md

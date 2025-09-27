@@ -30,7 +30,7 @@
 
 ## Introduction
 
-![SCOM](./res/Samples.png)
+![SCOM](./res/SCOM_1.2.6.png)
 
 **SCOM - Serial Communication:**
 
