@@ -51,6 +51,7 @@ from PySide6.QtGui import (
 )
 from serial.tools import list_ports
 import utils.common as common
+from components.ConfigManager import read_config as read_app_config, write_config as write_app_config
 from components.QSSLoader import QSSLoader
 from components.DataReceiver import DataReceiver
 from components.FileSender import FileSender
@@ -91,7 +92,6 @@ class MyWidget(QWidget):
         
         # Get User Data Directory
         self.app_data_dir = common.ensure_user_directories()
-
         # Init constants for the widget
         self.main_Serial = None
         self.hotkey_buttons = []
@@ -102,21 +102,21 @@ class MyWidget(QWidget):
         self.last_one_click_time = None
         self.path_ATCommand = os.path.join(self.app_data_dir, "tmps", "ATCommand.json")
         self.received_data_textarea_scrollBottom = True
-        
+
         # 初始化AT命令管理器
         self.at_command_manager = ATCommandManager(self)
         self.thread_pool = QThreadPool()
         self.data_receiver = None
         self.command_executor = None
-        
+
         ## Update main text area - 优化的缓冲区管理
-        self.full_data_store = [] # Complete history
+        self.full_data_store = []  # Complete history
         self.hex_buffer = []  # 用于存储十六进制数据
         self.raw_data_buffer = []  # 用于存储原始数据
-        self.buffer_size = 2000     # Maximum stored lines
-        self.visible_lines = 500    # 可见行数
-        self.current_offset = 0    # Scroll position tracker
-        
+        self.buffer_size = 2000  # Maximum stored lines
+        self.visible_lines = 500  # 可见行数
+        self.current_offset = 0  # Scroll position tracker
+
         ## 添加UI更新优化相关变量
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.batch_update_ui)
@@ -124,21 +124,25 @@ class MyWidget(QWidget):
         self.pending_updates = []
         self.last_ui_update_time = time.time()
         self.ui_update_interval = 0.1  # 100ms最小更新间隔
-        
+
         ## 性能监控和缓冲区配置
         self.performance_stats = {
             'updates_per_second': 0,
             'last_stats_time': time.time(),
-            'update_count': 0
+            'update_count': 0,
         }
-        
+
         # 增大缓冲区以减少数据丢失
         self.buffer_size = 10000  # 从2000增加到10000
         self.visible_lines = 500
         self.max_pending_updates = 20  # 限制待处理更新的最大数量，从200降低到20
-
         # Before init the UI, read the Configurations of SCOM from the config.ini
-        self.config = common.read_config("config.ini")
+        # Use the centralized ConfigManager to fully control config lifecycle
+        try:
+            self.config = read_app_config("config.ini")
+        except Exception:
+            # fallback to existing common.read_config if something unexpected happens
+            self.config = common.read_config("config.ini")
         
         # Init the UI of the widget
         self.init_UI()
@@ -759,26 +763,12 @@ class MyWidget(QWidget):
         
         # 创建ATCommand页面的标题栏，包含状态和保存按钮
         at_command_header = QHBoxLayout()
-        self.label_layout_2 = QLabel("ATCommand")
+        self.label_layout_2 = QLabel("")
         self.label_layout_2.setObjectName("page_title")
-        
-        # 文件状态标签
-        self.at_file_status_label = QLabel("")
-        self.at_file_status_label.setObjectName("file_status_label")
-        
-        # 整合的保存按钮（同时保存路径配置和AT命令文件）
-        self.integrated_save_button = QPushButton()
-        self.integrated_save_button.setObjectName("icon_button")
-        self.integrated_save_button.setFixedSize(30, 30)
-        self.integrated_save_button.setIcon(QIcon(common.safe_resource_path("res/save.png")))
-        self.integrated_save_button.setToolTip("Save path configuration and AT command file (Ctrl+S)")
-        self.integrated_save_button.clicked.connect(self.save_integrated_function)
-        self.integrated_save_button.setEnabled(False)
-        
-        at_command_header.addWidget(self.label_layout_2)
-        at_command_header.addStretch()
-        at_command_header.addWidget(self.at_file_status_label)
-        at_command_header.addWidget(self.integrated_save_button)
+        # 允许鼠标悬停显示完整路径
+        self.label_layout_2.setToolTip("")
+        self.label_layout_2.setMaximumWidth(300)
+        self.label_layout_2.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         
         layout_2.addLayout(at_command_header)
         
@@ -827,7 +817,35 @@ class MyWidget(QWidget):
         self.expand_left_button.setIcon(QIcon(common.safe_resource_path("res/direction_left.png")))
         self.expand_left_button.clicked.connect(self.set_radio_groupbox_visible)
 
+        # 文件状态标签
+        self.at_file_status_label = QLabel("")
+        self.at_file_status_label.setObjectName("file_status_label")
+        
+        # 整合的保存按钮（同时保存路径配置和AT命令文件）
+        self.integrated_save_button = QPushButton()
+        self.integrated_save_button.setObjectName("icon_button")
+        self.integrated_save_button.setFixedSize(30, 30)
+        self.integrated_save_button.setIcon(QIcon(common.safe_resource_path("res/save.png")))
+        self.integrated_save_button.setToolTip("Save path configuration and AT command file (Ctrl+S)")
+        self.integrated_save_button.clicked.connect(self.save_integrated_function)
+        self.integrated_save_button.setEnabled(False)
+        
+        at_command_header.addWidget(self.label_layout_2)
+        at_command_header.addStretch()
+        at_command_header.addWidget(self.at_file_status_label)
+        # at_command_header.addWidget(self.integrated_save_button)
+
+        # 导入按钮
+        self.import_button = QPushButton()
+        self.import_button.setObjectName("icon_button")
+        self.import_button.setFixedSize(30, 30)
+        self.import_button.setIcon(QIcon(common.safe_resource_path("res/import.png")))
+        self.import_button.setToolTip("Import AT command file")
+        self.import_button.clicked.connect(self.import_at_command_file)
+
         # 将按钮添加到左侧容器
+        left_buttons_layout.addWidget(self.integrated_save_button)
+        left_buttons_layout.addWidget(self.import_button)
         left_buttons_layout.addWidget(self.expand_left_button)
 
         # 设置左侧按钮容器的固定宽度
@@ -844,12 +862,12 @@ class MyWidget(QWidget):
 
         # 从配置文件中读取路径
         self.path_configs = []
-        for i in range(15):
+        for i in range(16):
             path_key = f"Path_{i+1}"
             path_value = self.config.get("Paths", path_key, fallback="")
             self.path_configs.append(path_value)
 
-        for i in range(15):
+        for i in range(16):
             radio_button = QRadioButton(f"Path {i + 1}")
             radio_button.toggled.connect(
                 lambda state, x=i: self.handle_radio_button_click(x)
@@ -1279,18 +1297,51 @@ class MyWidget(QWidget):
         if index == 1:
             self.handle_at_command_page_enter()
         elif index == 2 or current_index == 2:
-            # Log页面 - 直接从接收数据复制
-            self.text_input_layout_3.setPlainText(
-                self.received_data_textarea.toPlainText()
-            )
+            # Log页面 - 从日志文件读取完整日志（优先使用输入框里的路径），失败时回退到组件内容
+            log_path = ""
+            try:
+                if hasattr(self, 'input_path_data_received'):
+                    log_path = self.input_path_data_received.text()
+                else:
+                    log_path = self.config.get('Set', 'PathDataReceived', fallback='')
+
+                if log_path and os.path.exists(log_path):
+                    with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                        content = f.read()
+                else:
+                    # 回退到接收组件中的内容
+                    content = self.received_data_textarea.toPlainText()
+            except Exception as e:
+                logger.error(f"Error reading log file {log_path}: {e}")
+                content = self.received_data_textarea.toPlainText()
+
+            self.text_input_layout_3.setPlainText(content)
+
         elif index == 3 or current_index == 3:
-            # NoTimeStamp页面 - 移除时间戳后复制
-            self.text_input_layout_4.setPlainText(
-                common.remove_TimeStamp(
-                    self.received_data_textarea.toPlainText(),
-                    self.config["MoreSettings"]["TimestampRegex"]
-                )
-            )
+            # NoTimeStamp页面 - 基于日志文件内容去除时间戳后显示
+            log_path = ""
+            try:
+                if hasattr(self, 'input_path_data_received'):
+                    log_path = self.input_path_data_received.text()
+                else:
+                    log_path = self.config.get('Set', 'PathDataReceived', fallback='')
+
+                if log_path and os.path.exists(log_path):
+                    with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                        content = f.read()
+                else:
+                    content = self.received_data_textarea.toPlainText()
+            except Exception as e:
+                logger.error(f"Error reading log file {log_path}: {e}")
+                content = self.received_data_textarea.toPlainText()
+
+            try:
+                no_ts = common.remove_TimeStamp(content, self.config["MoreSettings"]["TimestampRegex"])
+            except Exception as e:
+                logger.error(f"Error removing timestamp: {e}")
+                no_ts = content
+
+            self.text_input_layout_4.setPlainText(no_ts)
         elif index == 4 or current_index == 4:
             pass
             
@@ -1402,6 +1453,15 @@ class MyWidget(QWidget):
                     message=f"Default AT command file created: {self.path_ATCommand}",
                     details="The file contains some basic AT command examples that you can modify as needed."
                 )
+                # 将新创建的文件设置到管理器并刷新显示（更新文件名标签）
+                try:
+                    self.at_command_manager.set_file_path(self.path_ATCommand)
+                except Exception:
+                    pass
+                try:
+                    self.update_at_command_status()
+                except Exception:
+                    pass
             else:
                 ErrorDialog.show_error(
                     parent=self,
@@ -1458,6 +1518,20 @@ class MyWidget(QWidget):
                     self.at_file_status_label.setProperty("status", "saved")
                     self.integrated_save_button.setEnabled(False)
                 
+                # 更新文件名标签（显示 basename，tooltip 显示完整路径）
+                try:
+                    file_path = file_info.get("file_path", "")
+                    if file_path:
+                        basename = os.path.basename(file_path)
+                        self.label_layout_2.setText(basename)
+                        self.label_layout_2.setToolTip(file_path)
+                    else:
+                        self.label_layout_2.setText("No file")
+                        self.label_layout_2.setToolTip("")
+                except Exception:
+                    # 保持原样，不影响主要状态更新
+                    pass
+
                 # 刷新样式
                 self.at_file_status_label.style().unpolish(self.at_file_status_label)
                 self.at_file_status_label.style().polish(self.at_file_status_label)
@@ -1823,37 +1897,44 @@ class MyWidget(QWidget):
 
     def select_received_file(self, event=None):
         file_dialog = QFileDialog()
+        # 禁用内置覆盖确认，选择已有文件时不弹出覆盖提示；仅在新建文件时显示提示
+        file_dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
         file_dialog.setFileMode(QFileDialog.AnyFile)
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
         file_dialog.setNameFilter("Text Files (*.txt *.log);;JSON Files (*.json);;All Files (*)")
         file_dialog.setDefaultSuffix("log")  # 默认后缀
         file_dialog.setWindowTitle("Select or Create Log File")
-        
+
         # 设置默认文件名
         import datetime
         default_name = f"received_data_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         file_dialog.selectFile(default_name)
-        
+
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
-                # 确保文件目录存在
+                # 确保文件目录存在（如果有父目录）
                 import os
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                
+                dir_name = os.path.dirname(file_path)
+                if dir_name:
+                    os.makedirs(dir_name, exist_ok=True)
+
+                created = False
                 # 如果文件不存在，创建一个空文件
                 if not os.path.exists(file_path):
                     try:
                         with open(file_path, 'w', encoding='utf-8') as f:
                             f.write("")  # 创建空文件
-                        
-                        # 显示创建成功消息
-                        QMessageBox.information(self, "File Created", 
-                            f"New log file created:\n{file_path}")
+                        created = True
                     except Exception as e:
                         QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
                         return
-                
+
+                # 只在新建时提示，已存在文件直接使用路径
+                if created:
+                    QMessageBox.information(self, "File Created",
+                        f"New log file created:\n{file_path}")
+
                 self.input_path_data_received.setText(file_path)
 
     def select_file(self):
@@ -1877,25 +1958,30 @@ class MyWidget(QWidget):
 
     def select_json_file(self, path_input):
         file_dialog = QFileDialog()
+        # 禁用内置覆盖确认，选择已有文件时不弹出覆盖提示；仅在新建文件时显示提示
+        file_dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
         file_dialog.setFileMode(QFileDialog.AnyFile)
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
         file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt);;All Files (*)")
         file_dialog.setDefaultSuffix("json")  # 默认后缀
         file_dialog.setWindowTitle("Select or Create JSON Configuration File")
-        
+
         # 设置默认文件名
         import datetime
         default_name = f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         file_dialog.selectFile(default_name)
-        
+
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
             if file_path:
-                # 确保文件目录存在
+                # 确保文件目录存在（如果有父目录）
                 import os
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                
-                # 如果文件不存在，创建一个空JSON文件
+                dir_name = os.path.dirname(file_path)
+                if dir_name:
+                    os.makedirs(dir_name, exist_ok=True)
+
+                created = False
+                # 仅在文件不存在时创建并提示；如果文件已存在，则直接使用，不弹出覆盖确认
                 if not os.path.exists(file_path):
                     try:
                         import json
@@ -1908,15 +1994,84 @@ class MyWidget(QWidget):
                             else:
                                 # 创建空文本文件
                                 f.write("")
-                        
-                        # 显示创建成功消息
-                        QMessageBox.information(self, "File Created", 
-                            f"New {'JSON configuration' if file_path.lower().endswith('.json') else 'text'} file created:\n{file_path}")
+                        created = True
                     except Exception as e:
                         QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
                         return
-                
+
+                # 只在刚创建文件时显示创建成功消息，选择已存在的文件时不再弹出覆盖提示
+                if created:
+                    QMessageBox.information(self, "File Created",
+                        f"New {'JSON configuration' if file_path.lower().endswith('.json') else 'text'} file created:\n{file_path}")
+
                 path_input.setText(file_path)
+                
+    def import_at_command_file(self):
+        """从文件系统导入AT命令文件并写入第一个空的路径槽位
+
+        - 打开文件选择对话（仅选择已存在文件）
+        - 如果存在空槽位（path_command_inputs 中文本为空），将选中文件路径写入第一个空槽位并保存配置
+        - 如果所有槽位都已被占用，使用 ErrorDialog 提示失败
+        """
+        try:
+            # 查找第一个空的路径输入框
+            empty_index = None
+            for idx, pi in enumerate(getattr(self, 'path_command_inputs', [])):
+                if not pi.text().strip():
+                    empty_index = idx
+                    break
+
+            if empty_index is None:
+                ErrorDialog.show_error(
+                    parent=self,
+                    title="Import Failed",
+                    message="No empty path slots available",
+                    details="All path slots are occupied. Please clear a slot before importing."
+                )
+                return
+
+            # 打开文件选择对话，仅允许选择已存在文件
+            file_dialog = QFileDialog(self)
+            file_dialog.setFileMode(QFileDialog.ExistingFile)
+            file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt *.log);;All Files (*)")
+            file_dialog.setWindowTitle("Import AT Command File")
+
+            if not file_dialog.exec():
+                return
+
+            file_path = file_dialog.selectedFiles()[0].replace('/', '\\')
+            if not file_path:
+                return
+
+            # 简单校验文件可读
+            if not os.path.exists(file_path):
+                ErrorDialog.show_error(
+                    parent=self,
+                    title="Import Failed",
+                    message="Selected file does not exist",
+                    details=f"File: {file_path}"
+                )
+                return
+
+            # 写入到第一个空槽位并保存到配置
+            self.path_command_inputs[empty_index].setText(file_path)
+            self.save_paths_to_config()
+
+            # 提示用户导入成功
+            QMessageBox.information(
+                self,
+                "Import Successful",
+                f"Imported file to Path_{empty_index + 1}:\n{file_path}"
+            )
+
+        except Exception as e:
+            logger.error(f"Error importing AT command file: {e}")
+            ErrorDialog.show_error(
+                parent=self,
+                title="Import Error",
+                message="An unexpected error occurred during import",
+                details=str(e),
+            )
                 
     def send_file(self):
         file_path = self.file_input.text()
@@ -2801,6 +2956,8 @@ class MyWidget(QWidget):
                     
                     # 保存当前选中的路径到配置文件
                     self.save_paths_to_config()
+                    # 刷新文件名显示
+                    self.update_at_command_status()
             else:
                 self.path_ATCommand = common.get_resource_path("tmps/ATCommand.json")
                 self.at_command_manager.set_file_path(self.path_ATCommand)

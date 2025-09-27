@@ -2212,6 +2212,26 @@ QLabel#status_label[status="info"] {
     color: #17a2b8;  /* 青色 - 信息状态 */
 }
 
+/* 如果需要以标签形式展示（兼容 QLabel 形式） */
+QLabel#integrated_save_button {
+    background-color: #00a86b;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 28px;
+    min-width: 100px;
+    text-align: center;
+}
+
+QLabel#integrated_save_button[variant="outline"] {
+    background-color: transparent;
+    color: #00a86b;
+    border: 2px solid #00a86b;
+}
+
+
 /* 其他小控件样式 */
 QGroupBox#button_groupbox QLineEdit {
     font-size: 13px; /* UI_FONT_SIZE_NORMAL */ /* UI_FONT_SIZE_MEDIUM */ /* UI_FONT_SIZE_NORMAL */
