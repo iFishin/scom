@@ -1895,7 +1895,7 @@ class MyWidget(QWidget):
         file_dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
         file_dialog.setFileMode(QFileDialog.AnyFile)
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
-        file_dialog.setNameFilter("Text Files (*.txt *.log);;JSON Files (*.json);;All Files (*)")
+        file_dialog.setNameFilter("Text Files (*.txt *.log);;All Files (*)")
         file_dialog.setDefaultSuffix("log")  # 默认后缀
         file_dialog.setWindowTitle("Select or Create Log File")
 
@@ -1931,74 +1931,194 @@ class MyWidget(QWidget):
 
                 self.input_path_data_received.setText(file_path)
 
-    def select_file(self):
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("Text Files (*.txt *.log *.csv);;Binary Files (*.bin *.hex *.dat);;JSON Files (*.json);;All Files (*)")
-        file_dialog.setWindowTitle("Select File to Send")
+    def select_file(self, file_type="send"):
+        """通用文件选择方法
         
+        Args:
+            file_type: 文件选择的用途类型
+                - "send": 选择要发送的文件（默认全类型）
+                - "log": 选择日志文件保存位置
+                - "json": 选择JSON配置文件
+                - "at_command": 导入AT命令文件
+        """
+        # 定义不同文件类型的配置
+        file_type_configs = {
+            "send": {
+                "mode": QFileDialog.ExistingFile,
+                "accept_mode": QFileDialog.AcceptOpen,
+                "filters": "All Files (*)",
+                "title": "Select File to Send",
+                "default_suffix": None,
+                "allow_create": False,
+                "callback": self._on_send_file_selected
+            },
+            "log": {
+                "mode": QFileDialog.AnyFile,
+                "accept_mode": QFileDialog.AcceptSave,
+                "filters": "Text Files (*.txt *.log);;JSON Files (*.json);;All Files (*)",
+                "title": "Select or Create Log File",
+                "default_suffix": "log",
+                "allow_create": True,
+                "callback": self._on_log_file_selected
+            },
+            "json": {
+                "mode": QFileDialog.AnyFile,
+                "accept_mode": QFileDialog.AcceptSave,
+                "filters": "JSON Files (*.json);;Text Files (*.txt);;All Files (*)",
+                "title": "Select or Create JSON Configuration File",
+                "default_suffix": "json",
+                "allow_create": True,
+                "callback": self._on_json_file_selected
+            },
+            "at_command": {
+                "mode": QFileDialog.ExistingFile,
+                "accept_mode": QFileDialog.AcceptOpen,
+                "filters": "JSON Files (*.json);;Text Files (*.txt *.log);;All Files (*)",
+                "title": "Import AT Command File",
+                "default_suffix": None,
+                "allow_create": False,
+                "callback": self._on_at_command_file_selected
+            }
+        }
+        
+        # 获取配置
+        config = file_type_configs.get(file_type, file_type_configs["send"])
+        
+        # 创建文件对话框
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(config["mode"])
+        file_dialog.setAcceptMode(config["accept_mode"])
+        file_dialog.setNameFilter(config["filters"])
+        file_dialog.setWindowTitle(config["title"])
+        
+        if config["default_suffix"]:
+            file_dialog.setDefaultSuffix(config["default_suffix"])
+        
+        # 如果允许创建新文件，禁用内置覆盖确认
+        if config["allow_create"]:
+            file_dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
+        
+        # 执行对话框
         if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
-            if file_path:
-                self.file_input.setText(file_path)
-                try:
-                    file_size = os.path.getsize(file_path)
-                    self.progress_bar.setMaximum(100)
-                    self.progress_bar.setValue(0)
-                    self.progress_bar.setFormat(f"File size: {file_size} bytes")
-                except OSError as e:
-                    QMessageBox.warning(self, "Warning", f"Cannot get file size: {str(e)}")
-                    self.progress_bar.setFormat("File size: Unknown")
+            if file_path and config["callback"]:
+                config["callback"](file_path, config["allow_create"])
+    
+    def _on_send_file_selected(self, file_path: str, allow_create: bool):
+        """处理发送文件选择完成的回调"""
+        self.file_input.setText(file_path)
+        try:
+            file_size = os.path.getsize(file_path)
+            self.progress_bar.setMaximum(100)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setFormat(f"File size: {file_size} bytes")
+        except OSError as e:
+            QMessageBox.warning(self, "Warning", f"Cannot get file size: {str(e)}")
+            self.progress_bar.setFormat("File size: Unknown")
+    
+    def _on_log_file_selected(self, file_path: str, allow_create: bool):
+        """处理日志文件选择完成的回调"""
+        # 确保文件目录存在
+        dir_name = os.path.dirname(file_path)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+        
+        created = False
+        # 如果文件不存在，创建一个空文件
+        if not os.path.exists(file_path) and allow_create:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write("")
+                created = True
+            except Exception as e:
+                QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
+                return
+        
+        # 只在新建时提示
+        if created:
+            QMessageBox.information(self, "File Created", f"New log file created:\n{file_path}")
+        
+        self.input_path_data_received.setText(file_path)
+    
+    def _on_json_file_selected(self, file_path: str, allow_create: bool):
+        """处理JSON文件选择完成的回调"""
+        # 确保文件目录存在
+        dir_name = os.path.dirname(file_path)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+        
+        created = False
+        # 如果文件不存在，创建JSON模板
+        if not os.path.exists(file_path) and allow_create:
+            try:
+                import json
+                import datetime
+                file_name = os.path.basename(file_path).replace('.json', '')
+                template = self.create_json_template(file_path, file_name)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(template, f, indent=2, ensure_ascii=False)
+                created = True
+            except Exception as e:
+                QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
+                return
+        
+        # 只在新建时提示
+        if created:
+            QMessageBox.information(self, "File Created", f"New JSON configuration file created:\n{file_path}")
+        
+        # 如果有保存的 path_input 对象，使用它；否则不处理
+        if hasattr(self, '_json_file_input') and self._json_file_input:
+            self._json_file_input.setText(file_path)
+            self._json_file_input = None  # 清除临时变量
+    
+    def _on_at_command_file_selected(self, file_path: str, allow_create: bool):
+        """处理AT命令文件选择完成的回调"""
+        # 查找第一个空的路径输入框
+        empty_index = None
+        for idx, pi in enumerate(getattr(self, 'path_command_inputs', [])):
+            if not pi.text().strip():
+                empty_index = idx
+                break
+        
+        if empty_index is None:
+            ErrorDialog.show_error(
+                parent=self,
+                title="Import Failed",
+                message="No empty path slots available",
+                details="All path slots are occupied. Please clear a slot before importing."
+            )
+            return
+        
+        # 校验文件存在
+        if not os.path.exists(file_path):
+            ErrorDialog.show_error(
+                parent=self,
+                title="Import Failed",
+                message="Selected file does not exist",
+                details=f"File: {file_path}"
+            )
+            return
+        
+        # 写入到第一个空槽位并保存配置
+        self.path_command_inputs[empty_index].setText(file_path)
+        self.save_paths_to_config()
+        
+        QMessageBox.information(
+            self,
+            "Import Successful",
+            f"Imported file to Path_{empty_index + 1}:\n{file_path}"
+        )
 
-    def select_json_file(self, path_input):
-        file_dialog = QFileDialog()
-        # 禁用内置覆盖确认，选择已有文件时不弹出覆盖提示；仅在新建文件时显示提示
-        file_dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
-        file_dialog.setFileMode(QFileDialog.AnyFile)
-        file_dialog.setAcceptMode(QFileDialog.AcceptSave)  # 允许保存/新建文件
-        file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt);;All Files (*)")
-        file_dialog.setDefaultSuffix("json")  # 默认后缀
-        file_dialog.setWindowTitle("Select or Create JSON Configuration File")
-
-        # 设置默认文件名
-        import datetime
-        default_name = f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        file_dialog.selectFile(default_name)
-
-        if file_dialog.exec():
-            file_path = file_dialog.selectedFiles()[0].replace("/", "\\")
-            if file_path:
-                # 确保文件目录存在（如果有父目录）
-                import os
-                dir_name = os.path.dirname(file_path)
-                if dir_name:
-                    os.makedirs(dir_name, exist_ok=True)
-
-                created = False
-                # 仅在文件不存在时创建并提示；如果文件已存在，则直接使用，不弹出覆盖确认
-                if not os.path.exists(file_path):
-                    try:
-                        import json
-                        with open(file_path, 'w', encoding='utf-8') as f:
-                            if file_path.lower().endswith('.json'):
-                                # 创建基本的JSON结构
-                                file_name = os.path.basename(file_path).replace('.json', '')
-                                template = self.create_json_template(file_path, file_name)
-                                json.dump(template, f, indent=2, ensure_ascii=False)
-                            else:
-                                # 创建空文本文件
-                                f.write("")
-                        created = True
-                    except Exception as e:
-                        QMessageBox.warning(self, "Warning", f"Cannot create file: {str(e)}")
-                        return
-
-                # 只在刚创建文件时显示创建成功消息，选择已存在的文件时不再弹出覆盖提示
-                if created:
-                    QMessageBox.information(self, "File Created",
-                        f"New {'JSON configuration' if file_path.lower().endswith('.json') else 'text'} file created:\n{file_path}")
-
-                path_input.setText(file_path)
+    def select_json_file(self, path_input=None):
+        """选择或创建JSON配置文件的包装方法
+        
+        Args:
+            path_input: 可选的QLineEdit控件，用于显示选择的文件路径
+        """
+        # 临时保存 path_input，在回调中使用
+        self._json_file_input = path_input
+        # 调用通用方法，使用 "json" 类型
+        self.select_file(file_type="json")
                 
     def import_at_command_file(self):
         """从文件系统导入AT命令文件并写入第一个空的路径槽位
@@ -2007,65 +2127,8 @@ class MyWidget(QWidget):
         - 如果存在空槽位（path_command_inputs 中文本为空），将选中文件路径写入第一个空槽位并保存配置
         - 如果所有槽位都已被占用，使用 ErrorDialog 提示失败
         """
-        try:
-            # 查找第一个空的路径输入框
-            empty_index = None
-            for idx, pi in enumerate(getattr(self, 'path_command_inputs', [])):
-                if not pi.text().strip():
-                    empty_index = idx
-                    break
-
-            if empty_index is None:
-                ErrorDialog.show_error(
-                    parent=self,
-                    title="Import Failed",
-                    message="No empty path slots available",
-                    details="All path slots are occupied. Please clear a slot before importing."
-                )
-                return
-
-            # 打开文件选择对话，仅允许选择已存在文件
-            file_dialog = QFileDialog(self)
-            file_dialog.setFileMode(QFileDialog.ExistingFile)
-            file_dialog.setNameFilter("JSON Files (*.json);;Text Files (*.txt *.log);;All Files (*)")
-            file_dialog.setWindowTitle("Import AT Command File")
-
-            if not file_dialog.exec():
-                return
-
-            file_path = file_dialog.selectedFiles()[0].replace('/', '\\')
-            if not file_path:
-                return
-
-            # 简单校验文件可读
-            if not os.path.exists(file_path):
-                ErrorDialog.show_error(
-                    parent=self,
-                    title="Import Failed",
-                    message="Selected file does not exist",
-                    details=f"File: {file_path}"
-                )
-                return
-
-            # 写入到第一个空槽位并保存到配置
-            self.path_command_inputs[empty_index].setText(file_path)
-            self.save_paths_to_config()
-
-            # 提示用户导入成功
-            QMessageBox.information(
-                self,
-                "Import Successful",
-                f"Imported file to Path_{empty_index + 1}:\n{file_path}"
-            )
-
-        except Exception as e:
-            logger.error(f"Error importing AT command file: {e}")
-            ErrorDialog.show_error(
-                parent=self,
-                title="Import Error",
-                message="An unexpected error occurred during import",
-                details=str(e),
-            )
+        # 调用通用方法，使用 "at_command" 类型
+        self.select_file(file_type="at_command")
                 
     def send_file(self):
         file_path = self.file_input.text()
@@ -2652,6 +2715,16 @@ class MyWidget(QWidget):
         dialog.show()
 
     def port_on(self):
+        # Check if log path is empty but save log is enabled
+        if self.checkbox_data_received.isChecked() and not self.input_path_data_received.text().strip():
+            ErrorDialog.show_warning(
+                parent=self,
+                title="Log Path Empty",
+                message="Cannot open serial port",
+                details="The 'Save Log' option is enabled but no log file path is specified. Please provide a log file path before opening the port."
+            )
+            return
+        
         serial_port = self.get_serial_port_value()
         baud_rate = int(self.get_baud_rate_value())
         stop_bits = float(self.get_stopbits_value())
