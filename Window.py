@@ -334,13 +334,7 @@ class MyWidget(QWidget):
     def create_input_field_key_handler(self, input_field, index):
         """为输入框创建键盘事件处理器"""
         def key_press_handler(event):
-            if event.key() == Qt.Key_Right:
-                # 右方向键：聚焦到第一行输入框
-                if len(self.input_fields) > 0:
-                    self.input_fields[0].setFocus()
-                    self.input_fields[0].selectAll()
-                return
-            elif event.key() == Qt.Key_Up:
+            if event.key() == Qt.Key_Up:
                 # 上方向键：聚焦到上一个输入框
                 if index > 0:
                     self.input_fields[index - 1].setFocus()
