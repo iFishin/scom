@@ -729,10 +729,7 @@ QSpinBox, QDoubleSpinBox {
     padding: 6px 10px;
     border-radius: 6px;
     background-color: white;
-    font-family: "Consolas", "SimSun", "Segoe UI", "Roboto", sans-serif; /* UI_FONT_FAMILY */
-    font-size: 13px; /* UI_FONT_SIZE_NORMAL */
     font-weight: 500;
-    color: #495057;
     min-height: 16px;
 }
 
@@ -751,8 +748,6 @@ QSpinBox:disabled, QDoubleSpinBox:disabled {
 }
 
 QSpinBox::up-button, QDoubleSpinBox::up-button {
-    subcontrol-origin: border;
-    subcontrol-position: top right;
     width: 20px;
     height: 12px;
     border-left: 2px solid #ced4da;
@@ -770,15 +765,7 @@ QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {
     border-left-color: #0056b3;
 }
 
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-    width: 8px;
-    height: 8px;
-    image: url(:/icons/arrow-up.png);
-}
-
 QSpinBox::down-button, QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
     width: 20px;
     height: 12px;
     border-left: 2px solid #ced4da;
@@ -796,11 +783,6 @@ QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
     border-left-color: #0056b3;
 }
 
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-    width: 8px;
-    height: 8px;
-    image: url(:/icons/arrow-down.png);
-}
 
 /* ===== 滑块样式 ===== */
 QSlider {

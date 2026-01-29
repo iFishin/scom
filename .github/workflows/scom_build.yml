@@ -9,7 +9,7 @@ on:
       force_build:
         description: 'Force build even without trigger keywords'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 jobs:
   check_build_trigger:

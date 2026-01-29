@@ -82,8 +82,10 @@ class ErrorDialog(QDialog):
         # 根据错误类型设置图标
         icon_path = self.get_icon_path()
         if icon_path:
-            icon_label.setPixmap(QPixmap(icon_path).scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        
+            pixmap = QPixmap(icon_path).scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            icon_label.setPixmap(pixmap)
+            icon_label.setAlignment(Qt.AlignCenter)
+            icon_label.setStyleSheet("background-color: transparent;")
         # 消息文本
         message_label = QLabel(self.message)
         message_label.setWordWrap(True)
@@ -108,7 +110,7 @@ class ErrorDialog(QDialog):
         layout.setContentsMargins(0, 10, 0, 0)
         
         # 详细信息标签
-        details_label = QLabel("详细信息:")
+        details_label = QLabel("Details:")
         details_label.setObjectName("details_header")
         layout.addWidget(details_label)
         
@@ -166,24 +168,25 @@ class ErrorDialog(QDialog):
         """设置样式"""
         style = """
         QDialog {
-            background-color: #ffffff;
             border: 1px solid #d0d0d0;
         }
         
         #message_frame {
-            background-color: #f8f9fa;
+            background-color: transparent;
             border: 1px solid #e9ecef;
             border-radius: 6px;
             padding: 10px;
         }
         
         #message_label {
+            background-color: transparent;
             color: #212529;
             font-size: 11px;
             line-height: 1.4;
         }
         
         #details_frame {
+            background-color: transparent;
             border-top: 1px solid #e9ecef;
             padding-top: 10px;
         }
@@ -191,16 +194,12 @@ class ErrorDialog(QDialog):
         #details_header {
             color: #6c757d;
             font-weight: bold;
-            font-size: 9px;
         }
         
         #details_text {
-            background-color: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 4px;
             color: #495057;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 9px;
             padding: 8px;
         }
         
@@ -209,7 +208,6 @@ class ErrorDialog(QDialog):
             border: none;
             border-radius: 4px;
             color: white;
-            font-size: 10px;
             font-weight: bold;
             padding: 6px 12px;
         }
