@@ -3298,6 +3298,7 @@ class MyWidget(QWidget):
                     "index": i,
                     "command": self.input_fields[i].text(),
                     "interval": self.interVal[i].text(),
+                    "hex": self.checkbox_hex[i].isChecked(),
                     "withEnder": self.checkbox_send_with_enders[i].isChecked(),
                 }
                 self.selected_commands.append(command_info)

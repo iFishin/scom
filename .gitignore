@@ -4,3 +4,5 @@ __pycache__/
 config.ini
 tmps/*
 AGENTS.md
+tmps/temp.log
+tmps/ATCommand.json

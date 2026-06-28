@@ -584,43 +584,62 @@ def hex_str_to_bytes(hex_str: str) -> bytes:
     except ValueError as e:
         raise ValueError(f"Invalid hex string '{hex_str}': {e}")
 
-def port_write(command: str, port_serial: serial.Serial, ender: str = None) -> None:
+def port_write(command: str, port_serial: serial.Serial, hex_mode: bool = False, ender=None) -> None:
     """
     向串口写入命令
 
     参数：
     command (str): 要写入的命令
     port_serial (serial.Serial): 打开的串口对象
-    ender (str): 结束符，十六进制字符串，如 "0D0A", "0d0a"，空字符串或 None
+    hex_mode (bool): 是否以十六进制模式发送命令，默认为 False
+    ender: 结束符，支持 bool / bytes / bytearray / str / None
     """
     if port_serial is None:
         raise SerialPortNotInitializedError("Serial port is not initialized.")
 
     try:
-        # 兼容不同类型的 ender 参数：bool / bytes / bytearray / str / None
-        # 布尔值：True 表示使用默认结束符 0D0A，False 表示不使用结束符
-        if isinstance(ender, bool):
-            ender_str = "0D0A" if ender else ""
-        elif isinstance(ender, (bytes, bytearray)):
-            # 直接写入字节类型的 ender
-            port_serial.write(command.encode("UTF-8") + bytes(ender))
-            return
-        else:
-            # 对于 str 或 None，保持原有语义
-            ender_str = ender if ender is not None else ""
+        if hex_mode:
+            # 如果是十六进制模式，先将命令转换为字节
+            command_bytes = hex_str_to_bytes(command)
 
-        # 如果提供了结束符且不是空字符串，尝试将其解析为十六进制字节
-        if ender_str:
-            try:
-                end_bytes = hex_str_to_bytes(ender_str)
-                port_serial.write(command.encode("UTF-8") + end_bytes)
-            except ValueError as e:
-                # 如果结束符无效，记录错误并仅发送命令
-                custom_print(f"Invalid hex string '{ender_str}': {e}")
-                port_serial.write(command.encode("UTF-8"))
+            # 兼容不同类型的 ender 参数：bool / bytes / bytearray / str / None
+            # 布尔值：True 表示使用默认结束符 0D0A，False 表示不使用结束符
+            if isinstance(ender, bool):
+                ender_str = "0D0A" if ender else ""
+                ender_bytes = hex_str_to_bytes(ender_str) if ender_str else b""
+            elif isinstance(ender, (bytes, bytearray)):
+                ender_bytes = bytes(ender)
+            elif isinstance(ender, str) and ender:
+                ender_bytes = hex_str_to_bytes(ender)
+            else:
+                ender_bytes = b""
+
+            port_serial.write(command_bytes + ender_bytes)
         else:
-            # 如果未提供结束符或为空字符串，仅发送命令
-            port_serial.write(command.encode("UTF-8"))
+            # 兼容不同类型的 ender 参数：bool / bytes / bytearray / str / None
+            # 布尔值：True 表示使用默认结束符 0D0A，False 表示不使用结束符
+            if isinstance(ender, bool):
+                ender_str = "0D0A" if ender else ""
+            elif isinstance(ender, (bytes, bytearray)):
+                # 直接写入字节类型的 ender
+                port_serial.write(command.encode("UTF-8") + bytes(ender))
+                return
+            else:
+                # 对于 str 或 None，保持原有语义
+                ender_str = ender if ender is not None else ""
+
+            # 如果提供了结束符且不是空字符串，尝试将其解析为十六进制字节
+            if ender_str:
+                try:
+                    end_bytes = hex_str_to_bytes(ender_str)
+                    port_serial.write(command.encode("UTF-8") + end_bytes)
+                except ValueError as e:
+                    # 如果结束符无效，记录错误并仅发送命令
+                    custom_print(f"Invalid hex string '{ender_str}': {e}")
+                    port_serial.write(command.encode("UTF-8"))
+            else:
+                # 如果未提供结束符或为空字符串，仅发送命令
+                port_serial.write(command.encode("UTF-8"))
     except Exception as e:
         custom_print(f"Error writing to serial port: {e}")
         raise e

@@ -30,6 +30,7 @@ class CommandExecutor(QThread):
             index = command_dict.get('index', 0)
             command = command_dict.get('command', '')
             interval = command_dict.get('interval', '')
+            hex_mode = command_dict.get('hex', False)
             with_enter = command_dict.get('withEnder', False)
             # Pause handling: lock the mutex and wait while paused
             self.mutex.lock()
@@ -43,7 +44,10 @@ class CommandExecutor(QThread):
             # Execute the command and emit detailed errors on failure
             try:
                 # execution log suppressed; only errors will be logged
-                common.port_write(command, self.serial_port, with_enter)
+                if hex_mode:
+                    common.port_write(command, self.serial_port, hex_mode=hex_mode, ender=with_enter)
+                else:
+                    common.port_write(command, self.serial_port, ender=with_enter)
                 self.commandExecuted.emit(index+1)
                 # interval is treated as milliseconds now. If it's provided, try to parse it
                 # as a number (may be string) representing ms. Fallback default is 3000 ms.
